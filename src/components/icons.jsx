@@ -1,0 +1,106 @@
+// Inline stroke icons ported from the handoff. Kept as a tiny local set so
+// there's no icon-library dependency; swap for lucide-react if the codebase
+// already uses it (per the handoff's Assets note).
+
+const base = {
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 1.6,
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+}
+
+export function IconHome({ size = 20 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <path d="M3 10.5 12 4l9 6.5" />
+      <path d="M5 9.5V20h14V9.5" />
+    </svg>
+  )
+}
+
+export function IconWork({ size = 20 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <rect x="3" y="7.5" width="18" height="12.5" rx="2.5" />
+      <path d="M8 7.5V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1.5" />
+      <path d="M3 13h18" />
+    </svg>
+  )
+}
+
+export function IconWorkout({ size = 20 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <path d="M4 9v6M7 7.5v9M17 7.5v9M20 9v6M7 12h10" />
+    </svg>
+  )
+}
+
+export function IconSettings({ size = 20 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8" />
+    </svg>
+  )
+}
+
+export function IconSearch({ size = 16 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" strokeWidth="1.7" strokeLinecap="round">
+      <circle cx="11" cy="11" r="7" />
+      <path d="M21 21l-3.6-3.6" />
+    </svg>
+  )
+}
+
+export function IconSun({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base} strokeWidth="1.7">
+      <circle cx="12" cy="12" r="4.5" />
+      <path d="M12 3v1.6M12 19.4V21M3 12h1.6M19.4 12H21M6 6l1.1 1.1M16.9 16.9 18 18M18 6l-1.1 1.1M7.1 16.9 6 18" />
+    </svg>
+  )
+}
+
+export function IconMoon({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base} strokeWidth="1.7">
+      <path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" />
+    </svg>
+  )
+}
+
+// Small weather glyphs used in the hourly strip.
+export function WeatherIcon({ kind, size = 20 }) {
+  if (kind === 'cloud') {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+        <path d="M7 17a4 4 0 0 1 .8-7.9 5 5 0 0 1 9.7 1A3.5 3.5 0 0 1 17 17z" />
+      </svg>
+    )
+  }
+  if (kind === 'rain') {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+        <path d="M7 15a4 4 0 0 1 .8-7.9 5 5 0 0 1 9.7 1A3.5 3.5 0 0 1 17 15z" />
+        <path d="M8 19l-1 2M12 19l-1 2M16 19l-1 2" />
+      </svg>
+    )
+  }
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 4v1.5M12 18.5V20M4 12h1.5M18.5 12H20M6.3 6.3l1 1M16.7 16.7l1 1M17.7 6.3l-1 1M7.3 16.7l-1 1" />
+    </svg>
+  )
+}
+
+export function IconCheck({ size = 13, stroke = 'var(--accent-text)' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 12l4 4 10-10" />
+    </svg>
+  )
+}
