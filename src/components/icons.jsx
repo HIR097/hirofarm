@@ -97,6 +97,46 @@ export function WeatherIcon({ kind, size = 20 }) {
   )
 }
 
+export function IconStatus({ size = 20 }) {
+  // 업무현황: 체크리스트
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <path d="M9 6h11M9 12h11M9 18h11" />
+      <path d="M4 6l1 1 1.5-2M4 12l1 1 1.5-2M4 18l1 1 1.5-2" />
+    </svg>
+  )
+}
+
+export function IconSchedule({ size = 20 }) {
+  // 펀드 연간일정: 반복/루틴
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <path d="M21 12a9 9 0 1 1-3-6.7" />
+      <path d="M21 4v4h-4" />
+      <path d="M12 8v4l2.5 2" />
+    </svg>
+  )
+}
+
+export function IconCalendar({ size = 20 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <rect x="3" y="5" width="18" height="16" rx="2.5" />
+      <path d="M3 9.5h18M8 3v4M16 3v4" />
+    </svg>
+  )
+}
+
+export function IconNote({ size = 20 }) {
+  // 낙서장: 펜
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z" />
+    </svg>
+  )
+}
+
 export function IconCheck({ size = 13, stroke = 'var(--accent-text)' }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">

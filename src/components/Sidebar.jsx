@@ -1,9 +1,11 @@
-import { IconHome, IconWork, IconWorkout, IconSettings } from './icons.jsx'
+import { IconHome, IconStatus, IconSchedule, IconCalendar, IconNote, IconSettings } from './icons.jsx'
 
 const NAV = [
   { key: 'home', label: '메인', Icon: IconHome },
-  { key: 'work', label: '업무', Icon: IconWork },
-  { key: 'workout', label: '운동', Icon: IconWorkout },
+  { key: 'status', label: '업무현황', Icon: IconStatus },
+  { key: 'fund', label: '펀드 연간일정', Icon: IconSchedule },
+  { key: 'calendar', label: '달력', Icon: IconCalendar },
+  { key: 'scratch', label: '낙서장', Icon: IconNote },
 ]
 
 function navItemStyle(active) {

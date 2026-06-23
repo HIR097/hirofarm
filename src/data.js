@@ -8,8 +8,10 @@
 
 export const PAGE_TITLES = {
   home: ['대시보드', '정하윤님의 하루를 한눈에'],
-  work: ['업무', '태스크 · 일정 · 마감 관리'],
-  workout: ['운동', '기록 · 루틴 · 목표 추적'],
+  status: ['업무현황', '자산별 업무 · 일정 · 긴급 관리'],
+  fund: ['펀드 연간일정', '월별 반복 루틴 스케줄'],
+  calendar: ['달력', 'Outlook 연동 예정 · 일정 보기'],
+  scratch: ['낙서장', '자유 메모'],
 }
 
 export const INITIAL_TODOS = [

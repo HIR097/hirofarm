@@ -6,8 +6,10 @@ import Sidebar from './components/Sidebar.jsx'
 import Header from './components/Header.jsx'
 import SettingsModal from './components/SettingsModal.jsx'
 import Home from './pages/Home.jsx'
-import Work from './pages/Work.jsx'
-import Workout from './pages/Workout.jsx'
+import WorkStatus from './pages/WorkStatus.jsx'
+import FundSchedule from './pages/FundSchedule.jsx'
+import Calendar from './pages/Calendar.jsx'
+import Scratchpad from './pages/Scratchpad.jsx'
 
 export default function App() {
   // ── persisted UI state (mirrors hy_theme / hy_accent) ──
@@ -49,8 +51,10 @@ export default function App() {
           {tab === 'home' && (
             <Home homeVar={homeVar} setHomeVar={setHomeVar} todos={todos} onToggle={toggleTodo} />
           )}
-          {tab === 'work' && <Work />}
-          {tab === 'workout' && <Workout />}
+          {tab === 'status' && <WorkStatus />}
+          {tab === 'fund' && <FundSchedule />}
+          {tab === 'calendar' && <Calendar />}
+          {tab === 'scratch' && <Scratchpad />}
         </div>
       </main>
 
