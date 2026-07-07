@@ -221,6 +221,16 @@ footer{margin-top:40px;border-top:1px solid var(--line);padding-top:14px;font-si
   </div>
 </header>
 
+<div class="kpis" id="kpis"></div>
+
+<div class="lbl">분양대금 배분 — 원본 상환 워터폴</div>
+<div class="card">
+  <div class="wbar" id="wbar"></div>
+  <div class="wlegend" id="wlegend"></div>
+  <div class="tblwrap"><table id="wtbl"></table></div>
+</div>
+
+<div class="lbl">가정 변수</div>
 <section class="card">
   <div class="phead">
     <span class="t">가정 변수 — 값을 바꾸면 전체가 즉시 재계산됩니다 (자동 저장)</span>
@@ -265,13 +275,32 @@ footer{margin-top:40px;border-top:1px solid var(--line);padding-top:14px;font-si
   </div>
 </section>
 
-<div class="kpis" id="kpis"></div>
-
-<div class="lbl">분양대금 배분 — 원본 상환 워터폴</div>
+<div class="lbl">별동 분할매각</div>
 <div class="card">
-  <div class="wbar" id="wbar"></div>
-  <div class="wlegend" id="wlegend"></div>
-  <div class="tblwrap"><table id="wtbl"></table></div>
+  <div class="duo">
+    <div>
+      <div class="planbox" onclick="lbOpen('mangrove-plans/annex.png')">
+        <img src="mangrove-plans/annex.png" alt="별동 입면도" loading="lazy">
+        <span class="zoom">별동 입면도 · 클릭 확대</span>
+      </div>
+      <div class="note">
+        별동은 본동과 <b>물리적으로 분리된 2층 근생 건물</b>(101 · 201호)로,
+        현재 <b>플레이에프앤비(아워베이커리)</b>가 사용 중입니다. 임대차 만기 <b>~2028.06</b>.
+      </div>
+    </div>
+    <div>
+      <div class="pgrid" style="margin-bottom:6px">
+        <div class="ctl"><label>별동 별개 매각</label><span class="seg" id="segAxOn"><button data-v="off">OFF · 리테일 일괄</button><button data-v="on">ON · 별도 산정</button></span></div>
+        <div class="ctl" id="ctlAxM"><label>별동 산정 방식 <em class="hint">OFF — 리테일 가정 적용 중</em></label><span class="seg" id="segAx"><button data-v="deal">거래사례</button><button data-v="income">수익환원</button></span></div>
+        <div class="ctl" id="ctlAxCap"><label>별동 Cap Rate <em class="hint">미반영</em><output id="vAxCap"></output></label><input type="range" id="axCap" min="3" max="9" step="0.1"></div>
+        <div class="ctl" id="ctlAxNoi1"><label>별동 NOI 1층 (101호) <em class="hint">미반영</em></label><div class="numin"><input id="axNoi1" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div><div class="derive" id="dAx1"></div></div>
+        <div class="ctl" id="ctlAxNoi2"><label>별동 NOI 2층 (201호) <em class="hint">미반영</em></label><div class="numin"><input id="axNoi2" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div><div class="derive" id="dAx2"></div></div>
+      </div>
+      <div class="tblwrap"><table id="axTbl"></table></div>
+      <div class="tblwrap"><table id="axFx"></table></div>
+      <div class="note" id="axNote"></div>
+    </div>
+  </div>
 </div>
 
 <div class="lbl">스태킹 플랜 &amp; 층별 도면</div>
@@ -308,33 +337,6 @@ footer{margin-top:40px;border-top:1px solid var(--line);padding-top:14px;font-si
     <div class="sub">리테일 25개 호실 선분양 대금으로 선순위를 상환하는 경우</div>
     <div class="tblwrap"><table id="retTbl"></table></div>
     <div class="note" id="retNote"></div>
-  </div>
-</div>
-
-<div class="lbl">별동 분할매각</div>
-<div class="card">
-  <div class="duo">
-    <div>
-      <div class="planbox" onclick="lbOpen('mangrove-plans/annex.png')">
-        <img src="mangrove-plans/annex.png" alt="별동 입면도" loading="lazy">
-        <span class="zoom">별동 입면도 · 클릭 확대</span>
-      </div>
-      <div class="note">
-        별동은 본동과 <b>물리적으로 분리된 2층 근생 건물</b>(101 · 201호)로,
-        현재 <b>플레이에프앤비(아워베이커리)</b>가 사용 중입니다. 임대차 만기 <b>~2028.06</b>.
-      </div>
-    </div>
-    <div>
-      <div class="pgrid" style="margin-bottom:6px">
-        <div class="ctl"><label>별동 산정 방식</label><span class="seg" id="segAx"><button data-v="deal">거래사례</button><button data-v="income">수익환원</button></span></div>
-        <div class="ctl" id="ctlAxCap"><label>별동 Cap Rate <em class="hint">미반영</em><output id="vAxCap"></output></label><input type="range" id="axCap" min="3" max="9" step="0.1"></div>
-        <div class="ctl" id="ctlAxNoi1"><label>별동 NOI 1층 (101호) <em class="hint">미반영</em></label><div class="numin"><input id="axNoi1" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div><div class="derive" id="dAx1"></div></div>
-        <div class="ctl" id="ctlAxNoi2"><label>별동 NOI 2층 (201호) <em class="hint">미반영</em></label><div class="numin"><input id="axNoi2" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div><div class="derive" id="dAx2"></div></div>
-      </div>
-      <div class="tblwrap"><table id="axTbl"></table></div>
-      <div class="tblwrap"><table id="axFx"></table></div>
-      <div class="note" id="axNote"></div>
-    </div>
   </div>
 </div>
 
@@ -421,7 +423,7 @@ const DEF = {g:2.5, capRes:4.0, capRet:5.5, adj:0, resM:'deal', retM:'income',
   cost:3.0, fee:0.5, sen:560, jun:85, rSen:4.5, rJun:6.5, noiMo:302.9,
   nResBig:NOI0.resBig, nResSmall:NOI0.resSmall, nF1:NOI0.f1, nF2:NOI0.f2, nB1:NOI0.b1,
   bRes:BASE0.res/1e6, bF1:BASE0.f1/1e6, bF2:BASE0.f2/1e6, bB1:BASE0.b1/1e6,
-  axM:'income', axCap:5.5, axNoi1:NOI0.f1, axNoi2:NOI0.f2}; // 별동 전용 (기본값 = 리테일과 동일)
+  axOn:false, axM:'income', axCap:5.5, axNoi1:NOI0.f1, axNoi2:NOI0.f2}; // 별동 별개매각 OFF = 리테일 일괄 적용
 
 /* 리테일 분양면적표 (㎡) — ex:전용, com:공용, mech:기계·전기, tot:계약, land:대지지분 */
 const AREA = {"B101":{"ex":60.59,"com":32.94,"mech":7.79,"tot":160.58,"land":19.31},"B102":{"ex":62.48,"com":33.95,"mech":8.04,"tot":165.58,"land":19.91},"B103":{"ex":57.51,"com":31.25,"mech":7.4,"tot":152.41,"land":18.33},"B104":{"ex":54.27,"com":29.5,"mech":6.98,"tot":143.83,"land":17.3},"B105":{"ex":50.5,"com":27.44,"mech":6.5,"tot":133.84,"land":16.09},"B106":{"ex":49.67,"com":26.99,"mech":6.39,"tot":131.64,"land":15.83},"B107":{"ex":66.49,"com":36.13,"mech":8.55,"tot":176.2,"land":21.19},"B108":{"ex":48.4,"com":26.31,"mech":6.23,"tot":128.28,"land":15.42},"101":{"ex":70.81,"com":21.44,"mech":9.11,"tot":170.61,"land":20.29},"102":{"ex":90.26,"com":27.34,"mech":11.61,"tot":217.49,"land":25.87},"103":{"ex":67.36,"com":20.4,"mech":8.67,"tot":162.32,"land":19.3},"104":{"ex":52.79,"com":15.98,"mech":6.79,"tot":127.19,"land":15.13},"105":{"ex":46.72,"com":14.14,"mech":6.01,"tot":112.56,"land":13.39},"106":{"ex":29.48,"com":8.92,"mech":3.79,"tot":71.03,"land":8.45},"107":{"ex":97.68,"com":29.58,"mech":12.57,"tot":235.37,"land":27.99},"108":{"ex":70.06,"com":21.22,"mech":9.01,"tot":168.81,"land":20.07},"201":{"ex":71.1,"com":22.46,"mech":9.15,"tot":172.25,"land":20.35},"202":{"ex":42.45,"com":13.41,"mech":5.46,"tot":102.84,"land":12.24},"203":{"ex":40.09,"com":12.66,"mech":5.16,"tot":97.12,"land":11.56},"204":{"ex":78.8,"com":24.89,"mech":10.14,"tot":190.9,"land":22.73},"205":{"ex":91.64,"com":28.94,"mech":11.79,"tot":222.0,"land":26.43},"206":{"ex":88.63,"com":27.99,"mech":11.4,"tot":214.71,"land":25.57},"207":{"ex":78.84,"com":24.9,"mech":10.14,"tot":190.99,"land":22.74},"208":{"ex":87.08,"com":27.5,"mech":11.2,"tot":210.95,"land":25.12},"209":{"ex":66.71,"com":21.06,"mech":8.58,"tot":161.6,"land":19.25}};
@@ -468,7 +470,7 @@ function unitType(u){
 function priceUnit(u){
   const g=S.g/100, isRes=u.fl>=3;
   let L,N,cap,method;
-  if(u.dong){ // 별동 — 전용 가정 사용
+  if(u.dong && S.axOn){ // 별동 별개매각 ON — 전용 가정 사용 (OFF면 리테일 일괄)
     L=(u.fl===1?S.bF1:S.bF2)*1e6*Math.pow(1+g,u.fl===2?1:4);
     N=u.fl===1?S.axNoi1:S.axNoi2; cap=S.axCap/100; method=S.axM;
   }
@@ -520,13 +522,13 @@ function render(){
 
   const kpi=(k,v,d,cls='')=>`<div class="kpi ${cls}"><div class="k">${k}</div><div class="v">${v}</div><div class="d">${d}</div></div>`;
   $('kpis').innerHTML=
-    kpi('총 분양수입','₩'+eok(C.gross)+'<em>억</em>','175개 호실 적용가 합계')+
+    kpi('총 분양수입','₩'+eok(C.gross)+'<em>억</em>',S.axOn?'주거150 + 리테일23 + 별동2(별도 산정)':'175개 호실 · 리테일 25호 일괄 가정')+
     kpi('대출 상환 후 잔여','₩'+eok(netAfterDebt)+'<em>억</em>',`대출 ${eok(debtNeed,0)}억 중 ${eok(debtPaid,0)}억 상환${debtPaid<debtNeed?' (부족!)':''}`, debtPaid<debtNeed?'bad':(netAfterDebt>0?'good':''))+
     kpi('에쿼티 회수율',(eqNeed?Math.round(eqPaid/eqNeed*100):0)+'<em>%</em>',`원본 ${eok(eqNeed,0)}억 중 ${eok(eqPaid)}억 회수`, eqPaid>=eqNeed?'good':(eqPaid>0?'':'bad'))+
     kpi('1종 원본 회수',C.wf[4].paid>=EQ.e1?'회수':(C.wf[4].paid>0?'일부':'미회수'),`192.7억 중 ${eok(C.wf[4].paid)}억`, C.wf[4].paid>=EQ.e1?'good':'bad');
 
-  $('wbar').innerHTML=C.wf.map(w=>`<div style="flex:${w.paid};background:${w.c}" title="${w.n} ${eok(w.paid)}억"></div>`).join('')+
-    (C.surplus>0?`<div style="flex:${C.surplus};background:var(--w8)" title="초과 잔여 ${eok(C.surplus)}억"></div>`:'');
+  $('wbar').innerHTML=C.wf.map(w=>`<div class="wseg" data-n="${w.n}" data-need="${w.need}" data-paid="${w.paid}" style="flex:${w.paid};background:${w.c}"></div>`).join('')+
+    (C.surplus>0?`<div class="wseg" data-n="초과 잔여 (성과보수 재원)" data-need="" data-paid="${C.surplus}" style="flex:${C.surplus};background:var(--w8)"></div>`:'');
   $('wlegend').innerHTML=C.wf.map(w=>`<span><i style="background:${w.c}"></i>${w.n}</span>`).join('')+(C.surplus>0?'<span><i style="background:var(--w8)"></i>초과 잔여</span>':'');
   $('wtbl').innerHTML='<tr><th>구분</th><th>필요액(억)</th><th>배분액(억)</th><th>회수율</th></tr>'+
     C.wf.map(w=>{
@@ -548,10 +550,12 @@ function syncLabels(){
   document.querySelectorAll('#segRes button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.resM));
   document.querySelectorAll('#segRet button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.retM));
   document.querySelectorAll('#segAx button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.axM));
+  document.querySelectorAll('#segAxOn button').forEach(b=>b.classList.toggle('on',(b.dataset.v==='on')===S.axOn));
   // 산정방식이 '거래사례'면 수익환원 변수는 분양가에 미반영 → 흐리게 + 힌트
   ['ctlCapRes','ctlNResBig','ctlNResSmall'].forEach(id=>$(id).classList.toggle('inactive',S.resM==='deal'));
   ['ctlCapRet','ctlNF1','ctlNF2','ctlNB1'].forEach(id=>$(id).classList.toggle('inactive',S.retM==='deal'));
-  ['ctlAxCap','ctlAxNoi1','ctlAxNoi2'].forEach(id=>$(id).classList.toggle('inactive',S.axM==='deal'));
+  $('ctlAxM').classList.toggle('inactive',!S.axOn); // OFF면 별동 전용 가정 전체 미반영
+  ['ctlAxCap','ctlAxNoi1','ctlAxNoi2'].forEach(id=>$(id).classList.toggle('inactive',!S.axOn||S.axM==='deal'));
   // NOI ÷ cap → 수익환원 단가 (백만원/py) 실시간 표시
   const dv=(id,noi,cap)=>{$(id).innerHTML=`→ 수익환원 단가 <b>${(noi*12/(cap/100)/1e6).toFixed(1)}</b> 백만/py`;};
   dv('dResBig',S.nResBig,S.capRes); dv('dResSmall',S.nResSmall,S.capRes);
@@ -652,8 +656,9 @@ function renderDetail(C){
 function renderSum(C){
   const groups=[
     {n:'B1층 근생',f:r=>r.u.fl===-1},
-    {n:'1층 근생',f:r=>r.u.fl===1},
-    {n:'2층 근생',f:r=>r.u.fl===2},
+    {n:'1층 근생 (별동 제외)',f:r=>r.u.fl===1&&!r.u.dong},
+    {n:'2층 근생 (별동 제외)',f:r=>r.u.fl===2&&!r.u.dong},
+    {n:`별동 101·201 (별개매각 ${S.axOn?'ON — 별도 가정':'OFF — 리테일 일괄'})`,f:r=>!!r.u.dong},
     {n:'도시형생활주택 (3~13F)',f:r=>r.t==='res'},
     {n:'오피스텔 (14F)',f:r=>r.t==='off'},
   ];
@@ -713,7 +718,11 @@ function renderAnnex(C){
   const dscrTxt = (d1-d0)>=0.005
     ? `DSCR이 <b>${d0.toFixed(2)} → ${d1.toFixed(2)}</b>로 개선됩니다`
     : `다만 대출 규모 대비 매각대금이 작아 DSCR 개선 효과는 <b>${d0.toFixed(3)} → ${d1.toFixed(3)}</b> 수준에 그칩니다`;
-  $('axNote').innerHTML = `별동만 <b>${eok(axSum,1)}억</b>에 우선 매각하면 이자 부담이 월 <b>${((int0-int1)/1e6).toFixed(1)}백만</b> 줄어듭니다. ${dscrTxt}.
+  const stateTxt = S.axOn
+    ? `<b style="color:var(--good)">별개 매각 ON</b> — 위 별동 전용 가정으로 산정한 금액이 총 분양수입·워터폴에 반영되고 있습니다 (리테일 일괄 가정은 나머지 23개 호실에만 적용).`
+    : `<b>별개 매각 OFF</b> — 별동도 리테일 일괄 가정(방식·Cap·NOI)으로 평가되어 25개 호실이 동일 기준입니다. 위 별동 전용 가정은 ON 전환 시 적용됩니다.`;
+  $('axNote').innerHTML = `${stateTxt}<br>
+    별동만 <b>${eok(axSum,1)}억</b>에 우선 매각하면 이자 부담이 월 <b>${((int0-int1)/1e6).toFixed(1)}백만</b> 줄어듭니다. ${dscrTxt}.
     규모가 작아 <b>개인·법인 꼬마빌딩 수요층 대상 asset deal</b>이 가능하고, 본건 임대주택 LTV 규제·종부세 이슈와 무관하게 접근할 수 있는 물건입니다.
     단, 대주단 담보 일부해지 동의와 매각대금 상환 조건 협의가 선행되어야 합니다.`;
 }
@@ -815,15 +824,22 @@ function moveTip(e){
   const y=Math.min(e.clientY+14, innerHeight-t.offsetHeight-10);
   t.style.left=x+'px'; t.style.top=y+'px';
 }
+function tipWseg(el){
+  const paid=+el.dataset.paid, need=el.dataset.need===''?null:+el.dataset.need;
+  return `<div class="th">${el.dataset.n}</div>배분액 <b>${eok(paid)}억</b>`
+    + (need!==null?`<br>필요액 ${eok(need)}억 · 회수율 <b>${need?Math.round(paid/need*100):100}%</b>`:'');
+}
 document.addEventListener('mouseover',e=>{
-  const el=e.target.closest('.cell');
-  if(!el||(!el.dataset.ho&&!el.dataset.gap)){ $('tip').style.display='none'; return; }
-  const html=tipHtml(el); if(!html){ $('tip').style.display='none'; return; }
+  const el=e.target.closest('.cell,.wseg');
+  if(!el){ $('tip').style.display='none'; return; }
+  const html=el.classList.contains('wseg') ? tipWseg(el)
+    : ((el.dataset.ho||el.dataset.gap) ? tipHtml(el) : '');
+  if(!html){ $('tip').style.display='none'; return; }
   const t=$('tip'); t.innerHTML=html; t.style.display='block'; moveTip(e);
 });
 document.addEventListener('mousemove',e=>{ if($('tip').style.display==='block') moveTip(e); });
 document.addEventListener('mouseout',e=>{
-  if(e.target.closest('.cell')) $('tip').style.display='none';
+  if(e.target.closest('.cell,.wseg')) $('tip').style.display='none';
 });
 
 /* ---- lightbox (스크롤 줌 + 드래그 이동) ---- */
@@ -892,6 +908,7 @@ function syncInputs(){
 document.querySelectorAll('#segRes button').forEach(b=>b.onclick=()=>{S.resM=b.dataset.v;render();});
 document.querySelectorAll('#segRet button').forEach(b=>b.onclick=()=>{S.retM=b.dataset.v;render();});
 document.querySelectorAll('#segAx button').forEach(b=>b.onclick=()=>{S.axM=b.dataset.v;render();});
+document.querySelectorAll('#segAxOn button').forEach(b=>b.onclick=()=>{S.axOn=b.dataset.v==='on';render();});
 $('reset').onclick=()=>{S={...DEF};syncInputs();render();};
 document.querySelectorAll('.fbar .fbtn').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.fbar .fbtn').forEach(x=>x.classList.remove('on'));b.classList.add('on');
