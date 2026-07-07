@@ -8,6 +8,21 @@ const NAV = [
   { key: 'scratch', label: '낙서장', Icon: IconNote },
 ]
 
+function IconBuilding() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16" />
+      <path d="M15 9h4a1 1 0 0 1 1 1v11" />
+      <path d="M2 21h20" />
+      <path d="M8 8h3M8 12h3M8 16h3" />
+    </svg>
+  )
+}
+
+const LINKS = [
+  { href: '/mangrove-sim.html', label: '분양 시뮬레이션', Icon: IconBuilding },
+]
+
 function navItemStyle(active) {
   return {
     display: 'flex',
@@ -70,6 +85,18 @@ export default function Sidebar({ tab, onNavigate, onOpenSettings }) {
             <Icon />
             <span>{label}</span>
           </div>
+        ))}
+      </nav>
+
+      <div style={{ font: "600 10px 'JetBrains Mono'", letterSpacing: '.1em', color: 'var(--text-3)', padding: '18px 10px 8px' }}>
+        프로젝트
+      </div>
+      <nav style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+        {LINKS.map(({ href, label, Icon }) => (
+          <a key={href} href={href} target="_blank" rel="noreferrer" style={{ ...navItemStyle(false), textDecoration: 'none' }}>
+            <Icon />
+            <span>{label}</span>
+          </a>
         ))}
       </nav>
 
