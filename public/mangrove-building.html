@@ -73,6 +73,9 @@ input[type=range]{width:100%;accent-color:var(--accent);height:20px}
 #reset:hover{color:var(--text);border-color:var(--text-3)}
 .plabel{grid-column:1/-1;font:600 9.5px 'JetBrains Mono',monospace;letter-spacing:.14em;color:var(--text-3);
   margin:4px 0 -6px;text-transform:uppercase}
+.ctl.inactive input,.ctl.inactive output{opacity:.4}
+.ctl .hint{display:none;font-style:normal;font-size:10px;color:var(--bad);margin-left:4px;margin-right:auto}
+.ctl.inactive .hint{display:inline}
 details.adv{grid-column:1/-1;border-top:1px dashed var(--line);padding-top:10px}
 details.adv summary{cursor:pointer;font-size:11.5px;color:var(--text-2);list-style:none;user-select:none}
 details.adv summary::before{content:'▸ ';color:var(--text-3)}
@@ -229,11 +232,15 @@ footer{margin-top:40px;border-top:1px solid var(--line);padding-top:14px;font-si
   </div>
   <div class="pgrid">
     <div class="ctl"><label>단가 인상률 (연) <output id="vG"></output></label><input type="range" id="g" min="0" max="6" step="0.1"></div>
-    <div class="ctl"><label>주거 Cap Rate <output id="vCapRes"></output></label><input type="range" id="capRes" min="2.5" max="7" step="0.1"></div>
-    <div class="ctl"><label>리테일 Cap Rate <output id="vCapRet"></output></label><input type="range" id="capRet" min="3" max="8" step="0.1"></div>
     <div class="ctl"><label>가격 일괄 조정 <output id="vAdj"></output></label><input type="range" id="adj" min="-15" max="15" step="1"></div>
     <div class="ctl"><label>주거 산정 방식</label><span class="seg" id="segRes"><button data-v="deal">거래사례</button><button data-v="income">수익환원</button></span></div>
     <div class="ctl"><label>리테일 산정 방식</label><span class="seg" id="segRet"><button data-v="deal">거래사례</button><button data-v="income">수익환원</button></span></div>
+
+    <div class="plabel">수익환원 가정 — 주거 (면적별 NOI · 방식이 '수익환원'일 때 분양가에 적용)</div>
+    <div class="ctl" id="ctlCapRes"><label>주거 Cap Rate <em class="hint">거래사례 적용 중 — 미반영</em><output id="vCapRes"></output></label><input type="range" id="capRes" min="2.5" max="7" step="0.1"></div>
+    <div class="ctl" id="ctlNResBig"><label>월 NOI 대형 9py↑ (25.7~29.9평형)<em class="hint">미반영</em></label><div class="numin"><input id="nResBig" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div></div>
+    <div class="ctl" id="ctlNResSmall"><label>월 NOI 소형 9py↓ (11.8~13평형)<em class="hint">미반영</em></label><div class="numin"><input id="nResSmall" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div></div>
+    <div class="ctl" id="ctlCapRet"><label>리테일 Cap Rate <em class="hint">거래사례 적용 중 — 미반영</em><output id="vCapRet"></output></label><input type="range" id="capRet" min="3" max="8" step="0.1"></div>
 
     <div class="plabel">매각 비용 · 대출 (원본상환 워터폴에 반영)</div>
     <div class="ctl"><label>분양 부대비용 <output id="vCost"></output></label><input type="range" id="cost" min="0" max="8" step="0.1"></div>
@@ -245,13 +252,11 @@ footer{margin-top:40px;border-top:1px solid var(--line);padding-top:14px;font-si
     <div class="ctl"><label>월 NOI (건물 전체)</label><div class="numin"><input id="noiMo" type="number" step="1"><span class="un">백만</span></div></div>
 
     <details class="adv">
-      <summary>고급 — 월 NOI (원/전유py/월) · 거래사례 기준단가 (백만원/전유py)</summary>
+      <summary>고급 — 리테일 월 NOI (원/전유py/월) · 거래사례 기준단가 (백만원/전유py)</summary>
       <div class="pgrid">
-        <div class="ctl"><label>NOI 주거 대형 (9py↑)</label><div class="numin"><input id="nResBig" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div></div>
-        <div class="ctl"><label>NOI 주거 소형 (9py↓)</label><div class="numin"><input id="nResSmall" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div></div>
-        <div class="ctl"><label>NOI 리테일 1층</label><div class="numin"><input id="nF1" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div></div>
-        <div class="ctl"><label>NOI 리테일 2층</label><div class="numin"><input id="nF2" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div></div>
-        <div class="ctl"><label>NOI 리테일 B1</label><div class="numin"><input id="nB1" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div></div>
+        <div class="ctl" id="ctlNF1"><label>NOI 리테일 1층 <em class="hint">미반영</em></label><div class="numin"><input id="nF1" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div></div>
+        <div class="ctl" id="ctlNF2"><label>NOI 리테일 2층 <em class="hint">미반영</em></label><div class="numin"><input id="nF2" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div></div>
+        <div class="ctl" id="ctlNB1"><label>NOI 리테일 B1 <em class="hint">미반영</em></label><div class="numin"><input id="nB1" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div></div>
         <div class="ctl"><label>기준단가 주거</label><div class="numin"><input id="bRes" type="number" step="0.01"><span class="un">백만/py</span></div></div>
         <div class="ctl"><label>기준단가 1층</label><div class="numin"><input id="bF1" type="number" step="0.01"><span class="un">백만/py</span></div></div>
         <div class="ctl"><label>기준단가 2층</label><div class="numin"><input id="bF2" type="number" step="0.01"><span class="un">백만/py</span></div></div>
@@ -322,9 +327,9 @@ footer{margin-top:40px;border-top:1px solid var(--line);padding-top:14px;font-si
     <div>
       <div class="pgrid" style="margin-bottom:6px">
         <div class="ctl"><label>별동 산정 방식</label><span class="seg" id="segAx"><button data-v="deal">거래사례</button><button data-v="income">수익환원</button></span></div>
-        <div class="ctl"><label>별동 Cap Rate <output id="vAxCap"></output></label><input type="range" id="axCap" min="3" max="9" step="0.1"></div>
-        <div class="ctl"><label>별동 NOI 1층 (101호)</label><div class="numin"><input id="axNoi1" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div></div>
-        <div class="ctl"><label>별동 NOI 2층 (201호)</label><div class="numin"><input id="axNoi2" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div></div>
+        <div class="ctl" id="ctlAxCap"><label>별동 Cap Rate <em class="hint">미반영</em><output id="vAxCap"></output></label><input type="range" id="axCap" min="3" max="9" step="0.1"></div>
+        <div class="ctl" id="ctlAxNoi1"><label>별동 NOI 1층 (101호) <em class="hint">미반영</em></label><div class="numin"><input id="axNoi1" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div></div>
+        <div class="ctl" id="ctlAxNoi2"><label>별동 NOI 2층 (201호) <em class="hint">미반영</em></label><div class="numin"><input id="axNoi2" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div></div>
       </div>
       <div class="tblwrap"><table id="axTbl"></table></div>
       <div class="tblwrap"><table id="axFx"></table></div>
@@ -407,11 +412,11 @@ const AREA = {"B101":{"ex":60.59,"com":32.94,"mech":7.79,"tot":160.58,"land":19.
 /* 호실 구획 좌표 (%) — [x, y, w, h], 건축도면에서 디지타이징 (근사) */
 const UNITMAP = {
   // 주거 기준층 (3~14F 공통 템플릿, 키 = 호실 끝 2자리)
-  res: {
-    '01':[52.5,58.5,6.5,10.5], '02':[33.5,78,6,11.5], '03':[41,78,5.5,11.5], '04':[46.5,78,5.5,11.5],
-    '05':[52.5,78,5.5,11.5], '06':[58,78,5.5,11.5], '07':[63.5,78,5,11.5], '08':[71,76.5,9.5,13],
-    '09':[70,71,6,5.5], '10':[70,58.5,10,12.5], '11':[70,47.3,10,11.2], '12':[65.5,34.5,14.5,12.8],
-    '13':[57.5,34.5,7,13], '14':[68.5,78,5,11.5],
+  res: { // Exit TF 3층 평면도(호수 표기본) 보라 구획 자동검출 → 아핀 변환
+    '01':[41,62.5,9,11], '02':[30.5,78,6.5,8], '03':[40.7,83.5,4.9,7], '04':[45.6,83.5,5.6,7],
+    '05':[51.9,84.3,5.6,6.4], '06':[57.5,84.3,4.5,6.4], '07':[62,84.3,5,6.4], '08':[70.7,78.5,9,11.2],
+    '09':[70.7,72,9.3,6], '10':[70.7,60.1,8.9,11.2], '11':[70.6,47.7,9.3,11.1], '12':[70.6,34.7,9.4,11.4],
+    '13':[57.3,35.1,9.2,11], '14':[67,84,4,6.4],
   },
   f1: {'101':[7,57,21,22], '102':[38,76,15,13], '103':[52,79,12,13], '104':[64,79,12,13],
        '105':[76,79,10.5,13], '106':[56,27,11,13], '107':[66,46,21,9.5], '108':[76,64,11,11]},
@@ -545,6 +550,10 @@ function syncLabels(){
   document.querySelectorAll('#segRes button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.resM));
   document.querySelectorAll('#segRet button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.retM));
   document.querySelectorAll('#segAx button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.axM));
+  // 산정방식이 '거래사례'면 수익환원 변수는 분양가에 미반영 → 흐리게 + 힌트
+  ['ctlCapRes','ctlNResBig','ctlNResSmall'].forEach(id=>$(id).classList.toggle('inactive',S.resM==='deal'));
+  ['ctlCapRet','ctlNF1','ctlNF2','ctlNB1'].forEach(id=>$(id).classList.toggle('inactive',S.retM==='deal'));
+  ['ctlAxCap','ctlAxNoi1','ctlAxNoi2'].forEach(id=>$(id).classList.toggle('inactive',S.axM==='deal'));
 }
 
 function renderStack(C){
