@@ -76,6 +76,8 @@ input[type=range]{width:100%;accent-color:var(--accent);height:20px}
 .ctl.inactive input,.ctl.inactive output{opacity:.4}
 .ctl .hint{display:none;font-style:normal;font-size:10px;color:var(--bad);margin-left:4px;margin-right:auto}
 .ctl.inactive .hint{display:inline}
+.derive{font-size:10.5px;color:var(--text-3);margin-top:4px}
+.derive b{color:var(--text-2);font:600 11px 'Space Grotesk',sans-serif;font-variant-numeric:tabular-nums}
 details.adv{grid-column:1/-1;border-top:1px dashed var(--line);padding-top:10px}
 details.adv summary{cursor:pointer;font-size:11.5px;color:var(--text-2);list-style:none;user-select:none}
 details.adv summary::before{content:'▸ ';color:var(--text-3)}
@@ -231,15 +233,15 @@ footer{margin-top:40px;border-top:1px solid var(--line);padding-top:14px;font-si
     <div class="plabel">주거 (3~14F · 150호)</div>
     <div class="ctl"><label>산정 방식</label><span class="seg" id="segRes"><button data-v="deal">거래사례</button><button data-v="income">수익환원</button></span></div>
     <div class="ctl" id="ctlCapRes"><label>Cap Rate <em class="hint">거래사례 적용 중 — 미반영</em><output id="vCapRes"></output></label><input type="range" id="capRes" min="2.5" max="7" step="0.1"></div>
-    <div class="ctl" id="ctlNResBig"><label>월 NOI 대형 9py↑ (25.7~29.9평형)<em class="hint">미반영</em></label><div class="numin"><input id="nResBig" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div></div>
-    <div class="ctl" id="ctlNResSmall"><label>월 NOI 소형 9py↓ (11.8~13평형)<em class="hint">미반영</em></label><div class="numin"><input id="nResSmall" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div></div>
+    <div class="ctl" id="ctlNResBig"><label>월 NOI 대형 9py↑ (25.7~29.9평형)<em class="hint">미반영</em></label><div class="numin"><input id="nResBig" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div><div class="derive" id="dResBig"></div></div>
+    <div class="ctl" id="ctlNResSmall"><label>월 NOI 소형 9py↓ (11.8~13평형)<em class="hint">미반영</em></label><div class="numin"><input id="nResSmall" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div><div class="derive" id="dResSmall"></div></div>
 
     <div class="plabel">리테일 (B1~2F · 25호)</div>
     <div class="ctl"><label>산정 방식</label><span class="seg" id="segRet"><button data-v="deal">거래사례</button><button data-v="income">수익환원</button></span></div>
     <div class="ctl" id="ctlCapRet"><label>Cap Rate <em class="hint">거래사례 적용 중 — 미반영</em><output id="vCapRet"></output></label><input type="range" id="capRet" min="3" max="8" step="0.1"></div>
-    <div class="ctl" id="ctlNF1"><label>월 NOI 1층 <em class="hint">미반영</em></label><div class="numin"><input id="nF1" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div></div>
-    <div class="ctl" id="ctlNF2"><label>월 NOI 2층 <em class="hint">미반영</em></label><div class="numin"><input id="nF2" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div></div>
-    <div class="ctl" id="ctlNB1"><label>월 NOI B1 <em class="hint">미반영</em></label><div class="numin"><input id="nB1" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div></div>
+    <div class="ctl" id="ctlNF1"><label>월 NOI 1층 <em class="hint">미반영</em></label><div class="numin"><input id="nF1" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div><div class="derive" id="dF1"></div></div>
+    <div class="ctl" id="ctlNF2"><label>월 NOI 2층 <em class="hint">미반영</em></label><div class="numin"><input id="nF2" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div><div class="derive" id="dF2"></div></div>
+    <div class="ctl" id="ctlNB1"><label>월 NOI B1 <em class="hint">미반영</em></label><div class="numin"><input id="nB1" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div><div class="derive" id="dB1"></div></div>
 
     <div class="plabel">대출 · 리파이낸싱 (원본상환 워터폴 · DSCR에 반영)</div>
     <div class="ctl"><label>선순위 잔액</label><div class="numin"><input id="sen" type="number" step="10"><span class="un">억</span></div></div>
@@ -322,8 +324,8 @@ footer{margin-top:40px;border-top:1px solid var(--line);padding-top:14px;font-si
       <div class="pgrid" style="margin-bottom:6px">
         <div class="ctl"><label>별동 산정 방식</label><span class="seg" id="segAx"><button data-v="deal">거래사례</button><button data-v="income">수익환원</button></span></div>
         <div class="ctl" id="ctlAxCap"><label>별동 Cap Rate <em class="hint">미반영</em><output id="vAxCap"></output></label><input type="range" id="axCap" min="3" max="9" step="0.1"></div>
-        <div class="ctl" id="ctlAxNoi1"><label>별동 NOI 1층 (101호) <em class="hint">미반영</em></label><div class="numin"><input id="axNoi1" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div></div>
-        <div class="ctl" id="ctlAxNoi2"><label>별동 NOI 2층 (201호) <em class="hint">미반영</em></label><div class="numin"><input id="axNoi2" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div></div>
+        <div class="ctl" id="ctlAxNoi1"><label>별동 NOI 1층 (101호) <em class="hint">미반영</em></label><div class="numin"><input id="axNoi1" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div><div class="derive" id="dAx1"></div></div>
+        <div class="ctl" id="ctlAxNoi2"><label>별동 NOI 2층 (201호) <em class="hint">미반영</em></label><div class="numin"><input id="axNoi2" type="text" inputmode="numeric" class="cma"><span class="un">원/py</span></div><div class="derive" id="dAx2"></div></div>
       </div>
       <div class="tblwrap"><table id="axTbl"></table></div>
       <div class="tblwrap"><table id="axFx"></table></div>
@@ -528,6 +530,11 @@ function syncLabels(){
   ['ctlCapRes','ctlNResBig','ctlNResSmall'].forEach(id=>$(id).classList.toggle('inactive',S.resM==='deal'));
   ['ctlCapRet','ctlNF1','ctlNF2','ctlNB1'].forEach(id=>$(id).classList.toggle('inactive',S.retM==='deal'));
   ['ctlAxCap','ctlAxNoi1','ctlAxNoi2'].forEach(id=>$(id).classList.toggle('inactive',S.axM==='deal'));
+  // NOI ÷ cap → 수익환원 단가 (백만원/py) 실시간 표시
+  const dv=(id,noi,cap)=>{$(id).innerHTML=`→ 수익환원 단가 <b>${(noi*12/(cap/100)/1e6).toFixed(1)}</b> 백만/py`;};
+  dv('dResBig',S.nResBig,S.capRes); dv('dResSmall',S.nResSmall,S.capRes);
+  dv('dF1',S.nF1,S.capRet); dv('dF2',S.nF2,S.capRet); dv('dB1',S.nB1,S.capRet);
+  dv('dAx1',S.axNoi1,S.axCap); dv('dAx2',S.axNoi2,S.axCap);
 }
 
 function renderStack(C){
