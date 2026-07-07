@@ -304,6 +304,7 @@ footer{margin-top:40px;border-top:1px solid var(--line);padding-top:14px;font-si
     <h3>리테일 선분양 → 대출 리파이낸싱</h3>
     <div class="sub">리테일 25개 호실 선분양 대금으로 선순위를 상환하는 경우</div>
     <div class="tblwrap"><table id="retTbl"></table></div>
+    <div class="note" id="retNote"></div>
   </div>
 </div>
 
@@ -648,18 +649,23 @@ function renderSum(C){
 }
 
 function renderRet(C){
-  const retSum=C.rows.filter(r=>r.u.fl<3).reduce((s,r)=>s+r.applied,0);
+  const retRows=C.rows.filter(r=>r.u.fl<3); // 별동 포함 25호 — 선분양 대상
+  const retSum=retRows.reduce((s,r)=>s+r.applied,0);
+  const retNoi=retRows.reduce((s,r)=>s+r.noiMo,0); // 매각으로 사라지는 리테일 NOI (원/월)
   const senAfter=Math.max(0,C.senA-retSum);
   const curInt=C.senA*CUR_RATES.sen/12+C.junA*CUR_RATES.jun/12;
   const newInt=senAfter*S.rSen/100/12+C.junA*S.rJun/100/12;
-  const noiM=S.noiMo*1e6;
+  const noi0=S.noiMo*1e6, noi1=Math.max(noi0-retNoi,0); // 선분양 후 = 주거분만
   const row=(a,b,c)=>`<tr><td>${a}</td><td>${b}</td><td>${c}</td></tr>`;
   $('retTbl').innerHTML=`<tr><th>구분</th><th>현재 (${(CUR_RATES.sen*100).toFixed(1)}% / ${(CUR_RATES.jun*100).toFixed(1)}%)</th><th>선분양 + 리파이낸싱 후</th></tr>`+
     row('리테일 분양대금','-',`<b>${eok(retSum)}억</b> (25개 호실)`)+
     row('선순위 잔액',eok(C.senA,0)+'억',eok(senAfter,0)+'억')+
     row('후순위 잔액',eok(C.junA,0)+'억',eok(C.junA,0)+'억')+
     row('월 이자',(curInt/1e6).toFixed(1)+'백만',(newInt/1e6).toFixed(1)+'백만')+
-    `<tr class="tot"><td>DSCR (월 NOI ${S.noiMo}백만)</td><td class="${noiM/curInt>=1?'pos':'neg'}">${(noiM/curInt).toFixed(2)}</td><td class="${noiM/newInt>=1?'pos':'neg'}">${newInt>0?(noiM/newInt).toFixed(2):'-'}</td></tr>`;
+    row('월 NOI','전체 '+(noi0/1e6).toFixed(1)+'백만',`주거분 ${(noi1/1e6).toFixed(1)}백만 <span style="color:var(--text-3)">(리테일 −${(retNoi/1e6).toFixed(1)})</span>`)+
+    `<tr class="tot"><td>DSCR</td><td class="${noi0/curInt>=1?'pos':'neg'}">${(noi0/curInt).toFixed(2)}</td><td class="${noi1/newInt>=1?'pos':'neg'}">${newInt>0?(noi1/newInt).toFixed(2):'-'}</td></tr>`;
+  $('retNote').innerHTML=`선분양 후 DSCR은 <b>리테일 호실 NOI(현재 가정 합계 ${(retNoi/1e6).toFixed(1)}백만/월)를 차감한 주거분 NOI</b> 기준입니다.
+    전체 NOI를 그대로 유지하는 엑셀 원본 방식으로는 <b>${newInt>0?(noi0/newInt).toFixed(2):'-'}</b>이나, 매각된 리테일의 임대수익은 사라지므로 차감 기준이 보수적으로 타당합니다.`;
 }
 
 function renderAnnex(C){
