@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>맹그로브 신촌 · 건물 시뮬레이션 (내부용)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;900&family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0c1322; --bg2:#0f1830; --panel:#141e33; --panel2:#1a2742; --paper:#f4f1ea;
+  --line:#243450; --line2:#2e4166; --ink:#e8edf8; --sub:#93a2bf; --faint:#5d6c8a;
+  --accent:#e2a24a; --accent-dim:#a87f3f;
+  --res:#4fc596; --off:#7b93f0; --ret:#e2a24a; --gym:#e07a52; --gap:#41537a; --etc:#2b3a5c;
+  --good:#4fc596; --bad:#ef7373;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scrollbar-color:#2e4166 #0c1322}
+body{
+  font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Pretendard','Malgun Gothic',sans-serif;
+  background:
+    linear-gradient(rgba(120,150,210,.045) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(120,150,210,.045) 1px,transparent 1px),
+    linear-gradient(180deg,#0c1322 0%,#0e1526 55%,#0c1322 100%);
+  background-size:28px 28px,28px 28px,100% 100%;
+  color:var(--ink);font-size:13.5px;line-height:1.55;
+}
+.wrap{max-width:1280px;margin:0 auto;padding:34px 26px 70px}
+.serif{font-family:'Noto Serif KR',serif}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+
+/* ---------- hero ---------- */
+.hero{border-bottom:1px solid var(--line2);padding-bottom:22px;margin-bottom:22px}
+.hero .top{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.hero .eng{font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.34em;color:var(--accent)}
+.hero h1{font-family:'Noto Serif KR',serif;font-weight:900;font-size:30px;letter-spacing:-.01em;margin-top:4px}
+.hero h1 small{font-size:17px;font-weight:600;color:var(--sub);margin-left:10px}
+.conf{display:inline-flex;align-items:center;gap:6px;font:600 10.5px 'IBM Plex Mono',monospace;letter-spacing:.16em;
+  color:#ffb1b1;border:1px solid rgba(239,115,115,.45);padding:3px 9px;border-radius:3px}
+.hero .xlink{margin-left:auto;font-size:12.5px;color:var(--accent);text-decoration:none;border-bottom:1px dashed rgba(226,162,74,.5);padding-bottom:1px}
+.hero .xlink:hover{border-bottom-style:solid}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}
+.chip{font-size:12px;color:var(--sub);border:1px solid var(--line);background:rgba(20,30,51,.6);padding:4px 11px;border-radius:3px}
+.chip b{color:var(--ink);font-weight:500;margin-left:5px}
+
+/* ---------- section title ---------- */
+h2.sec{font-family:'Noto Serif KR',serif;font-weight:600;font-size:16.5px;color:var(--ink);
+  display:flex;align-items:center;gap:10px;margin:30px 0 12px}
+h2.sec::before{content:'';width:22px;height:1px;background:var(--accent)}
+h2.sec .n{font:600 10px 'IBM Plex Mono',monospace;color:var(--accent);letter-spacing:.2em}
+
+/* ---------- params ---------- */
+.params{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px 18px}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:14px 22px}
+.ctl label{display:flex;justify-content:space-between;font-size:11.5px;color:var(--sub);margin-bottom:4px}
+.ctl label output{color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:11.5px}
+input[type=range]{width:100%;accent-color:var(--accent);height:20px}
+.numin{display:flex;align-items:center;gap:6px}
+.numin input{width:100%;background:var(--bg2);border:1px solid var(--line);color:var(--ink);
+  font:600 12.5px 'IBM Plex Mono',monospace;padding:5px 8px;border-radius:4px;outline:none}
+.numin input:focus{border-color:var(--accent)}
+.numin .un{font-size:11px;color:var(--faint);white-space:nowrap}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.seg button{background:transparent;border:0;color:var(--sub);font-size:11.5px;padding:5px 12px;cursor:pointer;font-family:inherit}
+.seg button.on{background:var(--accent);color:#141414;font-weight:700}
+.phead{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.phead .t{font-size:12px;letter-spacing:.12em;color:var(--faint);font-weight:600}
+#reset{background:transparent;border:1px solid var(--line2);color:var(--sub);font-size:11.5px;
+  padding:5px 13px;border-radius:4px;cursor:pointer;font-family:inherit}
+#reset:hover{color:var(--accent);border-color:var(--accent)}
+.pdivider{grid-column:1/-1;height:1px;background:var(--line);margin:2px 0}
+.plabel{grid-column:1/-1;font:600 10px 'IBM Plex Mono',monospace;letter-spacing:.22em;color:var(--faint);margin-bottom:-8px}
+
+/* ---------- KPI ---------- */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:14px}
+.kpi{background:linear-gradient(160deg,var(--panel) 0%,var(--panel2) 130%);border:1px solid var(--line);
+  border-radius:6px;padding:15px 17px;position:relative;overflow:hidden}
+.kpi::after{content:'';position:absolute;top:0;left:0;width:100%;height:2px;background:linear-gradient(90deg,var(--accent),transparent 70%)}
+.kpi .k{font-size:11.5px;color:var(--sub);letter-spacing:.04em}
+.kpi .v{font-family:'Noto Serif KR',serif;font-weight:900;font-size:23px;margin:3px 0 2px;letter-spacing:-.01em}
+.kpi .v em{font-style:normal;font-size:13px;color:var(--sub);font-weight:600}
+.kpi .d{font-size:11px;color:var(--faint)}
+
+/* ---------- main grid ---------- */
+.main{display:grid;grid-template-columns:430px 1fr;gap:16px;align-items:start}
+@media(max-width:980px){.main{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:18px}
+.card h3{font-family:'Noto Serif KR',serif;font-size:14.5px;font-weight:600;margin-bottom:4px}
+.card .sub{font-size:11.5px;color:var(--faint);margin-bottom:14px}
+
+/* ---------- stacking plan ---------- */
+.stk{display:flex;flex-direction:column;gap:3px}
+.srow{display:flex;align-items:stretch;gap:9px;cursor:pointer;border-radius:4px;padding:2px 5px}
+.srow:hover{background:rgba(226,162,74,.07)}
+.srow.sel{background:rgba(226,162,74,.13);outline:1px solid rgba(226,162,74,.55)}
+.srow .fl{width:44px;flex:none;font:600 11px 'IBM Plex Mono',monospace;color:var(--sub);
+  display:flex;align-items:center;justify-content:flex-end}
+.srow.sel .fl{color:var(--accent)}
+.srow .bar{display:flex;gap:1.5px;height:22px;align-items:stretch}
+.srow .cell{border-radius:1.5px;min-width:3px}
+.srow .cell.gapc{background:repeating-linear-gradient(45deg,var(--gap),var(--gap) 3px,#2c3a5c 3px,#2c3a5c 6px);opacity:.85}
+.srow .etcbar{background:var(--etc);border-radius:1.5px;border:1px dashed var(--line2);height:15px;align-self:center}
+.srow .meta{font-size:10.5px;color:var(--faint);display:flex;align-items:center;white-space:nowrap}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:14px;font-size:11px;color:var(--sub)}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.annexTag{margin-top:16px;border-top:1px dashed var(--line2);padding-top:12px}
+.annexTag .t{font:600 10px 'IBM Plex Mono',monospace;letter-spacing:.2em;color:var(--faint);margin-bottom:6px}
+
+/* ---------- floor detail ---------- */
+.dhead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.dhead h3{font-size:19px}
+.dhead .kind{font-size:11.5px;color:var(--accent);letter-spacing:.06em}
+.dchips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 14px}
+.dchip{font-size:11.5px;border:1px solid var(--line);border-radius:3px;padding:3px 9px;color:var(--sub)}
+.dchip b{color:var(--ink);font-weight:600;font-family:'IBM Plex Mono',monospace;font-size:11.5px}
+.dchip.warn{border-color:rgba(224,122,82,.5);color:#eda184}
+.dchip.warn b{color:#eda184}
+.planbox{background:var(--paper);border-radius:4px;padding:8px;cursor:zoom-in;position:relative}
+.planbox img{width:100%;display:block;border-radius:2px}
+.planbox .zoom{position:absolute;right:12px;bottom:12px;font-size:10.5px;background:rgba(12,19,34,.75);
+  color:#dfe7f5;padding:3px 9px;border-radius:3px;letter-spacing:.08em}
+.planbox.none{background:var(--bg2);color:var(--faint);text-align:center;padding:40px 0;cursor:default;font-size:12px}
+
+/* ---------- tables ---------- */
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{font:600 10.5px 'IBM Plex Mono',monospace;letter-spacing:.06em;color:var(--faint);text-align:right;
+  padding:7px 8px;border-bottom:1px solid var(--line2);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+td{padding:6.5px 8px;border-bottom:1px solid var(--line);text-align:right;color:var(--ink);
+  font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:11.8px}
+td:first-child{font-family:'IBM Plex Sans KR',sans-serif;font-size:12px}
+tr.tot td{border-top:1px solid var(--line2);border-bottom:0;color:var(--accent);font-weight:600;background:rgba(226,162,74,.05)}
+.tblwrap{overflow-x:auto;margin-top:14px}
+.badge{display:inline-block;font-size:10.5px;padding:1.5px 7px;border-radius:3px;font-family:'IBM Plex Sans KR'}
+.b-res{background:rgba(79,197,150,.15);color:#7ddfb6}
+.b-off{background:rgba(123,147,240,.16);color:#a5b6f5}
+.b-ret{background:rgba(226,162,74,.15);color:#eec27f}
+.b-gym{background:rgba(224,122,82,.16);color:#eda184}
+.b-gap{background:rgba(65,83,122,.3);color:#8b99b3}
+.pos{color:var(--good)!important}.neg{color:var(--bad)!important}
+
+/* ---------- annex ---------- */
+.axgrid{display:grid;grid-template-columns:340px 1fr;gap:18px;align-items:start}
+@media(max-width:900px){.axgrid{grid-template-columns:1fr}}
+.note{font-size:12px;color:var(--sub);border-left:2px solid var(--accent);padding:2px 0 2px 12px;margin-top:14px}
+.note b{color:var(--ink)}
+
+/* ---------- lightbox ---------- */
+#lb{position:fixed;inset:0;background:rgba(5,8,16,.92);display:none;z-index:99;cursor:zoom-out;
+  align-items:center;justify-content:center;padding:20px}
+#lb.on{display:flex}
+#lb img{max-width:96vw;max-height:94vh;background:var(--paper);border-radius:4px;padding:6px}
+
+footer{margin-top:46px;border-top:1px solid var(--line);padding-top:14px;font-size:11px;color:var(--faint);
+  display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="top">
+    <div>
+      <div class="eng">MANGROVE SINCHON · BUILDING SIMULATION</div>
+      <h1>맹그로브 신촌 <small>건물 · 층별 시뮬레이션</small></h1>
+    </div>
+    <span class="conf">CONFIDENTIAL · 내부용</span>
+    <a class="xlink" href="mangrove-sim.html">호실 분양 시뮬레이션 →</a>
+  </div>
+  <div class="chips">
+    <span class="chip">소재지<b>마포구 서강로 121 (노고산동)</b></span>
+    <span class="chip">규모<b>지하 2층 · 지상 14층 (주차피트 B6)</b></span>
+    <span class="chip">연면적<b>3,702py <span style="color:var(--faint)">기부채납 제외</span> / 4,090py 포함</b></span>
+    <span class="chip">대지<b>556py (1,837㎡)</b></span>
+    <span class="chip">용적률/건폐율<b>455% / 60%</b></span>
+    <span class="chip">준공<b>2023.01</b></span>
+    <span class="chip">객실<b>150실 + 기부채납 15세대</b></span>
+    <span class="chip" style="cursor:zoom-in;color:var(--accent);border-color:rgba(226,162,74,.45)" onclick="lbOpen('mangrove-plans/elev.png')">입면도 보기 ⤢</span>
+  </div>
+</header>
+
+<section class="params">
+  <div class="phead">
+    <span class="t">가정 변수 — 값을 바꾸면 전체가 즉시 재계산됩니다 (자동 저장)</span>
+    <button id="reset">기본값 복원</button>
+  </div>
+  <div class="pgrid">
+    <div class="ctl"><label>단가 인상률 (연) <output id="vG"></output></label><input type="range" id="g" min="0" max="6" step="0.1"></div>
+    <div class="ctl"><label>주거 Cap Rate <output id="vCapRes"></output></label><input type="range" id="capRes" min="2.5" max="7" step="0.1"></div>
+    <div class="ctl"><label>리테일 Cap Rate <output id="vCapRet"></output></label><input type="range" id="capRet" min="3" max="8" step="0.1"></div>
+    <div class="ctl"><label>가격 일괄 조정 <output id="vAdj"></output></label><input type="range" id="adj" min="-15" max="15" step="1"></div>
+    <div class="ctl"><label>주거 산정 방식</label><span class="seg" id="segRes"><button data-v="deal">거래사례</button><button data-v="income">수익환원</button></span></div>
+    <div class="ctl"><label>리테일 산정 방식</label><span class="seg" id="segRet"><button data-v="deal">거래사례</button><button data-v="income">수익환원</button></span></div>
+
+    <div class="plabel">월 NOI (원 / 전유py / 월) — 수익환원가에 반영</div>
+    <div class="ctl"><label>주거 대형 (9py↑)</label><div class="numin"><input id="nResBig" type="number" step="1000"><span class="un">원/py</span></div></div>
+    <div class="ctl"><label>주거 소형 (9py↓)</label><div class="numin"><input id="nResSmall" type="number" step="1000"><span class="un">원/py</span></div></div>
+    <div class="ctl"><label>리테일 1층</label><div class="numin"><input id="nF1" type="number" step="1000"><span class="un">원/py</span></div></div>
+    <div class="ctl"><label>리테일 2층</label><div class="numin"><input id="nF2" type="number" step="1000"><span class="un">원/py</span></div></div>
+    <div class="ctl"><label>리테일 B1</label><div class="numin"><input id="nB1" type="number" step="1000"><span class="un">원/py</span></div></div>
+
+    <div class="plabel">거래사례 기준단가 (백만원 / 전유py) — 인상률 복리 적용 전</div>
+    <div class="ctl"><label>주거</label><div class="numin"><input id="bRes" type="number" step="0.01"><span class="un">백만/py</span></div></div>
+    <div class="ctl"><label>리테일 1층</label><div class="numin"><input id="bF1" type="number" step="0.01"><span class="un">백만/py</span></div></div>
+    <div class="ctl"><label>리테일 2층</label><div class="numin"><input id="bF2" type="number" step="0.01"><span class="un">백만/py</span></div></div>
+    <div class="ctl"><label>리테일 B1</label><div class="numin"><input id="bB1" type="number" step="0.01"><span class="un">백만/py</span></div></div>
+  </div>
+</section>
+
+<div class="kpis" id="kpis"></div>
+
+<h2 class="sec"><span class="n">01</span>스태킹 플랜 &amp; 층별 도면</h2>
+<div class="main">
+  <div class="card">
+    <h3>Stacking Plan</h3>
+    <div class="sub">막대 폭 = 층 전유면적 합(py) · 칸 = 호실 (폭 비례) · 층을 클릭하면 도면과 상세가 열립니다</div>
+    <div class="stk" id="stk"></div>
+    <div class="legend">
+      <span><i style="background:var(--res)"></i>도시형생활주택</span>
+      <span><i style="background:var(--off)"></i>오피스텔</span>
+      <span><i style="background:var(--ret)"></i>근생 (소매)</span>
+      <span><i style="background:var(--gym)"></i>근생 (체력단련)</span>
+      <span><i style="background:repeating-linear-gradient(45deg,#41537a,#41537a 3px,#2c3a5c 3px,#2c3a5c 6px)"></i>결번 (기부채납 추정)</span>
+      <span><i style="background:var(--etc);border:1px dashed var(--line2)"></i>공용 · 설비 · 주차</span>
+    </div>
+    <div class="annexTag">
+      <div class="t">ANNEX — 별동 (아워베이커리 동)</div>
+      <div class="stk" id="stkAx"></div>
+    </div>
+  </div>
+  <div class="card" id="detail"></div>
+</div>
+
+<h2 class="sec"><span class="n">02</span>별동 분할매각 시나리오</h2>
+<div class="card">
+  <div class="axgrid">
+    <div>
+      <div class="planbox" onclick="lbOpen('mangrove-plans/annex.png')">
+        <img src="mangrove-plans/annex.png" alt="별동 입면도" loading="lazy">
+        <span class="zoom">별동 입면도 · 클릭 확대</span>
+      </div>
+      <div class="note">
+        별동은 본동과 <b>물리적으로 분리된 2층 근생 건물</b>(101호 · 201호)로,
+        현재 <b>플레이에프앤비(아워베이커리)</b>가 사용 중입니다.
+        임대차 만기 <b>~2028.06</b> — 만기 전 매각 시 임차 승계, 이후 매각 시 명도 부담이 없습니다.
+      </div>
+    </div>
+    <div>
+      <div class="tblwrap"><table id="axTbl"></table></div>
+      <div class="tblwrap"><table id="axFx"></table></div>
+      <div class="note" id="axNote"></div>
+    </div>
+  </div>
+</div>
+
+<h2 class="sec"><span class="n">03</span>기부채납 (공공임대 15세대)</h2>
+<div class="card">
+  <div class="tblwrap"><table id="giftTbl"></table></div>
+  <div class="note">
+    지구단위계획 <b>용적률 인센티브의 대가로 인허가 조건에 따라 15세대를 서울시에 기부채납</b>(공공임대주택)한 구조입니다.
+    연면적 기준 기부채납분은 약 <b>388py ≈ 전체의 9.5%</b>로, 통상적이고 적법한 방식입니다.
+    다만 서울시가 구분소유자로 들어와 있어 <b>용도전환(호텔 등) 시 동의 확보가 사실상 어렵고</b>,
+    매각 구조 설계 시 공공임대 지분은 <b>매각 대상에서 제외</b>해야 합니다.
+    3~13층 결번 호실이 기부채납 세대로 추정되며, 정확한 호실은 <b>등기부·건축물대장 확인이 필요</b>합니다.
+  </div>
+</div>
+
+<footer>
+  <span>© 이지스자산운용 국내자산관리그룹 · 내부 검토용 — 외부 배포 금지</span>
+  <span class="mono">SOURCE: 약식CF_분양ver_260706.xlsx · 건축도면 3차수정(221219) · EXIT TF 260630</span>
+</footer>
+</div>
+
+<div id="lb" onclick="this.classList.remove('on')"><img id="lbImg" alt=""></div>
+
+<script>
+const UNITS = [{"dong":"","ho":"102","use":"제1종근린생활시설(소매점)","fl":1,"py":27.3,"pyeong":57.5},{"dong":"","ho":"103","use":"제1종근린생활시설(소매점)","fl":1,"py":20.38,"pyeong":42.9},{"dong":"","ho":"104","use":"제1종근린생활시설(소매점)","fl":1,"py":15.97,"pyeong":33.6},{"dong":"","ho":"105","use":"제1종근린생활시설(소매점)","fl":1,"py":14.13,"pyeong":29.7},{"dong":"","ho":"106","use":"제1종근린생활시설(소매점)","fl":1,"py":8.92,"pyeong":18.7},{"dong":"","ho":"107","use":"제1종근린생활시설(소매점)","fl":1,"py":29.55,"pyeong":62.2},{"dong":"","ho":"108","use":"제1종근린생활시설(소매점)","fl":1,"py":21.19,"pyeong":44.6},{"dong":"","ho":"202","use":"제1종근린생활시설(소매점)","fl":2,"py":12.84,"pyeong":27.2},{"dong":"","ho":"203","use":"제1종근린생활시설(소매점)","fl":2,"py":12.13,"pyeong":25.7},{"dong":"","ho":"204","use":"제1종근린생활시설(소매점)","fl":2,"py":23.84,"pyeong":50.5},{"dong":"","ho":"205","use":"제1종근린생활시설(소매점)","fl":2,"py":27.72,"pyeong":58.7},{"dong":"","ho":"206","use":"제1종근린생활시설(소매점)","fl":2,"py":26.81,"pyeong":56.8},{"dong":"","ho":"207","use":"제1종근린생활시설(소매점)","fl":2,"py":23.85,"pyeong":50.5},{"dong":"","ho":"208","use":"제1종근린생활시설(소매점)","fl":2,"py":26.34,"pyeong":55.8},{"dong":"","ho":"209","use":"제1종근린생활시설(소매점)","fl":2,"py":20.18,"pyeong":42.7},{"dong":"","ho":"301","use":"아파트(도시형생활주택원룸형)","fl":3,"py":9.22,"pyeong":25.7},{"dong":"","ho":"302","use":"아파트(도시형생활주택원룸형)","fl":3,"py":4.37,"pyeong":12.2},{"dong":"","ho":"303","use":"아파트(도시형생활주택원룸형)","fl":3,"py":4.62,"pyeong":12.9},{"dong":"","ho":"304","use":"아파트(도시형생활주택원룸형)","fl":3,"py":4.62,"pyeong":12.9},{"dong":"","ho":"305","use":"아파트(도시형생활주택원룸형)","fl":3,"py":4.24,"pyeong":11.8},{"dong":"","ho":"306","use":"아파트(도시형생활주택원룸형)","fl":3,"py":4.24,"pyeong":11.8},{"dong":"","ho":"307","use":"아파트(도시형생활주택원룸형)","fl":3,"py":4.24,"pyeong":11.8},{"dong":"","ho":"308","use":"아파트(도시형생활주택원룸형)","fl":3,"py":9.3,"pyeong":25.9},{"dong":"","ho":"309","use":"아파트(도시형생활주택원룸형)","fl":3,"py":4.25,"pyeong":11.8},{"dong":"","ho":"310","use":"아파트(도시형생활주택원룸형)","fl":3,"py":9.22,"pyeong":25.7},{"dong":"","ho":"311","use":"아파트(도시형생활주택원룸형)","fl":3,"py":9.22,"pyeong":25.7},{"dong":"","ho":"312","use":"아파트(도시형생활주택원룸형)","fl":3,"py":9.22,"pyeong":25.7},{"dong":"","ho":"313","use":"아파트(도시형생활주택원룸형)","fl":3,"py":9.3,"pyeong":25.9},{"dong":"","ho":"401","use":"아파트(도시형생활주택원룸형)","fl":4,"py":9.22,"pyeong":25.7},{"dong":"","ho":"402","use":"아파트(도시형생활주택원룸형)","fl":4,"py":4.37,"pyeong":12.2},{"dong":"","ho":"403","use":"아파트(도시형생활주택원룸형)","fl":4,"py":4.62,"pyeong":12.9},{"dong":"","ho":"404","use":"아파트(도시형생활주택원룸형)","fl":4,"py":4.62,"pyeong":12.9},{"dong":"","ho":"405","use":"아파트(도시형생활주택원룸형)","fl":4,"py":4.24,"pyeong":11.8},{"dong":"","ho":"406","use":"아파트(도시형생활주택원룸형)","fl":4,"py":4.24,"pyeong":11.8},{"dong":"","ho":"407","use":"아파트(도시형생활주택원룸형)","fl":4,"py":4.24,"pyeong":11.8},{"dong":"","ho":"408","use":"아파트(도시형생활주택원룸형)","fl":4,"py":9.3,"pyeong":25.9},{"dong":"","ho":"409","use":"아파트(도시형생활주택원룸형)","fl":4,"py":4.25,"pyeong":11.8},{"dong":"","ho":"410","use":"아파트(도시형생활주택원룸형)","fl":4,"py":9.22,"pyeong":25.7},{"dong":"","ho":"411","use":"아파트(도시형생활주택원룸형)","fl":4,"py":9.22,"pyeong":25.7},{"dong":"","ho":"412","use":"아파트(도시형생활주택원룸형)","fl":4,"py":9.22,"pyeong":25.7},{"dong":"","ho":"414","use":"아파트(도시형생활주택원룸형)","fl":4,"py":4.25,"pyeong":11.8},{"dong":"","ho":"501","use":"아파트(도시형생활주택원룸형)","fl":5,"py":9.22,"pyeong":25.7},{"dong":"","ho":"502","use":"아파트(도시형생활주택원룸형)","fl":5,"py":4.37,"pyeong":12.2},{"dong":"","ho":"503","use":"아파트(도시형생활주택원룸형)","fl":5,"py":4.62,"pyeong":12.9},{"dong":"","ho":"504","use":"아파트(도시형생활주택원룸형)","fl":5,"py":4.62,"pyeong":12.9},{"dong":"","ho":"505","use":"아파트(도시형생활주택원룸형)","fl":5,"py":4.24,"pyeong":11.8},{"dong":"","ho":"506","use":"아파트(도시형생활주택원룸형)","fl":5,"py":4.24,"pyeong":11.8},{"dong":"","ho":"507","use":"아파트(도시형생활주택원룸형)","fl":5,"py":4.24,"pyeong":11.8},{"dong":"","ho":"508","use":"아파트(도시형생활주택원룸형)","fl":5,"py":9.3,"pyeong":25.9},{"dong":"","ho":"509","use":"아파트(도시형생활주택원룸형)","fl":5,"py":4.25,"pyeong":11.8},{"dong":"","ho":"510","use":"아파트(도시형생활주택원룸형)","fl":5,"py":9.22,"pyeong":25.7},{"dong":"","ho":"511","use":"아파트(도시형생활주택원룸형)","fl":5,"py":9.22,"pyeong":25.7},{"dong":"","ho":"512","use":"아파트(도시형생활주택원룸형)","fl":5,"py":9.22,"pyeong":25.7},{"dong":"","ho":"513","use":"아파트(도시형생활주택원룸형)","fl":5,"py":9.3,"pyeong":25.9},{"dong":"","ho":"514","use":"아파트(도시형생활주택원룸형)","fl":5,"py":4.25,"pyeong":11.8},{"dong":"","ho":"601","use":"아파트(도시형생활주택원룸형)","fl":6,"py":9.22,"pyeong":25.7},{"dong":"","ho":"602","use":"아파트(도시형생활주택원룸형)","fl":6,"py":4.37,"pyeong":12.2},{"dong":"","ho":"603","use":"아파트(도시형생활주택원룸형)","fl":6,"py":4.62,"pyeong":12.9},{"dong":"","ho":"604","use":"아파트(도시형생활주택원룸형)","fl":6,"py":4.62,"pyeong":12.9},{"dong":"","ho":"605","use":"아파트(도시형생활주택원룸형)","fl":6,"py":4.24,"pyeong":11.8},{"dong":"","ho":"606","use":"아파트(도시형생활주택원룸형)","fl":6,"py":4.24,"pyeong":11.8},{"dong":"","ho":"607","use":"아파트(도시형생활주택원룸형)","fl":6,"py":4.24,"pyeong":11.8},{"dong":"","ho":"609","use":"아파트(도시형생활주택원룸형)","fl":6,"py":4.25,"pyeong":11.8},{"dong":"","ho":"610","use":"아파트(도시형생활주택원룸형)","fl":6,"py":9.22,"pyeong":25.7},{"dong":"","ho":"611","use":"아파트(도시형생활주택원룸형)","fl":6,"py":9.22,"pyeong":25.7},{"dong":"","ho":"612","use":"아파트(도시형생활주택원룸형)","fl":6,"py":9.22,"pyeong":25.7},{"dong":"","ho":"613","use":"아파트(도시형생활주택원룸형)","fl":6,"py":9.3,"pyeong":25.9},{"dong":"","ho":"614","use":"아파트(도시형생활주택원룸형)","fl":6,"py":4.25,"pyeong":11.8},{"dong":"","ho":"701","use":"아파트(도시형생활주택원룸형)","fl":7,"py":9.22,"pyeong":25.7},{"dong":"","ho":"702","use":"아파트(도시형생활주택원룸형)","fl":7,"py":4.37,"pyeong":12.2},{"dong":"","ho":"703","use":"아파트(도시형생활주택원룸형)","fl":7,"py":4.62,"pyeong":12.9},{"dong":"","ho":"704","use":"아파트(도시형생활주택원룸형)","fl":7,"py":4.62,"pyeong":12.9},{"dong":"","ho":"705","use":"아파트(도시형생활주택원룸형)","fl":7,"py":4.24,"pyeong":11.8},{"dong":"","ho":"706","use":"아파트(도시형생활주택원룸형)","fl":7,"py":4.24,"pyeong":11.8},{"dong":"","ho":"707","use":"아파트(도시형생활주택원룸형)","fl":7,"py":4.24,"pyeong":11.8},{"dong":"","ho":"708","use":"아파트(도시형생활주택원룸형)","fl":7,"py":9.3,"pyeong":25.9},{"dong":"","ho":"709","use":"아파트(도시형생활주택원룸형)","fl":7,"py":4.25,"pyeong":11.8},{"dong":"","ho":"712","use":"아파트(도시형생활주택원룸형)","fl":7,"py":9.22,"pyeong":25.7},{"dong":"","ho":"713","use":"아파트(도시형생활주택원룸형)","fl":7,"py":9.3,"pyeong":25.9},{"dong":"","ho":"802","use":"아파트(도시형생활주택원룸형)","fl":8,"py":4.37,"pyeong":12.2},{"dong":"","ho":"803","use":"아파트(도시형생활주택원룸형)","fl":8,"py":4.62,"pyeong":12.9},{"dong":"","ho":"804","use":"아파트(도시형생활주택원룸형)","fl":8,"py":4.62,"pyeong":12.9},{"dong":"","ho":"805","use":"아파트(도시형생활주택원룸형)","fl":8,"py":4.24,"pyeong":11.8},{"dong":"","ho":"806","use":"아파트(도시형생활주택원룸형)","fl":8,"py":4.24,"pyeong":11.8},{"dong":"","ho":"807","use":"아파트(도시형생활주택원룸형)","fl":8,"py":4.24,"pyeong":11.8},{"dong":"","ho":"808","use":"아파트(도시형생활주택원룸형)","fl":8,"py":9.3,"pyeong":25.9},{"dong":"","ho":"809","use":"아파트(도시형생활주택원룸형)","fl":8,"py":4.25,"pyeong":11.8},{"dong":"","ho":"811","use":"아파트(도시형생활주택원룸형)","fl":8,"py":9.22,"pyeong":25.7},{"dong":"","ho":"814","use":"아파트(도시형생활주택원룸형)","fl":8,"py":4.25,"pyeong":11.8},{"dong":"","ho":"901","use":"아파트(도시형생활주택원룸형)","fl":9,"py":9.22,"pyeong":25.7},{"dong":"","ho":"902","use":"아파트(도시형생활주택원룸형)","fl":9,"py":4.37,"pyeong":12.2},{"dong":"","ho":"903","use":"아파트(도시형생활주택원룸형)","fl":9,"py":4.62,"pyeong":12.9},{"dong":"","ho":"904","use":"아파트(도시형생활주택원룸형)","fl":9,"py":4.62,"pyeong":12.9},{"dong":"","ho":"905","use":"아파트(도시형생활주택원룸형)","fl":9,"py":4.24,"pyeong":11.8},{"dong":"","ho":"906","use":"아파트(도시형생활주택원룸형)","fl":9,"py":4.24,"pyeong":11.8},{"dong":"","ho":"907","use":"아파트(도시형생활주택원룸형)","fl":9,"py":4.24,"pyeong":11.8},{"dong":"","ho":"908","use":"아파트(도시형생활주택원룸형)","fl":9,"py":9.3,"pyeong":25.9},{"dong":"","ho":"909","use":"아파트(도시형생활주택원룸형)","fl":9,"py":4.25,"pyeong":11.8},{"dong":"","ho":"910","use":"아파트(도시형생활주택원룸형)","fl":9,"py":9.22,"pyeong":25.7},{"dong":"","ho":"911","use":"아파트(도시형생활주택원룸형)","fl":9,"py":9.22,"pyeong":25.7},{"dong":"","ho":"913","use":"아파트(도시형생활주택원룸형)","fl":9,"py":9.3,"pyeong":25.9},{"dong":"","ho":"914","use":"아파트(도시형생활주택원룸형)","fl":9,"py":4.25,"pyeong":11.8},{"dong":"","ho":"1001","use":"아파트(도시형생활주택원룸형)","fl":10,"py":9.22,"pyeong":25.7},{"dong":"","ho":"1002","use":"아파트(도시형생활주택원룸형)","fl":10,"py":4.37,"pyeong":12.2},{"dong":"","ho":"1003","use":"아파트(도시형생활주택원룸형)","fl":10,"py":4.62,"pyeong":12.9},{"dong":"","ho":"1004","use":"아파트(도시형생활주택원룸형)","fl":10,"py":4.62,"pyeong":12.9},{"dong":"","ho":"1005","use":"아파트(도시형생활주택원룸형)","fl":10,"py":4.24,"pyeong":11.8},{"dong":"","ho":"1006","use":"아파트(도시형생활주택원룸형)","fl":10,"py":4.24,"pyeong":11.8},{"dong":"","ho":"1007","use":"아파트(도시형생활주택원룸형)","fl":10,"py":4.24,"pyeong":11.8},{"dong":"","ho":"1008","use":"아파트(도시형생활주택원룸형)","fl":10,"py":9.3,"pyeong":25.9},{"dong":"","ho":"1009","use":"아파트(도시형생활주택원룸형)","fl":10,"py":4.25,"pyeong":11.8},{"dong":"","ho":"1010","use":"아파트(도시형생활주택원룸형)","fl":10,"py":9.22,"pyeong":25.7},{"dong":"","ho":"1011","use":"아파트(도시형생활주택원룸형)","fl":10,"py":9.22,"pyeong":25.7},{"dong":"","ho":"1013","use":"아파트(도시형생활주택원룸형)","fl":10,"py":9.3,"pyeong":25.9},{"dong":"","ho":"1014","use":"아파트(도시형생활주택원룸형)","fl":10,"py":4.25,"pyeong":11.8},{"dong":"","ho":"1101","use":"아파트(도시형생활주택원룸형)","fl":11,"py":9.22,"pyeong":25.7},{"dong":"","ho":"1102","use":"아파트(도시형생활주택원룸형)","fl":11,"py":4.37,"pyeong":12.2},{"dong":"","ho":"1103","use":"아파트(도시형생활주택원룸형)","fl":11,"py":4.62,"pyeong":12.9},{"dong":"","ho":"1104","use":"아파트(도시형생활주택원룸형)","fl":11,"py":4.62,"pyeong":12.9},{"dong":"","ho":"1105","use":"아파트(도시형생활주택원룸형)","fl":11,"py":4.24,"pyeong":11.8},{"dong":"","ho":"1106","use":"아파트(도시형생활주택원룸형)","fl":11,"py":4.24,"pyeong":11.8},{"dong":"","ho":"1107","use":"아파트(도시형생활주택원룸형)","fl":11,"py":4.24,"pyeong":11.8},{"dong":"","ho":"1109","use":"아파트(도시형생활주택원룸형)","fl":11,"py":4.25,"pyeong":11.8},{"dong":"","ho":"1111","use":"아파트(도시형생활주택원룸형)","fl":11,"py":9.22,"pyeong":25.7},{"dong":"","ho":"1112","use":"아파트(도시형생활주택원룸형)","fl":11,"py":9.22,"pyeong":25.7},{"dong":"","ho":"1113","use":"아파트(도시형생활주택원룸형)","fl":11,"py":9.3,"pyeong":25.9},{"dong":"","ho":"1201","use":"아파트(도시형생활주택원룸형)","fl":12,"py":9.22,"pyeong":25.7},{"dong":"","ho":"1202","use":"아파트(도시형생활주택원룸형)","fl":12,"py":4.37,"pyeong":12.2},{"dong":"","ho":"1203","use":"아파트(도시형생활주택원룸형)","fl":12,"py":4.62,"pyeong":12.9},{"dong":"","ho":"1204","use":"아파트(도시형생활주택원룸형)","fl":12,"py":4.62,"pyeong":12.9},{"dong":"","ho":"1205","use":"아파트(도시형생활주택원룸형)","fl":12,"py":4.24,"pyeong":11.8},{"dong":"","ho":"1206","use":"아파트(도시형생활주택원룸형)","fl":12,"py":4.24,"pyeong":11.8},{"dong":"","ho":"1207","use":"아파트(도시형생활주택원룸형)","fl":12,"py":4.24,"pyeong":11.8},{"dong":"","ho":"1208","use":"아파트(도시형생활주택원룸형)","fl":12,"py":9.3,"pyeong":25.9},{"dong":"","ho":"1209","use":"아파트(도시형생활주택원룸형)","fl":12,"py":4.25,"pyeong":11.8},{"dong":"","ho":"1210","use":"아파트(도시형생활주택원룸형)","fl":12,"py":9.22,"pyeong":25.7},{"dong":"","ho":"1212","use":"아파트(도시형생활주택원룸형)","fl":12,"py":9.22,"pyeong":25.7},{"dong":"","ho":"1214","use":"아파트(도시형생활주택원룸형)","fl":12,"py":4.25,"pyeong":11.8},{"dong":"","ho":"1301","use":"아파트(도시형생활주택원룸형)","fl":13,"py":9.22,"pyeong":25.7},{"dong":"","ho":"1302","use":"아파트(도시형생활주택원룸형)","fl":13,"py":4.37,"pyeong":12.2},{"dong":"","ho":"1303","use":"아파트(도시형생활주택원룸형)","fl":13,"py":4.62,"pyeong":12.9},{"dong":"","ho":"1304","use":"아파트(도시형생활주택원룸형)","fl":13,"py":4.62,"pyeong":12.9},{"dong":"","ho":"1305","use":"아파트(도시형생활주택원룸형)","fl":13,"py":4.24,"pyeong":11.8},{"dong":"","ho":"1306","use":"아파트(도시형생활주택원룸형)","fl":13,"py":4.24,"pyeong":11.8},{"dong":"","ho":"1307","use":"아파트(도시형생활주택원룸형)","fl":13,"py":4.24,"pyeong":11.8},{"dong":"","ho":"1308","use":"아파트(도시형생활주택원룸형)","fl":13,"py":9.3,"pyeong":25.9},{"dong":"","ho":"1309","use":"아파트(도시형생활주택원룸형)","fl":13,"py":4.25,"pyeong":11.8},{"dong":"","ho":"1310","use":"아파트(도시형생활주택원룸형)","fl":13,"py":9.22,"pyeong":25.7},{"dong":"","ho":"1312","use":"아파트(도시형생활주택원룸형)","fl":13,"py":9.22,"pyeong":25.7},{"dong":"","ho":"1313","use":"아파트(도시형생활주택원룸형)","fl":13,"py":9.3,"pyeong":25.9},{"dong":"","ho":"1314","use":"아파트(도시형생활주택원룸형)","fl":13,"py":4.25,"pyeong":11.8},{"dong":"","ho":"1401","use":"업무시설(오피스텔)","fl":14,"py":11.8,"pyeong":29.7},{"dong":"","ho":"1402","use":"업무시설(오피스텔)","fl":14,"py":5.18,"pyeong":13},{"dong":"","ho":"1403","use":"업무시설(오피스텔)","fl":14,"py":5.12,"pyeong":12.9},{"dong":"","ho":"1404","use":"업무시설(오피스텔)","fl":14,"py":5.12,"pyeong":12.9},{"dong":"","ho":"1405","use":"업무시설(오피스텔)","fl":14,"py":5.19,"pyeong":13},{"dong":"","ho":"1406","use":"업무시설(오피스텔)","fl":14,"py":5.19,"pyeong":13},{"dong":"","ho":"1407","use":"업무시설(오피스텔)","fl":14,"py":5.19,"pyeong":13},{"dong":"","ho":"1408","use":"업무시설(오피스텔)","fl":14,"py":11.87,"pyeong":29.9},{"dong":"","ho":"1409","use":"업무시설(오피스텔)","fl":14,"py":5.07,"pyeong":12.7},{"dong":"","ho":"1410","use":"업무시설(오피스텔)","fl":14,"py":11.8,"pyeong":29.7},{"dong":"","ho":"1411","use":"업무시설(오피스텔)","fl":14,"py":11.8,"pyeong":29.7},{"dong":"","ho":"1412","use":"업무시설(오피스텔)","fl":14,"py":11.8,"pyeong":29.7},{"dong":"","ho":"1413","use":"업무시설(오피스텔)","fl":14,"py":11.87,"pyeong":29.9},{"dong":"","ho":"1414","use":"업무시설(오피스텔)","fl":14,"py":5.07,"pyeong":12.7},{"dong":"","ho":"B101","use":"제1종근린생활시설(소매점)","fl":-1,"py":18.33,"pyeong":43},{"dong":"","ho":"B102","use":"제1종근린생활시설(소매점)","fl":-1,"py":18.9,"pyeong":44.3},{"dong":"","ho":"B103","use":"제2종근린생활시설(체력단련장)","fl":-1,"py":17.4,"pyeong":40.8},{"dong":"","ho":"B104","use":"제2종근린생활시설(체력단련장)","fl":-1,"py":16.42,"pyeong":38.5},{"dong":"","ho":"B105","use":"제2종근린생활시설(체력단련장)","fl":-1,"py":15.28,"pyeong":35.8},{"dong":"","ho":"B106","use":"제2종근린생활시설(체력단련장)","fl":-1,"py":15.03,"pyeong":35.2},{"dong":"","ho":"B107","use":"제2종근린생활시설(체력단련장)","fl":-1,"py":20.11,"pyeong":47.2},{"dong":"","ho":"B108","use":"제1종근린생활시설(소매점)","fl":-1,"py":14.64,"pyeong":34.3},{"dong":"별동","ho":"101","use":"제1종근린생활시설(소매점)","fl":1,"py":21.42,"pyeong":45.1},{"dong":"별동","ho":"201","use":"제1종근린생활시설(소매점)","fl":2,"py":21.51,"pyeong":45.5}];
+
+/* ---- 원본 상수 (엑셀 추출·검증) ---- */
+const BASE0 = {res:52184958.62068966, f1:79266370.86470175, f2:31706548.345880702, b1:21752356.866910882}; // 원/py
+const NOI0  = {f1:181969.28084415317, f2:104390.80052090967, b1:113367.37958485274, resBig:270839.28387181816, resSmall:299459.5001866946}; // 원/py/월
+const CUR = {sen:560e8, jun:85e8, rSen:0.06, rJun:0.08, noiMo:302.9}; // 현 대출·월NOI(백만)
+const DEF = {g:2.5, capRes:4.0, capRet:5.5, adj:0, resM:'deal', retM:'income',
+  nResBig:NOI0.resBig, nResSmall:NOI0.resSmall, nF1:NOI0.f1, nF2:NOI0.f2, nB1:NOI0.b1,
+  bRes:BASE0.res/1e6, bF1:BASE0.f1/1e6, bF2:BASE0.f2/1e6, bB1:BASE0.b1/1e6};
+
+/* 리테일 분양면적표 (㎡) — ex:전용, com:공용(ELEV·계단 등), mech:기계·전기 등, tot:계약, land:대지지분 */
+const AREA = {"B101":{"ex":60.59,"com":32.94,"mech":7.79,"tot":160.58,"land":19.31},"B102":{"ex":62.48,"com":33.95,"mech":8.04,"tot":165.58,"land":19.91},"B103":{"ex":57.51,"com":31.25,"mech":7.4,"tot":152.41,"land":18.33},"B104":{"ex":54.27,"com":29.5,"mech":6.98,"tot":143.83,"land":17.3},"B105":{"ex":50.5,"com":27.44,"mech":6.5,"tot":133.84,"land":16.09},"B106":{"ex":49.67,"com":26.99,"mech":6.39,"tot":131.64,"land":15.83},"B107":{"ex":66.49,"com":36.13,"mech":8.55,"tot":176.2,"land":21.19},"B108":{"ex":48.4,"com":26.31,"mech":6.23,"tot":128.28,"land":15.42},"101":{"ex":70.81,"com":21.44,"mech":9.11,"tot":170.61,"land":20.29},"102":{"ex":90.26,"com":27.34,"mech":11.61,"tot":217.49,"land":25.87},"103":{"ex":67.36,"com":20.4,"mech":8.67,"tot":162.32,"land":19.3},"104":{"ex":52.79,"com":15.98,"mech":6.79,"tot":127.19,"land":15.13},"105":{"ex":46.72,"com":14.14,"mech":6.01,"tot":112.56,"land":13.39},"106":{"ex":29.48,"com":8.92,"mech":3.79,"tot":71.03,"land":8.45},"107":{"ex":97.68,"com":29.58,"mech":12.57,"tot":235.37,"land":27.99},"108":{"ex":70.06,"com":21.22,"mech":9.01,"tot":168.81,"land":20.07},"201":{"ex":71.1,"com":22.46,"mech":9.15,"tot":172.25,"land":20.35},"202":{"ex":42.45,"com":13.41,"mech":5.46,"tot":102.84,"land":12.24},"203":{"ex":40.09,"com":12.66,"mech":5.16,"tot":97.12,"land":11.56},"204":{"ex":78.8,"com":24.89,"mech":10.14,"tot":190.9,"land":22.73},"205":{"ex":91.64,"com":28.94,"mech":11.79,"tot":222.0,"land":26.43},"206":{"ex":88.63,"com":27.99,"mech":11.4,"tot":214.71,"land":25.57},"207":{"ex":78.84,"com":24.9,"mech":10.14,"tot":190.99,"land":22.74},"208":{"ex":87.08,"com":27.5,"mech":11.2,"tot":210.95,"land":25.12},"209":{"ex":66.71,"com":21.06,"mech":8.58,"tot":161.6,"land":19.25}};
+
+/* 층 정의 (위→아래) */
+const FLOORS = [
+  {id:'f15', fl:15,  name:'옥탑',  img:'f15', kind:'설비층',  note:'계단실 · ELEV 기계실 · 옥상'},
+  ...[14,13,12,11,10,9,8,7,6,5,4,3].map(f=>({id:'f'+f, fl:f, name:f+'F', img:'f'+f,
+      kind:f===14?'오피스텔':'도시형생활주택'})),
+  {id:'f2', fl:2,  name:'2F', img:'f2', kind:'근린생활시설'},
+  {id:'f1', fl:1,  name:'1F', img:'f1', kind:'근린생활시설'},
+  {id:'b1', fl:-1, name:'B1', img:'b1', kind:'근린생활시설'},
+  {id:'b2', fl:-2, name:'B2', img:'b2', kind:'설비층', note:'주차 · 기계실 · 전기실'},
+  {id:'b3', fl:-3, name:'B3', img:'b3', kind:'설비층', note:'기계식주차 피트'},
+  {id:'b4', fl:-4, name:'B4', img:'b4', kind:'설비층', note:'기계식주차 피트'},
+  {id:'b5', fl:-5, name:'B5', img:'b5', kind:'설비층', note:'기계식주차 피트'},
+  {id:'b6', fl:-6, name:'B6', img:'b6', kind:'설비층', note:'기계식주차 피트'},
+];
+
+let S = load();
+let sel = 'f3';
+
+const rnd7 = x => Math.round(x/1e7)*1e7;
+const eok = (v,d=1) => (v/1e8).toLocaleString('ko-KR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const $ = id => document.getElementById(id);
+const TC = {res:'var(--res)',off:'var(--off)',ret:'var(--ret)',gym:'var(--gym)'};
+
+function load(){
+  try{ const s=JSON.parse(localStorage.getItem('mgrv_bldg')||'{}'); return {...DEF,...s}; }
+  catch(e){ return {...DEF}; }
+}
+function save(){ localStorage.setItem('mgrv_bldg', JSON.stringify(S)); }
+
+function unitType(u){
+  if(u.fl>=3 && u.use.includes('오피스텔')) return 'off';
+  if(u.fl>=3) return 'res';
+  return u.use.includes('체력') ? 'gym' : 'ret';
+}
+function priceUnit(u){
+  const g=S.g/100, isRes=u.fl>=3;
+  let L,N,cap;
+  if(isRes){ L=S.bRes*1e6*Math.pow(1+g,4); N=u.py>=9?S.nResBig:S.nResSmall; cap=S.capRes/100; }
+  else{
+    L=(u.fl===1?S.bF1:u.fl===2?S.bF2:S.bB1)*1e6*Math.pow(1+g,u.fl===2?1:4);
+    N=u.fl===1?S.nF1:u.fl===2?S.nF2:S.nB1; cap=S.capRet/100;
+  }
+  const M=rnd7(L*u.py), R=rnd7(N*12/cap*u.py);
+  const applied=((isRes?S.resM:S.retM)==='deal'?M:R)*(1+S.adj/100);
+  return {M,R,applied,noiMo:N*u.py};
+}
+function calc(){ return UNITS.map(u=>({u,t:unitType(u),...priceUnit(u)})); }
+
+/* 결번(기부채납 추정) — 3F는 01~13, 4F 이상은 01~14 기준 */
+function gaps(fl){
+  const max = fl===3?13:14;
+  const present = new Set(UNITS.filter(u=>!u.dong&&u.fl===fl).map(u=>+u.ho.slice(-2)));
+  const out=[];
+  for(let i=1;i<=max;i++) if(!present.has(i)) out.push(fl+String(i).padStart(2,'0'));
+  return out;
+}
+
+function render(){
+  syncLabels();
+  const R = calc();
+  const main = R.filter(r=>!r.u.dong), ax = R.filter(r=>r.u.dong);
+  const resSum = main.filter(r=>r.u.fl>=3).reduce((s,r)=>s+r.applied,0);
+  const retSum = main.filter(r=>r.u.fl<3).reduce((s,r)=>s+r.applied,0);
+  const axSum  = ax.reduce((s,r)=>s+r.applied,0);
+  const gross  = resSum+retSum+axSum;
+
+  const kpi=(k,v,d)=>`<div class="kpi"><div class="k">${k}</div><div class="v">${v}</div><div class="d">${d}</div></div>`;
+  $('kpis').innerHTML =
+    kpi('총 분양수입','₩'+eok(gross)+'<em> 억</em>','175개 호실 · 산정방식 적용가 합계')+
+    kpi('주거 (3~14F)','₩'+eok(resSum)+'<em> 억</em>',`150호 · ${S.resM==='deal'?'거래사례':'수익환원'} 기준`)+
+    kpi('리테일 (B1~2F)','₩'+eok(retSum)+'<em> 억</em>',`23호 (별동 제외) · ${S.retM==='deal'?'거래사례':'수익환원'} 기준`)+
+    kpi('별동 분할매각가','₩'+eok(axSum)+'<em> 억</em>','101 · 201호 — 아래 시나리오 참고');
+
+  renderStack(R); renderDetail(R); renderAnnex(R); renderGift(R);
+  save();
+}
+
+function syncLabels(){
+  $('vG').value=S.g.toFixed(1)+'%'; $('vCapRes').value=S.capRes.toFixed(1)+'%';
+  $('vCapRet').value=S.capRet.toFixed(1)+'%'; $('vAdj').value=(S.adj>0?'+':'')+S.adj+'%';
+  document.querySelectorAll('#segRes button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.resM));
+  document.querySelectorAll('#segRet button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.retM));
+}
+
+function renderStack(R){
+  const maxPy = Math.max(...FLOORS.map(f=>{
+    const rs=R.filter(r=>!r.u.dong&&r.u.fl===f.fl);
+    return rs.reduce((s,r)=>s+r.u.py,0) + (f.fl>=3&&f.fl<=13?gaps(f.fl).length*6.5:0);
+  }));
+  $('stk').innerHTML = FLOORS.map(f=>{
+    const rs=R.filter(r=>!r.u.dong&&r.u.fl===f.fl);
+    let inner, pct, meta;
+    if(rs.length){
+      const gp=(f.fl>=3&&f.fl<=13)?gaps(f.fl):[];
+      const sumPy=rs.reduce((s,r)=>s+r.u.py,0)+gp.length*6.5;
+      pct=Math.max(sumPy/maxPy*100,8);
+      inner=rs.map(r=>`<div class="cell" style="flex-grow:${r.u.py};background:${TC[r.t]}" title="${r.u.ho}호 · ${r.u.py}py · ${eok(r.applied,2)}억"></div>`).join('')
+        + gp.map(h=>`<div class="cell gapc" style="flex-grow:6.5" title="${h}호 결번 — 기부채납(서울시) 추정"></div>`).join('');
+      meta=`${rs.length}호 · ${eok(rs.reduce((s,r)=>s+r.applied,0),0)}억`;
+    }else{
+      pct=f.fl===15?30:(f.fl===-2?52:22);
+      inner=''; meta=f.note||'';
+    }
+    return `<div class="srow ${sel===f.id?'sel':''}" onclick="selFloor('${f.id}')">
+      <div class="fl">${f.name}</div>
+      ${rs.length?`<div class="bar" style="width:${pct}%">${inner}</div>`:`<div class="etcbar" style="width:${pct}%"></div>`}
+      <div class="meta">${meta}</div></div>`;
+  }).join('');
+
+  $('stkAx').innerHTML = [['ax2','2F','201'],['ax1','1F','101']].map(([id,nm,ho])=>{
+    const r=R.find(x=>x.u.dong&&x.u.ho===ho);
+    return `<div class="srow ${sel===id?'sel':''}" onclick="selFloor('${id}')">
+      <div class="fl">${nm}</div>
+      <div class="bar" style="width:26%"><div class="cell" style="flex-grow:1;background:var(--ret)"></div></div>
+      <div class="meta">${ho}호 · ${r.u.py}py · ${eok(r.applied,1)}억</div></div>`;
+  }).join('');
+}
+
+window.selFloor = id => { sel=id; render(); };
+
+function fmtUse(u){
+  return u.fl>=3?(u.use.includes('오피스텔')?'오피스텔':'도생'):(u.use.includes('체력')?'근생(체력)':'근생(소매)');
+}
+const BDG={'도생':'b-res','오피스텔':'b-off','근생(소매)':'b-ret','근생(체력)':'b-gym'};
+
+function renderDetail(R){
+  const isAx = sel.startsWith('ax');
+  const f = isAx ? null : FLOORS.find(x=>x.id===sel);
+  const rs = isAx
+    ? R.filter(r=>r.u.dong && r.u.fl===(sel==='ax1'?1:2))
+    : R.filter(r=>!r.u.dong && r.u.fl===f.fl);
+  const title = isAx ? `별동 ${sel==='ax1'?'1F':'2F'}` : (f.fl>0&&f.fl<15?'지상 '+f.fl+'층':f.fl===15?'옥탑':'지하 '+(-f.fl)+'층');
+  const kind = isAx ? '근린생활시설 (아워베이커리 동)' : f.kind + (f.note?' — '+f.note:'');
+  const img = isAx ? 'annex' : f.img;
+  const gp = (!isAx && f.fl>=3 && f.fl<=13) ? gaps(f.fl) : [];
+
+  let chips='';
+  if(rs.length){
+    const py=rs.reduce((s,r)=>s+r.u.py,0), ap=rs.reduce((s,r)=>s+r.applied,0), noi=rs.reduce((s,r)=>s+r.noiMo,0);
+    chips = `<span class="dchip">호실 <b>${rs.length}</b></span>
+      <span class="dchip">전유 <b>${py.toFixed(1)}py</b> (${(py*3.3058).toFixed(0)}㎡)</span>
+      <span class="dchip">적용가 합 <b>${eok(ap)}억</b></span>
+      <span class="dchip">월 NOI <b>${(noi/1e6).toFixed(1)}백만</b></span>`
+      + (gp.length?`<span class="dchip warn">결번 ${gp.length} — ${gp.join(', ')} (기부채납 추정)</span>`:'');
+  }
+
+  let tbl='';
+  if(rs.length){
+    tbl = `<div class="tblwrap"><table><tr><th>호실</th><th>용도</th><th>전유(py)</th><th>평형</th><th>거래사례(억)</th><th>수익환원(억)</th><th>적용가(억)</th><th>월NOI(만)</th></tr>`+
+      rs.map(r=>{const us=fmtUse(r.u);
+        return `<tr><td>${r.u.dong?'별동 ':''}${r.u.ho}</td><td style="text-align:left"><span class="badge ${BDG[us]}">${us}</span></td>
+          <td>${r.u.py.toFixed(2)}</td><td>${r.u.pyeong}</td><td>${eok(r.M,2)}</td><td>${eok(r.R,2)}</td><td><b>${eok(r.applied,2)}</b></td><td>${(r.noiMo/1e4).toFixed(0)}</td></tr>`;}).join('')+
+      `<tr class="tot"><td colspan="2">합계 ${rs.length}호</td><td>${rs.reduce((s,r)=>s+r.u.py,0).toFixed(1)}</td><td></td>
+        <td>${eok(rs.reduce((s,r)=>s+r.M,0))}</td><td>${eok(rs.reduce((s,r)=>s+r.R,0))}</td><td>${eok(rs.reduce((s,r)=>s+r.applied,0))}</td>
+        <td>${(rs.reduce((s,r)=>s+r.noiMo,0)/1e4).toFixed(0)}</td></tr></table></div>`;
+    // 리테일 층 → 분양면적표 상세
+    if(rs[0].u.fl<3 || rs[0].u.dong){
+      const as=rs.filter(r=>AREA[r.u.ho]);
+      if(as.length){
+        tbl += `<div class="tblwrap"><table><tr><th>호실</th><th>전용(㎡)</th><th>공용(㎡)</th><th>기계·전기(㎡)</th><th>주차배분(㎡)</th><th>계약(㎡)</th><th>대지지분(㎡)</th><th>전용률</th></tr>`+
+          as.map(r=>{const a=AREA[r.u.ho], park=(a.tot-a.ex-a.com-a.mech);
+            return `<tr><td>${r.u.dong?'별동 ':''}${r.u.ho}</td><td>${a.ex.toFixed(2)}</td><td>${a.com.toFixed(2)}</td><td>${a.mech.toFixed(2)}</td><td>${park.toFixed(2)}</td><td>${a.tot.toFixed(2)}</td><td>${a.land.toFixed(2)}</td><td>${(a.ex/a.tot*100).toFixed(1)}%</td></tr>`;}).join('')+
+          `</table></div>`;
+      }
+    }
+  }
+
+  $('detail').innerHTML = `
+    <div class="dhead"><h3 class="serif">${title}</h3><span class="kind">${kind}</span></div>
+    <div class="dchips">${chips}</div>
+    <div class="planbox" onclick="lbOpen('mangrove-plans/${img}.png')">
+      <img src="mangrove-plans/${img}.png" alt="${title} 평면도" loading="lazy">
+      <span class="zoom">${isAx?'별동 입면도':'평면도'} 1/100 · 클릭 확대</span>
+    </div>${tbl}`;
+}
+
+function renderAnnex(R){
+  const ax=R.filter(r=>r.u.dong);
+  const axSum=ax.reduce((s,r)=>s+r.applied,0);
+  const axNoi=ax.reduce((s,r)=>s+r.noiMo,0);
+  $('axTbl').innerHTML = `<tr><th>호실</th><th>층</th><th>전유(py)</th><th>계약(㎡)</th><th>거래사례(억)</th><th>수익환원(억)</th><th>적용가(억)</th></tr>`+
+    ax.map(r=>{const a=AREA[r.u.ho]||{};
+      return `<tr><td>별동 ${r.u.ho}</td><td>${r.u.fl}F</td><td>${r.u.py.toFixed(2)}</td><td>${a.tot?a.tot.toFixed(1):'-'}</td><td>${eok(r.M,2)}</td><td>${eok(r.R,2)}</td><td><b>${eok(r.applied,2)}</b></td></tr>`;}).join('')+
+    `<tr class="tot"><td colspan="2">분할매각가</td><td>${ax.reduce((s,r)=>s+r.u.py,0).toFixed(1)}</td><td></td><td>${eok(ax.reduce((s,r)=>s+r.M,0),2)}</td><td>${eok(ax.reduce((s,r)=>s+r.R,0),2)}</td><td>${eok(axSum,2)}</td></tr>`;
+
+  const int0 = CUR.sen*CUR.rSen/12 + CUR.jun*CUR.rJun/12;
+  const sen1 = Math.max(0,CUR.sen-axSum);
+  const int1 = sen1*CUR.rSen/12 + CUR.jun*CUR.rJun/12;
+  const noi0 = CUR.noiMo*1e6, noi1 = noi0-axNoi;
+  $('axFx').innerHTML = `<tr><th>매각대금 선순위 상환 가정</th><th>현재</th><th>별동 매각 후</th></tr>
+    <tr><td>선순위 잔액</td><td>${eok(CUR.sen,0)}억 @6.0%</td><td>${eok(sen1,1)}억</td></tr>
+    <tr><td>후순위 잔액</td><td>${eok(CUR.jun,0)}억 @8.0%</td><td>${eok(CUR.jun,0)}억</td></tr>
+    <tr><td>월 이자</td><td>${(int0/1e6).toFixed(1)}백만</td><td>${(int1/1e6).toFixed(1)}백만 <span class="pos">(−${((int0-int1)/1e6).toFixed(1)})</span></td></tr>
+    <tr><td>월 NOI (별동분 차감)</td><td>${(noi0/1e6).toFixed(1)}백만</td><td>${(noi1/1e6).toFixed(1)}백만</td></tr>
+    <tr class="tot"><td>DSCR</td><td class="${noi0/int0>=1?'pos':'neg'}">${(noi0/int0).toFixed(2)}</td><td class="${noi1/int1>=1?'pos':'neg'}">${(noi1/int1).toFixed(2)}</td></tr>`;
+
+  const d0=noi0/int0, d1=noi1/int1;
+  const dscrTxt = (d1-d0)>=0.005
+    ? `DSCR이 <b>${d0.toFixed(2)} → ${d1.toFixed(2)}</b>로 개선됩니다`
+    : `다만 대출 규모 대비 매각대금이 작아 DSCR 개선 효과는 <b>${d0.toFixed(3)} → ${d1.toFixed(3)}</b> 수준에 그칩니다`;
+  $('axNote').innerHTML = `별동만 <b>${eok(axSum,1)}억</b>에 우선 매각하면 이자 부담이 월 <b>${((int0-int1)/1e6).toFixed(1)}백만</b> 줄어듭니다. ${dscrTxt}.
+    규모가 작아 <b>개인·법인 꼬마빌딩 수요층 대상 asset deal</b>이 가능하고, 본건 임대주택 LTV 규제·종부세 이슈와 무관하게 접근할 수 있는 물건입니다.
+    단, 대주단 담보 일부해지 동의와 매각대금 상환 조건 협의가 선행되어야 합니다.`;
+}
+
+function renderGift(R){
+  const allGaps = [];
+  for(let f=3;f<=13;f++) gaps(f).forEach(h=>allGaps.push({f,h}));
+  const per = {};
+  allGaps.forEach(g=>{ per[g.f]=(per[g.f]||[]); per[g.f].push(g.h); });
+  $('giftTbl').innerHTML = `<tr><th>층</th><th>결번 호실 (기부채납 추정)</th><th>결번 수</th></tr>`+
+    Object.keys(per).sort((a,b)=>b-a).map(f=>`<tr><td>${f}F</td><td style="text-align:left" class="mono">${per[f].join(' · ')}</td><td>${per[f].length}</td></tr>`).join('')+
+    `<tr class="tot"><td colspan="2">결번 합계 (기부채납 15세대 + 결번 2)</td><td>${allGaps.length}</td></tr>`;
+}
+
+/* ---- lightbox ---- */
+window.lbOpen = src => { $('lbImg').src=src; $('lb').classList.add('on'); };
+
+/* ---- wiring ---- */
+function syncInputs(){
+  ['g','capRes','capRet','adj'].forEach(k=>$(k).value=S[k]);
+  [['nResBig'],['nResSmall'],['nF1'],['nF2'],['nB1']].forEach(([k])=>$(k).value=Math.round(S[k]));
+  [['bRes'],['bF1'],['bF2'],['bB1']].forEach(([k])=>$(k).value=+S[k].toFixed(2));
+}
+['g','capRes','capRet','adj'].forEach(k=>$(k).addEventListener('input',e=>{S[k]=+e.target.value;render();}));
+['nResBig','nResSmall','nF1','nF2','nB1','bRes','bF1','bF2','bB1'].forEach(k=>
+  $(k).addEventListener('input',e=>{const v=+e.target.value;if(isFinite(v)&&v>0){S[k]=v;render();}}));
+document.querySelectorAll('#segRes button').forEach(b=>b.onclick=()=>{S.resM=b.dataset.v;render();});
+document.querySelectorAll('#segRet button').forEach(b=>b.onclick=()=>{S.retM=b.dataset.v;render();});
+$('reset').onclick=()=>{S={...DEF};syncInputs();render();};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')$('lb').classList.remove('on');});
+
+syncInputs(); render();
+</script>
+</body>
+</html>

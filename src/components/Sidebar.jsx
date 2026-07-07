@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { IconHome, IconStatus, IconSchedule, IconCalendar, IconNote, IconSettings } from './icons.jsx'
 
 const NAV = [
@@ -19,7 +20,19 @@ function IconBuilding() {
   )
 }
 
-const LINKS = [
+function IconStack() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2 2 7l10 5 10-5-10-5z" />
+      <path d="M2 12l10 5 10-5" />
+      <path d="M2 17l10 5 10-5" />
+    </svg>
+  )
+}
+
+// 프로젝트 페이지 — 대시보드 안에서 오버레이(iframe)로 바로 열린다
+const PROJECTS = [
+  { href: '/mangrove-building.html', label: '건물 시뮬레이션', Icon: IconStack },
   { href: '/mangrove-sim.html', label: '분양 시뮬레이션', Icon: IconBuilding },
 ]
 
@@ -39,7 +52,77 @@ function navItemStyle(active) {
   }
 }
 
+function ProjectOverlay({ project, onClose }) {
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 250,
+        right: 0,
+        bottom: 0,
+        zIndex: 80,
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'var(--bg)',
+        borderLeft: '1px solid var(--line)',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '8px 16px',
+          borderBottom: '1px solid var(--line)',
+          background: 'var(--bg2)',
+        }}
+      >
+        <span style={{ fontSize: 13, fontWeight: 600 }}>{project.label}</span>
+        <span style={{ font: "500 10px 'JetBrains Mono'", color: 'var(--text-3)', letterSpacing: '.06em' }}>
+          CONFIDENTIAL · 내부용
+        </span>
+        <div style={{ flex: 1 }} />
+        <a
+          href={project.href}
+          target="_blank"
+          rel="noreferrer"
+          style={{ fontSize: 12, color: 'var(--text-3)', textDecoration: 'none' }}
+        >
+          새 탭에서 열기 ↗
+        </a>
+        <button
+          onClick={onClose}
+          style={{
+            border: '1px solid var(--line)',
+            background: 'transparent',
+            color: 'var(--text-2)',
+            borderRadius: 8,
+            padding: '3px 10px',
+            fontSize: 12,
+            cursor: 'pointer',
+          }}
+        >
+          닫기 ✕
+        </button>
+      </div>
+      <iframe
+        src={project.href}
+        title={project.label}
+        style={{ flex: 1, width: '100%', border: 0, background: '#0c1322' }}
+      />
+    </div>
+  )
+}
+
 export default function Sidebar({ tab, onNavigate, onOpenSettings }) {
+  const [proj, setProj] = useState(null)
+
+  const navigate = (key) => {
+    setProj(null)
+    onNavigate(key)
+  }
+
   return (
     <aside
       style={{
@@ -81,7 +164,7 @@ export default function Sidebar({ tab, onNavigate, onOpenSettings }) {
       </div>
       <nav style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
         {NAV.map(({ key, label, Icon }) => (
-          <div key={key} onClick={() => onNavigate(key)} style={navItemStyle(tab === key)}>
+          <div key={key} onClick={() => navigate(key)} style={navItemStyle(!proj && tab === key)}>
             <Icon />
             <span>{label}</span>
           </div>
@@ -92,11 +175,11 @@ export default function Sidebar({ tab, onNavigate, onOpenSettings }) {
         프로젝트
       </div>
       <nav style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-        {LINKS.map(({ href, label, Icon }) => (
-          <a key={href} href={href} target="_blank" rel="noreferrer" style={{ ...navItemStyle(false), textDecoration: 'none' }}>
-            <Icon />
-            <span>{label}</span>
-          </a>
+        {PROJECTS.map((p) => (
+          <div key={p.href} onClick={() => setProj(p)} style={navItemStyle(proj?.href === p.href)}>
+            <p.Icon />
+            <span>{p.label}</span>
+          </div>
         ))}
       </nav>
 
@@ -140,6 +223,8 @@ export default function Sidebar({ tab, onNavigate, onOpenSettings }) {
           <div style={{ font: "500 10px 'JetBrains Mono'", color: 'var(--text-3)' }}>온라인</div>
         </div>
       </div>
+
+      {proj && <ProjectOverlay project={proj} onClose={() => setProj(null)} />}
     </aside>
   )
 }
