@@ -29,13 +29,41 @@ function IconChevron({ dir }) {
   )
 }
 
+function IconPulse() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 12h4l3-8 4 16 3-8h4" />
+    </svg>
+  )
+}
+
 // 프로젝트 페이지 — 대시보드 안에서 오버레이(iframe)로 바로 열린다
 const PROJECTS = [
-  { href: '/mangrove-building.html', label: '맹그로브 신촌', Icon: IconStack },
+  { href: '/mangrove-building.html', label: '맹그로브 신촌', Icon: IconStack, tag: 'CONFIDENTIAL · 내부용' },
+  { href: '/lovelab-followers.html', label: '팔로워 트래커', Icon: IconPulse, tag: '연애실험실 · 인스타' },
 ]
 
 const RAIL = 64
 const FULL = 250
+
+// 드래그 앤 드롭 순서 변경 — 저장된 순서(localStorage, 콤마 구분 키) 우선, 새 항목은 뒤에 붙는다
+function useOrdered(storageKey, items, keyOf) {
+  const [orderStr, setOrderStr] = useLocalStorage(storageKey, '')
+  const saved = orderStr ? orderStr.split(',') : []
+  const ordered = [
+    ...saved.map((k) => items.find((it) => keyOf(it) === k)).filter(Boolean),
+    ...items.filter((it) => !saved.includes(keyOf(it))),
+  ]
+  const move = (fromKey, toKey) => {
+    const keys = ordered.map(keyOf)
+    const from = keys.indexOf(fromKey)
+    const to = keys.indexOf(toKey)
+    if (from < 0 || to < 0 || from === to) return
+    keys.splice(to, 0, keys.splice(from, 1)[0])
+    setOrderStr(keys.join(','))
+  }
+  return [ordered, move]
+}
 
 function navItemStyle(active, slim) {
   return {
@@ -82,7 +110,7 @@ function ProjectOverlay({ project, left, onClose }) {
       >
         <span style={{ fontSize: 13, fontWeight: 600 }}>{project.label}</span>
         <span style={{ font: "500 10px 'JetBrains Mono'", color: 'var(--text-3)', letterSpacing: '.06em' }}>
-          CONFIDENTIAL · 내부용
+          {project.tag}
         </span>
         <div style={{ flex: 1 }} />
         <a
@@ -120,8 +148,26 @@ function ProjectOverlay({ project, left, onClose }) {
 export default function Sidebar({ tab, onNavigate, onOpenSettings }) {
   const [proj, setProj] = useState(null)
   const [sideOpen, setSideOpen] = useLocalStorage('hy_sidebar', 'open')
+  const [drag, setDrag] = useState(null) // {list, key} — 드래그 중인 탭
+  const [navItems, moveNav] = useOrdered('hy_nav_order', NAV, (it) => it.key)
+  const [projItems, moveProj] = useOrdered('hy_proj_order', PROJECTS, (it) => it.href)
   const slim = sideOpen !== 'open'
   const width = slim ? RAIL : FULL
+
+  const dragProps = (list, key, move) => ({
+    draggable: true,
+    onDragStart: (e) => {
+      setDrag({ list, key })
+      e.dataTransfer.effectAllowed = 'move'
+    },
+    onDragOver: (e) => {
+      if (drag && drag.list === list) {
+        e.preventDefault()
+        if (drag.key !== key) move(drag.key, key)
+      }
+    },
+    onDragEnd: () => setDrag(null),
+  })
 
   const navigate = (key) => {
     setProj(null)
@@ -203,8 +249,14 @@ export default function Sidebar({ tab, onNavigate, onOpenSettings }) {
 
       {groupLabel('메뉴')}
       <nav style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-        {NAV.map(({ key, label, Icon }) => (
-          <div key={key} onClick={() => navigate(key)} title={slim ? label : undefined} style={navItemStyle(!proj && tab === key, slim)}>
+        {navItems.map(({ key, label, Icon }) => (
+          <div
+            key={key}
+            onClick={() => navigate(key)}
+            title={slim ? label : undefined}
+            style={{ ...navItemStyle(!proj && tab === key, slim), opacity: drag?.list === 'nav' && drag.key === key ? 0.45 : 1 }}
+            {...dragProps('nav', key, moveNav)}
+          >
             <Icon />
             {!slim && <span>{label}</span>}
           </div>
@@ -213,8 +265,14 @@ export default function Sidebar({ tab, onNavigate, onOpenSettings }) {
 
       {groupLabel('프로젝트')}
       <nav style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-        {PROJECTS.map((p) => (
-          <div key={p.href} onClick={() => setProj(p)} title={slim ? p.label : undefined} style={navItemStyle(proj?.href === p.href, slim)}>
+        {projItems.map((p) => (
+          <div
+            key={p.href}
+            onClick={() => setProj(p)}
+            title={slim ? p.label : undefined}
+            style={{ ...navItemStyle(proj?.href === p.href, slim), opacity: drag?.list === 'proj' && drag.key === p.href ? 0.45 : 1 }}
+            {...dragProps('proj', p.href, moveProj)}
+          >
             <p.Icon />
             {!slim && <span>{p.label}</span>}
           </div>
