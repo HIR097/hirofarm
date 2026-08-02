@@ -13,7 +13,6 @@ window.LOVELAB_DATA = {
     { handle: "1997.0127",   name: "정하윤", show: "lovelab", me: true,  initial: 0,     approx: false, note: "하트 왕게임 · 2026-08-02 등록 시점 비공개/팔로워 0에서 시작" },
     { handle: "__3.e7",      name: "강경호", show: "lovelab", initial: 56000, approx: true  },
     { handle: "0616gy",      name: "박가연", show: "lovelab", initial: 20000, approx: true  },
-    { handle: "da_l_in",     name: "문채린", show: "lovelab", initial: 8731,  approx: false },
     { handle: "xogunnnn",    name: "박도건", show: "lovelab", initial: 3994,  approx: false },
     { handle: "a_ct_p",      name: "박정민", show: "lovelab", initial: 7571,  approx: false },
     { handle: "yrimirey",    name: "이예림", show: "lovelab", initial: 7002,  approx: false },
@@ -35,8 +34,12 @@ window.LOVELAB_DATA = {
     { handle: "dr_jin0",     name: "이진영", show: "noona",   initial: 1936,  approx: false },
     { handle: "pairanisblue",name: "유진우", show: "noona",   initial: 4362,  approx: false },
     { handle: "jung__won.k", name: "김정원", show: "noona",   initial: 76000, approx: true  },
-    { handle: "le.siwon",    name: "이시원", show: "noona",   initial: 3123,  approx: false },
     { handle: "yoonso_.lee", name: "이윤소", show: "noona",   initial: 2238,  approx: false, note: "이후 별도 캡처 시점 약 1.3만" },
+    // 자동 수집 불가로 제외 (2026-08-02):
+    //   da_l_in  문채린 (연실)  — initial 8731,  마지막 수집 2026-08-02 9310
+    //   le.siwon 이시원 (누난2) — initial 3123,  마지막 수집 2026-08-02 15198
+    // 인스타 web_profile_info API가 두 계정에만 400을 반환한다(계정 설정 이슈).
+    // 지금까지의 수치는 snapshots 에 그대로 남아 있으므로, 위 두 줄을 되살리면 이력까지 복구된다.
   ],
   snapshots: {
     "2026-08-01": {
