@@ -1,4 +1,5 @@
-import { IconSearch, IconSun, IconMoon } from './icons.jsx'
+import { IconSearch, IconSun, IconMoon, WeatherIcon } from './icons.jsx'
+import { useWeather } from '../hooks/useWeather.js'
 
 const pill = {
   display: 'flex',
@@ -19,6 +20,8 @@ function IconMenu({ size = 20 }) {
 
 export default function Header({ title, sub, isDark, onToggleTheme, mobile, onOpenMenu }) {
   const round = mobile ? 36 : 42
+  // 서울 실황 온도 — 로딩/실패 시 알약 자체를 숨기지 않고 마지막 더미 값 표시
+  const weather = useWeather()
 
   return (
     <header
@@ -80,8 +83,8 @@ export default function Header({ title, sub, isDark, onToggleTheme, mobile, onOp
               <span style={{ fontSize: 13, color: 'var(--text-3)' }}>검색…</span>
             </div>
             <div style={{ ...pill, gap: 8, padding: '9px 14px', color: 'var(--text)' }}>
-              <IconSun size={16} />
-              <span style={{ font: "600 13px 'JetBrains Mono'" }}>23°</span>
+              {weather ? <WeatherIcon kind={weather.current.icon} size={16} /> : <IconSun size={16} />}
+              <span style={{ font: "600 13px 'JetBrains Mono'" }}>{weather ? `${weather.current.temp}°` : '—°'}</span>
               <span style={{ fontSize: 12, color: 'var(--text-3)' }}>서울</span>
             </div>
           </>

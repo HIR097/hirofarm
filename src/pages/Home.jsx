@@ -12,6 +12,7 @@ import {
 } from '../components/ui.jsx'
 import TodoList from '../components/TodoList.jsx'
 import { useIsMobile } from '../hooks/useIsMobile.js'
+import { useWeather } from '../hooks/useWeather.js'
 
 // 오늘 날짜 라벨 — 매일 자동 갱신
 const _now = new Date()
@@ -79,7 +80,7 @@ function WeekCalendar() {
 }
 
 // ─────────── Variant A : Bento ───────────
-function VariantA({ todos, onToggle, done, total }) {
+function VariantA({ todos, onToggle, done, total, weather }) {
   const isMobile = useIsMobile()
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18, ...fade }}>
@@ -153,7 +154,7 @@ function VariantA({ todos, onToggle, done, total }) {
           </Card>
           <Card style={{ padding: 20 }}>
             <CardHead title="시간대별 날씨" size={15} />
-            <WeatherStrip weather={WEATHER} />
+            <WeatherStrip weather={weather} />
           </Card>
         </div>
       </div>
@@ -173,7 +174,7 @@ function VariantA({ todos, onToggle, done, total }) {
 }
 
 // ─────────── Variant B : 3 Column ───────────
-function VariantB({ todos, onToggle, done, total }) {
+function VariantB({ todos, onToggle, done, total, weather }) {
   const isMobile = useIsMobile()
   return (
     <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1.1fr 1fr', gap: 18, alignItems: 'start', ...fade }}>
@@ -218,7 +219,7 @@ function VariantB({ todos, onToggle, done, total }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
         <Card style={{ padding: 20 }}>
           <CardHead title="시간대별 날씨" size={15} />
-          <WeatherStrip weather={WEATHER} iconSize={18} gap={5} />
+          <WeatherStrip weather={weather} iconSize={18} gap={5} />
         </Card>
         <Card style={{ padding: 20 }}>
           <CardHead title="습관 트래커" size={15} mb={15} />
@@ -250,7 +251,7 @@ function VariantB({ todos, onToggle, done, total }) {
 }
 
 // ─────────── Variant C : Focus ───────────
-function VariantC({ todos, onToggle, done, total, left }) {
+function VariantC({ todos, onToggle, done, total, left, weather }) {
   const isMobile = useIsMobile()
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18, ...fade }}>
@@ -295,7 +296,7 @@ function VariantC({ todos, onToggle, done, total, left }) {
         </Card>
         <Card style={{ padding: 20 }}>
           <CardHead title="시간대별 날씨" size={15} />
-          <WeatherStrip weather={WEATHER} iconSize={18} gap={5} />
+          <WeatherStrip weather={weather} iconSize={18} gap={5} />
         </Card>
         <Card style={{ padding: 20 }}>
           <CardHead title="최근 활동" size={15} />
@@ -315,6 +316,9 @@ export default function Home({ homeVar, setHomeVar, todos, onToggle }) {
   const done = todos.filter((t) => t.done).length
   const total = todos.length
   const left = total - done
+  // 실제 서울 날씨 — 로딩/실패 시 더미(WEATHER)로 폴백
+  const live = useWeather()
+  const weather = live?.hours || WEATHER
 
   return (
     <>
@@ -329,9 +333,9 @@ export default function Home({ homeVar, setHomeVar, todos, onToggle }) {
         </div>
       </div>
 
-      {homeVar === 'A' && <VariantA todos={todos} onToggle={onToggle} done={done} total={total} />}
-      {homeVar === 'B' && <VariantB todos={todos} onToggle={onToggle} done={done} total={total} />}
-      {homeVar === 'C' && <VariantC todos={todos} onToggle={onToggle} done={done} total={total} left={left} />}
+      {homeVar === 'A' && <VariantA todos={todos} onToggle={onToggle} done={done} total={total} weather={weather} />}
+      {homeVar === 'B' && <VariantB todos={todos} onToggle={onToggle} done={done} total={total} weather={weather} />}
+      {homeVar === 'C' && <VariantC todos={todos} onToggle={onToggle} done={done} total={total} left={left} weather={weather} />}
     </>
   )
 }
