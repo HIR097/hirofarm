@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { useLocalStorage } from '../hooks/useLocalStorage.js'
-import { IconHome, IconStatus, IconSchedule, IconCalendar, IconNote, IconSettings } from './icons.jsx'
+import { IconHome, IconStatus, IconSchedule, IconCalendar, IconNote, IconFlame, IconSettings } from './icons.jsx'
 
 const NAV = [
   { key: 'home', label: '메인', Icon: IconHome },
   { key: 'status', label: '업무현황', Icon: IconStatus },
   { key: 'fund', label: '펀드 연간일정', Icon: IconSchedule },
   { key: 'calendar', label: '달력', Icon: IconCalendar },
+  { key: 'calorie', label: '칼로리', Icon: IconFlame },
   { key: 'scratch', label: '낙서장', Icon: IconNote },
 ]
 

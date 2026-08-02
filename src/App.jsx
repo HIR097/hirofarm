@@ -9,6 +9,7 @@ import Home from './pages/Home.jsx'
 import WorkStatus from './pages/WorkStatus.jsx'
 import FundSchedule from './pages/FundSchedule.jsx'
 import Calendar from './pages/Calendar.jsx'
+import Calories from './pages/Calories.jsx'
 import Scratchpad from './pages/Scratchpad.jsx'
 
 export default function App() {
@@ -54,6 +55,7 @@ export default function App() {
           {tab === 'status' && <WorkStatus />}
           {tab === 'fund' && <FundSchedule />}
           {tab === 'calendar' && <Calendar />}
+          {tab === 'calorie' && <Calories />}
           {tab === 'scratch' && <Scratchpad />}
         </div>
       </main>

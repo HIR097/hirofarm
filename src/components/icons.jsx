@@ -137,6 +137,15 @@ export function IconNote({ size = 20 }) {
   )
 }
 
+export function IconFlame({ size = 20 }) {
+  // 칼로리: 불꽃
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <path d="M12 22a7 7 0 0 0 7-7c0-5-4-6-4-10-3 1.5-4.5 4-4.5 6.5C10.5 10 9 9 9 7c-1.6 1.7-2.5 4-2.5 6a5.5 5.5 0 0 0 5.5 9z" />
+    </svg>
+  )
+}
+
 export function IconCheck({ size = 13, stroke = 'var(--accent-text)' }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">

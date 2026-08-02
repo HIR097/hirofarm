@@ -11,6 +11,7 @@ export const PAGE_TITLES = {
   status: ['업무현황', '자산별 업무 · 일정 · 긴급 관리'],
   fund: ['펀드 연간일정', '월별 반복 루틴 스케줄'],
   calendar: ['달력', 'Outlook 연동 예정 · 일정 보기'],
+  calorie: ['칼로리', '당일 섭취량 기록 · 목표 대비 관리'],
   scratch: ['낙서장', '자유 메모'],
 }
 
