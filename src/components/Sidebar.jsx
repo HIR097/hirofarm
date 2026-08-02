@@ -146,14 +146,15 @@ function ProjectOverlay({ project, left, onClose }) {
   )
 }
 
-export default function Sidebar({ tab, onNavigate, onOpenSettings }) {
+export default function Sidebar({ tab, onNavigate, onOpenSettings, mobile, drawerOpen, onCloseDrawer }) {
   const [proj, setProj] = useState(null)
   const [sideOpen, setSideOpen] = useLocalStorage('hy_sidebar', 'open')
   const [drag, setDrag] = useState(null) // {list, key} — 드래그 중인 탭
   const [navItems, moveNav] = useOrdered('hy_nav_order', NAV, (it) => it.key)
   const [projItems, moveProj] = useOrdered('hy_proj_order', PROJECTS, (it) => it.href)
-  const slim = sideOpen !== 'open'
-  const width = slim ? RAIL : FULL
+  // 모바일에서는 접기 상태를 무시하고 항상 펼친 드로어로 뜬다
+  const slim = mobile ? false : sideOpen !== 'open'
+  const width = mobile ? 264 : slim ? RAIL : FULL
 
   const dragProps = (list, key, move) => ({
     draggable: true,
@@ -173,6 +174,7 @@ export default function Sidebar({ tab, onNavigate, onOpenSettings }) {
   const navigate = (key) => {
     setProj(null)
     onNavigate(key)
+    if (mobile) onCloseDrawer?.()
   }
 
   const groupLabel = (text) =>
@@ -194,15 +196,30 @@ export default function Sidebar({ tab, onNavigate, onOpenSettings }) {
         padding: slim ? '24px 10px' : '24px 18px',
         borderRight: '1px solid var(--line)',
         background: 'var(--bg2)',
-        transition: 'width .2s, padding .2s',
+        transition: mobile ? 'left .22s ease' : 'width .2s, padding .2s',
+        // 모바일: 화면 밖에서 밀려 들어오는 드로어.
+        // transform 대신 left 로 움직인다 — transform 을 쓰면 내부의 position:fixed
+        // 프로젝트 오버레이가 이 요소를 기준으로 잡혀 같이 화면 밖으로 밀려난다.
+        ...(mobile
+          ? {
+              position: 'fixed',
+              top: 0,
+              bottom: 0,
+              left: drawerOpen ? 0 : -(width + 24),
+              zIndex: 75,
+              overflowY: 'auto',
+              boxShadow: drawerOpen ? '0 0 40px rgba(0,0,0,.35)' : 'none',
+            }
+          : null),
       }}
     >
-      {/* 접기 버튼 — 펼침 상태에서만. 슬림 상태의 펼치기 버튼은 하단에 있다 */}
+      {/* 접기 버튼 — 펼침 상태에서만. 슬림 상태의 펼치기 버튼은 하단에 있다.
+          모바일에서는 드로어 닫기 버튼으로 쓴다 */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', padding: slim ? '4px 0 10px' : '4px 8px 14px' }}>
         {!slim && (
           <button
-            onClick={() => setSideOpen('closed')}
-            title="사이드바 접기"
+            onClick={() => (mobile ? onCloseDrawer?.() : setSideOpen('closed'))}
+            title={mobile ? '메뉴 닫기' : '사이드바 접기'}
             style={{
               border: '1px solid var(--line)',
               background: 'transparent',
@@ -243,7 +260,10 @@ export default function Sidebar({ tab, onNavigate, onOpenSettings }) {
         {projItems.map((p) => (
           <div
             key={p.href}
-            onClick={() => setProj(p)}
+            onClick={() => {
+              setProj(p)
+              if (mobile) onCloseDrawer?.()
+            }}
             title={slim ? p.label : undefined}
             style={{ ...navItemStyle(proj?.href === p.href, slim), opacity: drag?.list === 'proj' && drag.key === p.href ? 0.45 : 1 }}
             {...dragProps('proj', p.href, moveProj)}
@@ -256,7 +276,7 @@ export default function Sidebar({ tab, onNavigate, onOpenSettings }) {
 
       <div style={{ flex: 1 }} />
 
-      {slim && (
+      {slim && !mobile && (
         <div onClick={() => setSideOpen('open')} title="사이드바 펼치기" style={navItemStyle(false, true)}>
           <IconChevron dir="right" />
         </div>
@@ -302,7 +322,7 @@ export default function Sidebar({ tab, onNavigate, onOpenSettings }) {
         </div>
       )}
 
-      {proj && <ProjectOverlay project={proj} left={width} onClose={() => setProj(null)} />}
+      {proj && <ProjectOverlay project={proj} left={mobile ? 0 : width} onClose={() => setProj(null)} />}
     </aside>
   )
 }

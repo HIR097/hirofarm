@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { buildCssVars } from './theme.js'
 import { useLocalStorage } from './hooks/useLocalStorage.js'
+import { useIsMobile } from './hooks/useIsMobile.js'
 import { PAGE_TITLES, INITIAL_TODOS } from './data.js'
 import Sidebar from './components/Sidebar.jsx'
 import Header from './components/Header.jsx'
@@ -21,8 +22,10 @@ export default function App() {
   const [tab, setTab] = useState('home')
   const [homeVar, setHomeVar] = useState('A')
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false) // 모바일 사이드바
   const [todos, setTodos] = useState(INITIAL_TODOS)
 
+  const isMobile = useIsMobile()
   const isDark = theme === 'dark'
   const toggleTheme = () => setTheme(isDark ? 'light' : 'dark')
   const toggleTodo = (i) =>
@@ -35,7 +38,7 @@ export default function App() {
       style={{
         ...buildCssVars(theme, accent),
         display: 'flex',
-        height: '100vh',
+        height: '100%',
         width: '100%',
         background: 'var(--bg)',
         fontFamily: "'Space Grotesk', -apple-system, Helvetica, Arial, sans-serif",
@@ -43,12 +46,41 @@ export default function App() {
         overflow: 'hidden',
       }}
     >
-      <Sidebar tab={tab} onNavigate={setTab} onOpenSettings={() => setSettingsOpen(true)} />
+      <Sidebar
+        tab={tab}
+        onNavigate={setTab}
+        onOpenSettings={() => setSettingsOpen(true)}
+        mobile={isMobile}
+        drawerOpen={drawerOpen}
+        onCloseDrawer={() => setDrawerOpen(false)}
+      />
+
+      {/* 모바일 드로어 뒤 배경 */}
+      {isMobile && drawerOpen && (
+        <div
+          onClick={() => setDrawerOpen(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', zIndex: 70 }}
+        />
+      )}
 
       <main style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <Header title={title} sub={sub} isDark={isDark} onToggleTheme={toggleTheme} />
+        <Header
+          title={title}
+          sub={sub}
+          isDark={isDark}
+          onToggleTheme={toggleTheme}
+          mobile={isMobile}
+          onOpenMenu={() => setDrawerOpen(true)}
+        />
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '6px 28px 36px' }}>
+        <div
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            padding: isMobile ? '4px 14px 32px' : '6px 28px 36px',
+          }}
+        >
           {tab === 'home' && (
             <Home homeVar={homeVar} setHomeVar={setHomeVar} todos={todos} onToggle={toggleTodo} />
           )}

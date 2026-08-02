@@ -8,6 +8,16 @@ body {
 }
 #root {
   height: 100vh;
+  /* 모바일 브라우저 주소창 때문에 100vh가 잘려서 dvh 우선 */
+  height: 100dvh;
+}
+/* 모바일에서 입력창 포커스 시 iOS가 화면을 확대하는 것 방지 */
+@media (max-width: 760px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
 }
 ::-webkit-scrollbar {
   width: 9px;
