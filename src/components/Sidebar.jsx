@@ -197,54 +197,28 @@ export default function Sidebar({ tab, onNavigate, onOpenSettings }) {
         transition: 'width .2s, padding .2s',
       }}
     >
-      {/* Brand + collapse toggle */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: slim ? '4px 0 18px' : '4px 8px 22px', justifyContent: slim ? 'center' : 'flex-start' }}>
-        <div
-          onClick={slim ? () => setSideOpen('open') : undefined}
-          title={slim ? '사이드바 펼치기' : undefined}
-          style={{
-            width: 34,
-            height: 34,
-            borderRadius: 11,
-            background: 'var(--accent)',
-            color: 'var(--accent-text)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 700,
-            fontSize: 16,
-            cursor: slim ? 'pointer' : 'default',
-            flex: 'none',
-          }}
-        >
-          하
-        </div>
+      {/* 접기 버튼 — 펼침 상태에서만. 슬림 상태의 펼치기 버튼은 하단에 있다 */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', padding: slim ? '4px 0 10px' : '4px 8px 14px' }}>
         {!slim && (
-          <>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: '-.01em' }}>정하윤</div>
-              <div style={{ font: "500 10px 'JetBrains Mono'", color: 'var(--text-3)', letterSpacing: '.04em' }}>LIFE OS</div>
-            </div>
-            <button
-              onClick={() => setSideOpen('closed')}
-              title="사이드바 접기"
-              style={{
-                border: '1px solid var(--line)',
-                background: 'transparent',
-                color: 'var(--text-3)',
-                borderRadius: 9,
-                width: 26,
-                height: 26,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                flex: 'none',
-              }}
-            >
-              <IconChevron dir="left" />
-            </button>
-          </>
+          <button
+            onClick={() => setSideOpen('closed')}
+            title="사이드바 접기"
+            style={{
+              border: '1px solid var(--line)',
+              background: 'transparent',
+              color: 'var(--text-3)',
+              borderRadius: 9,
+              width: 26,
+              height: 26,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              flex: 'none',
+            }}
+          >
+            <IconChevron dir="left" />
+          </button>
         )}
       </div>
 
