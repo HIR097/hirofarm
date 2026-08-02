@@ -49,15 +49,26 @@ def main():
     if dry or not got:
         print("dry run" if dry else "수집 실패 — 파일 미변경")
         return
-    entry = '    "%s": { %s },\n' % (
-        today, ", ".join(f'"{h}": {v}' for h, v in got.items()))
-    if f'"{today}"' in src:  # 같은 날 재실행 → 교체
-        src = re.sub(r'    "%s": \{[^}]*\},\n' % today, entry, src)
+    block = re.search(r'    "%s": \{([^}]*)\},\n' % today, src)
+    merged = {}
+    if block:  # 같은 날 재실행 → 기존 값 보존 후 새 값만 덮어쓰기
+        merged.update({h: int(v) for h, v in
+                       re.findall(r'"([^"]+)":\s*(\d+)', block.group(1))})
+    kept = len(set(merged) - set(got))
+    merged.update(got)
+
+    body = [f'"{h}": {v}' for h, v in merged.items()]
+    lines = "".join("      %s,\n" % ", ".join(body[i:i + 5])
+                    for i in range(0, len(body), 5))
+    entry = '    "%s": {\n%s    },\n' % (today, lines)
+
+    if block:
+        src = src[:block.start()] + entry + src[block.end():]
     else:  # snapshots 블록 끝("  },\n};" 직전)에 삽입
         idx = src.rfind("  },\n};")
         src = src[:idx] + entry + src[idx:]
     DATA.write_text(src, encoding="utf-8")
-    print(f"기록 완료: {today} ({len(got)}/{len(handles)}명)")
+    print(f"기록 완료: {today} (수집 {len(got)}/{len(handles)}명, 기존 값 유지 {kept}명)")
 
 
 if __name__ == "__main__":
