@@ -131,7 +131,9 @@ footer{margin-top:38px;font-size:11px;color:var(--text-3);line-height:1.7}
 </div>
 <div id="tip"></div>
 
-<script src="lovelab-data.js"></script>
+<!-- 데이터는 항상 최신을 읽어야 하므로 캐시 무효화 쿼리를 붙여 동기 로드한다.
+     (일반 <script src="lovelab-data.js"> 는 브라우저가 캐시해서 새 스냅샷이 바로 안 보인다) -->
+<script>document.write('<script src="lovelab-data.js?t=' + Date.now() + '"><\/script>')</script>
 <script>
 /* ---- hirofarm 테마 연동 (hy_theme / hy_accent) ---- */
 const ACC = {mono:null,
