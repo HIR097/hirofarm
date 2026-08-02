@@ -11,6 +11,7 @@ import {
   ActivityTimeline,
 } from '../components/ui.jsx'
 import TodoList from '../components/TodoList.jsx'
+import { useIsMobile } from '../hooks/useIsMobile.js'
 
 const DATE_LABEL = '2026 · 06 · 23 · 화'
 const fade = { animation: 'hyFade .4s ease' }
@@ -30,11 +31,13 @@ function pillStyle(active) {
 }
 
 // Month-grid week calendar with ring for "today" (shared by A and C).
+// 모바일에서는 7칸이 안 들어가므로 가로 스크롤로 보여준다.
 function WeekCalendar() {
+  const isMobile = useIsMobile()
   return (
-    <div style={{ display: 'flex', gap: 7 }}>
+    <div style={{ display: 'flex', gap: 7, ...(isMobile ? { overflowX: 'auto', paddingBottom: 6, minWidth: 0 } : {}) }}>
       {WEEK.map((day) => (
-        <div key={day.n} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 9 }}>
+        <div key={day.n} style={{ ...(isMobile ? { flex: 'none', width: 62 } : { flex: 1 }), display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 9 }}>
           <span style={{ font: mono, color: 'var(--text-3)' }}>{day.d}</span>
           <div
             style={{
@@ -69,20 +72,23 @@ function WeekCalendar() {
 
 // ─────────── Variant A : Bento ───────────
 function VariantA({ todos, onToggle, done, total }) {
+  const isMobile = useIsMobile()
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18, ...fade }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 18 }}>
+      {/* 모바일: 인사 카드 전체 폭 + 지표 2×2, 데스크톱: 4열 벤토 */}
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: isMobile ? 12 : 18 }}>
         <div
           style={{
             ...darkCard,
             gridColumn: 'span 2',
-            gridRow: 'span 2',
+            gridRow: isMobile ? 'auto' : 'span 2',
             borderRadius: 24,
             padding: 26,
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            minHeight: 230,
+            gap: isMobile ? 20 : 0,
+            minHeight: isMobile ? 0 : 230,
             position: 'relative',
             overflow: 'hidden',
           }}
@@ -127,7 +133,7 @@ function VariantA({ todos, onToggle, done, total }) {
         <MiniMetric label="소모 칼로리" value="732" unit="kcal" sub="오늘" />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 18 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.5fr 1fr', gap: 18 }}>
         <Card>
           <CardHead title="오늘 할 일" caption={`${done}/${total} 완료`} mb={16} />
           <TodoList todos={todos} onToggle={onToggle} variant="bento" />
@@ -144,7 +150,7 @@ function VariantA({ todos, onToggle, done, total }) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: 18 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.3fr 1fr', gap: 18 }}>
         <Card>
           <CardHead title="최근 활동" mb={16} />
           <ActivityTimeline activities={ACTIVITIES} />
@@ -160,8 +166,9 @@ function VariantA({ todos, onToggle, done, total }) {
 
 // ─────────── Variant B : 3 Column ───────────
 function VariantB({ todos, onToggle, done, total }) {
+  const isMobile = useIsMobile()
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.1fr 1fr', gap: 18, alignItems: 'start', ...fade }}>
+    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1.1fr 1fr', gap: 18, alignItems: 'start', ...fade }}>
       {/* col 1 */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div style={{ ...darkCard, padding: 22 }}>
@@ -236,9 +243,10 @@ function VariantB({ todos, onToggle, done, total }) {
 
 // ─────────── Variant C : Focus ───────────
 function VariantC({ todos, onToggle, done, total, left }) {
+  const isMobile = useIsMobile()
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18, ...fade }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1.7fr 1fr', gap: 18 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.7fr 1fr', gap: 18 }}>
         <Card style={{ borderRadius: 24, padding: 26 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
@@ -272,7 +280,7 @@ function VariantC({ todos, onToggle, done, total, left }) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 18 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3,1fr)', gap: 18 }}>
         <Card style={{ padding: 20 }}>
           <CardHead title="습관 트래커" size={15} mb={15} />
           <HabitList habits={HABITS} />
