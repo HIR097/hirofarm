@@ -13,7 +13,15 @@ import {
 import TodoList from '../components/TodoList.jsx'
 import { useIsMobile } from '../hooks/useIsMobile.js'
 
-const DATE_LABEL = '2026 · 06 · 23 · 화'
+// 오늘 날짜 라벨 — 매일 자동 갱신
+const _now = new Date()
+const _pad = (n) => String(n).padStart(2, '0')
+const DATE_LABEL = `${_now.getFullYear()} · ${_pad(_now.getMonth() + 1)} · ${_pad(_now.getDate())} · ${'일월화수목금토'[_now.getDay()]}`
+// 이번 주 범위 캡션 (예: "8월 3 – 9", 월이 걸치면 "7월 28 – 8월 3")
+const WEEK_CAPTION =
+  WEEK[0].m === WEEK[6].m
+    ? `${WEEK[0].m}월 ${WEEK[0].n} – ${WEEK[6].n}`
+    : `${WEEK[0].m}월 ${WEEK[0].n} – ${WEEK[6].m}월 ${WEEK[6].n}`
 const fade = { animation: 'hyFade .4s ease' }
 
 // Layout-toggle pill (A / B / C)
@@ -156,7 +164,7 @@ function VariantA({ todos, onToggle, done, total }) {
           <ActivityTimeline activities={ACTIVITIES} />
         </Card>
         <Card>
-          <CardHead title="이번 주 일정" caption="6월 22 – 28" mb={16} />
+          <CardHead title="이번 주 일정" caption={WEEK_CAPTION} mb={16} />
           <WeekCalendar />
         </Card>
       </div>
@@ -296,7 +304,7 @@ function VariantC({ todos, onToggle, done, total, left }) {
       </div>
 
       <Card>
-        <CardHead title="이번 주 일정" caption="6월 22 – 28" mb={16} />
+        <CardHead title="이번 주 일정" caption={WEEK_CAPTION} mb={16} />
         <WeekCalendar />
       </Card>
     </div>

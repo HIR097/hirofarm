@@ -17,6 +17,13 @@ export default function App() {
   // ── persisted UI state (mirrors hy_theme / hy_accent) ──
   const [theme, setTheme] = useLocalStorage('hy_theme', 'light')
   const [accent, setAccent] = useLocalStorage('hy_accent', 'mono')
+  // 사이드바 메뉴 표시/숨김 — 숨긴 항목 key 목록 (콤마 구분)
+  const [hiddenStr, setHiddenStr] = useLocalStorage('hy_menu_hidden', '')
+  const hiddenMenus = hiddenStr ? hiddenStr.split(',') : []
+  const toggleMenu = (key) =>
+    setHiddenStr(
+      (hiddenMenus.includes(key) ? hiddenMenus.filter((k) => k !== key) : [...hiddenMenus, key]).join(','),
+    )
 
   // ── session state ──
   const [tab, setTab] = useState('home')
@@ -53,6 +60,7 @@ export default function App() {
         mobile={isMobile}
         drawerOpen={drawerOpen}
         onCloseDrawer={() => setDrawerOpen(false)}
+        hidden={hiddenMenus}
       />
 
       {/* 모바일 드로어 뒤 배경 */}
@@ -97,6 +105,8 @@ export default function App() {
           accent={accent}
           onPickAccent={setAccent}
           onToggleTheme={toggleTheme}
+          hiddenMenus={hiddenMenus}
+          onToggleMenu={toggleMenu}
           onClose={() => setSettingsOpen(false)}
         />
       )}

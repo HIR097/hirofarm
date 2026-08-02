@@ -2,14 +2,8 @@ import { useState } from 'react'
 import { useLocalStorage } from '../hooks/useLocalStorage.js'
 import { IconHome, IconStatus, IconSchedule, IconCalendar, IconNote, IconFlame, IconSettings } from './icons.jsx'
 
-const NAV = [
-  { key: 'home', label: '메인', Icon: IconHome },
-  { key: 'status', label: '업무현황', Icon: IconStatus },
-  { key: 'fund', label: '펀드 연간일정', Icon: IconSchedule },
-  { key: 'calendar', label: '달력', Icon: IconCalendar },
-  { key: 'calorie', label: '칼로리', Icon: IconFlame },
-  { key: 'scratch', label: '낙서장', Icon: IconNote },
-]
+// 페이지·프로젝트를 하나의 목록으로 관리 — 드래그로 자유롭게 섞을 수 있고,
+// 설정에서 항목별로 표시/숨김을 켜고 끈다. (MENU_ITEMS는 SettingsModal에서도 사용)
 
 function IconStack() {
   return (
@@ -38,18 +32,40 @@ function IconPulse() {
   )
 }
 
-// 프로젝트 페이지 — 대시보드 안에서 오버레이(iframe)로 바로 열린다
-const PROJECTS = [
-  { href: '/mangrove-building.html', label: '맹그로브 신촌', Icon: IconStack, tag: 'CONFIDENTIAL · 내부용' },
-  { href: '/lovelab-followers.html', label: '팔로워 트래커', Icon: IconPulse, tag: '연애실험실 · 인스타' },
+// type: 'page' → 탭 전환, 'project' → 오버레이(iframe)로 바로 열린다
+export const MENU_ITEMS = [
+  { key: 'home', label: '메인', Icon: IconHome, type: 'page' },
+  { key: 'status', label: '업무현황', Icon: IconStatus, type: 'page' },
+  { key: 'fund', label: '펀드 연간일정', Icon: IconSchedule, type: 'page' },
+  { key: 'calendar', label: '달력', Icon: IconCalendar, type: 'page' },
+  { key: 'calorie', label: '칼로리', Icon: IconFlame, type: 'page' },
+  { key: 'scratch', label: '낙서장', Icon: IconNote, type: 'page' },
+  { key: 'mangrove', label: '맹그로브 신촌', Icon: IconStack, type: 'project', href: '/mangrove-building.html', tag: 'CONFIDENTIAL · 내부용' },
+  { key: 'lovelab', label: '팔로워 트래커', Icon: IconPulse, type: 'project', href: '/lovelab-followers.html', tag: '연애실험실 · 인스타' },
 ]
 
 const RAIL = 64
 const FULL = 250
 
+// 예전 메뉴/프로젝트 분리 저장(hy_nav_order, hy_proj_order)에서 한 번만 이어받는다
+function legacyOrder() {
+  try {
+    if (localStorage.getItem('hy_menu_order')) return ''
+    const nav = (localStorage.getItem('hy_nav_order') || '').split(',').filter(Boolean)
+    const proj = (localStorage.getItem('hy_proj_order') || '')
+      .split(',')
+      .filter(Boolean)
+      .map((href) => MENU_ITEMS.find((it) => it.href === href)?.key)
+      .filter(Boolean)
+    return nav.length || proj.length ? [...nav, ...proj].join(',') : ''
+  } catch {
+    return ''
+  }
+}
+
 // 드래그 앤 드롭 순서 변경 — 저장된 순서(localStorage, 콤마 구분 키) 우선, 새 항목은 뒤에 붙는다
 function useOrdered(storageKey, items, keyOf) {
-  const [orderStr, setOrderStr] = useLocalStorage(storageKey, '')
+  const [orderStr, setOrderStr] = useLocalStorage(storageKey, legacyOrder())
   const saved = orderStr ? orderStr.split(',') : []
   const ordered = [
     ...saved.map((k) => items.find((it) => keyOf(it) === k)).filter(Boolean),
@@ -146,26 +162,27 @@ function ProjectOverlay({ project, left, onClose }) {
   )
 }
 
-export default function Sidebar({ tab, onNavigate, onOpenSettings, mobile, drawerOpen, onCloseDrawer }) {
+export default function Sidebar({ tab, onNavigate, onOpenSettings, mobile, drawerOpen, onCloseDrawer, hidden = [] }) {
   const [proj, setProj] = useState(null)
   const [sideOpen, setSideOpen] = useLocalStorage('hy_sidebar', 'open')
-  const [drag, setDrag] = useState(null) // {list, key} — 드래그 중인 탭
-  const [navItems, moveNav] = useOrdered('hy_nav_order', NAV, (it) => it.key)
-  const [projItems, moveProj] = useOrdered('hy_proj_order', PROJECTS, (it) => it.href)
+  const [drag, setDrag] = useState(null) // 드래그 중인 항목 key
+  const [menuItems, moveItem] = useOrdered('hy_menu_order', MENU_ITEMS, (it) => it.key)
+  const visibleItems = menuItems.filter((it) => !hidden.includes(it.key))
   // 모바일에서는 접기 상태를 무시하고 항상 펼친 드로어로 뜬다
   const slim = mobile ? false : sideOpen !== 'open'
   const width = mobile ? 264 : slim ? RAIL : FULL
 
-  const dragProps = (list, key, move) => ({
+  // 페이지·프로젝트 구분 없이 하나의 목록 안에서 자유롭게 순서를 바꾼다
+  const dragProps = (key) => ({
     draggable: true,
     onDragStart: (e) => {
-      setDrag({ list, key })
+      setDrag(key)
       e.dataTransfer.effectAllowed = 'move'
     },
     onDragOver: (e) => {
-      if (drag && drag.list === list) {
+      if (drag) {
         e.preventDefault()
-        if (drag.key !== key) move(drag.key, key)
+        if (drag !== key) moveItem(drag, key)
       }
     },
     onDragEnd: () => setDrag(null),
@@ -241,37 +258,28 @@ export default function Sidebar({ tab, onNavigate, onOpenSettings, mobile, drawe
 
       {groupLabel('메뉴')}
       <nav style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-        {navItems.map(({ key, label, Icon }) => (
-          <div
-            key={key}
-            onClick={() => navigate(key)}
-            title={slim ? label : undefined}
-            style={{ ...navItemStyle(!proj && tab === key, slim), opacity: drag?.list === 'nav' && drag.key === key ? 0.45 : 1 }}
-            {...dragProps('nav', key, moveNav)}
-          >
-            <Icon />
-            {!slim && <span>{label}</span>}
-          </div>
-        ))}
-      </nav>
-
-      {groupLabel('프로젝트')}
-      <nav style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-        {projItems.map((p) => (
-          <div
-            key={p.href}
-            onClick={() => {
-              setProj(p)
-              if (mobile) onCloseDrawer?.()
-            }}
-            title={slim ? p.label : undefined}
-            style={{ ...navItemStyle(proj?.href === p.href, slim), opacity: drag?.list === 'proj' && drag.key === p.href ? 0.45 : 1 }}
-            {...dragProps('proj', p.href, moveProj)}
-          >
-            <p.Icon />
-            {!slim && <span>{p.label}</span>}
-          </div>
-        ))}
+        {visibleItems.map((it) => {
+          const active = it.type === 'project' ? proj?.key === it.key : !proj && tab === it.key
+          return (
+            <div
+              key={it.key}
+              onClick={() => {
+                if (it.type === 'project') {
+                  setProj(it)
+                  if (mobile) onCloseDrawer?.()
+                } else {
+                  navigate(it.key)
+                }
+              }}
+              title={slim ? it.label : undefined}
+              style={{ ...navItemStyle(active, slim), opacity: drag === it.key ? 0.45 : 1 }}
+              {...dragProps(it.key)}
+            >
+              <it.Icon />
+              {!slim && <span>{it.label}</span>}
+            </div>
+          )
+        })}
       </nav>
 
       <div style={{ flex: 1 }} />

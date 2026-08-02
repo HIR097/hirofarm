@@ -46,23 +46,33 @@ export const ACTIVITIES = [
   { time: '19:10', text: '상체 웨이트 5세트', meta: '운동 · 420 kcal' },
 ]
 
-export const WEEK = [
-  { d: '월', n: 22, today: false, evs: [{ t: '09:00', label: '주간 회의' }] },
-  {
-    d: '화',
-    n: 23,
-    today: true,
-    evs: [
-      { t: '13:30', label: '디자인 리뷰' },
-      { t: '19:00', label: '하체 루틴' },
-    ],
-  },
-  { d: '수', n: 24, today: false, evs: [{ t: '15:00', label: '1:1 미팅' }] },
-  { d: '목', n: 25, today: false, evs: [{ t: '11:00', label: '보고서 마감' }] },
-  { d: '금', n: 26, today: false, evs: [{ t: '18:00', label: '러닝 8km' }] },
-  { d: '토', n: 27, today: false, evs: [] },
-  { d: '일', n: 28, today: false, evs: [{ t: '10:00', label: '장보기' }] },
+// 요일별 데모 일정 (0=월 … 6=일). 주간 달력은 오늘 날짜 기준으로 계산된다.
+const WEEK_EVS = [
+  [{ t: '09:00', label: '주간 회의' }],
+  [
+    { t: '13:30', label: '디자인 리뷰' },
+    { t: '19:00', label: '하체 루틴' },
+  ],
+  [{ t: '15:00', label: '1:1 미팅' }],
+  [{ t: '11:00', label: '보고서 마감' }],
+  [{ t: '18:00', label: '러닝 8km' }],
+  [],
+  [{ t: '10:00', label: '장보기' }],
 ]
+
+// 이번 주(월~일)를 오늘 기준으로 생성 — m/n: 월·일, today 플래그 포함
+export function getWeek(now = new Date()) {
+  const dayIdx = (now.getDay() + 6) % 7 // 0=월
+  const mon = new Date(now)
+  mon.setDate(now.getDate() - dayIdx)
+  return ['월', '화', '수', '목', '금', '토', '일'].map((d, i) => {
+    const dt = new Date(mon)
+    dt.setDate(mon.getDate() + i)
+    return { d, m: dt.getMonth() + 1, n: dt.getDate(), today: i === dayIdx, evs: WEEK_EVS[i] }
+  })
+}
+
+export const WEEK = getWeek()
 
 // ── WORK ──
 export const WORK_TASKS = [
