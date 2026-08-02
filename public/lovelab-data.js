@@ -10,8 +10,7 @@ window.LOVELAB_DATA = {
     noona:   { label: "누난 내게 여자야 2", short: "누난2" },
   },
   cast: [
-    // TODO: junnani__oo 는 2026-08-01 기준 존재하지 않는 계정(404) — 정확한 핸들 확인 필요
-    { handle: "junnani__oo", name: "정하윤", show: "lovelab", me: true,  initial: null,  approx: false },
+    { handle: "1997.0127",   name: "정하윤", show: "lovelab", me: true,  initial: 0,     approx: false, note: "하트 왕게임 · 2026-08-02 등록 시점 비공개/팔로워 0에서 시작" },
     { handle: "__3.e7",      name: "강경호", show: "lovelab", initial: 56000, approx: true  },
     { handle: "0616gy",      name: "박가연", show: "lovelab", initial: 20000, approx: true  },
     { handle: "da_l_in",     name: "문채린", show: "lovelab", initial: 8731,  approx: false },
@@ -55,6 +54,7 @@ window.LOVELAB_DATA = {
       "hatmda_": 21770, "_see_hyunny": 20222, "lahhyunjin": 20822, "junnnssi": 9890, "zzixyng": 8138,
       "_bellagenie": 9026, "joohee.yy": 14279, "_xx__hye": 42303, "dearmay___": 21924, "dr_jin0": 12287,
       "pairanisblue": 15440, "jung__won.k": 83104, "le.siwon": 15198, "yoonso_.lee": 14765,
+      "1997.0127": 0,
     },
   },
 };
