@@ -4,7 +4,7 @@
  * snapshots = 날짜별 팔로워 수 (매일 갱신, 2026-08-01부터)
  */
 window.LOVELAB_DATA = {
-  updated: "2026-08-02",
+  updated: "2026-08-06",
   shows: {
     lovelab: { label: "연애실험실", short: "연실" },
     noona:   { label: "누난 내게 여자야 2", short: "누난2" },
@@ -13,6 +13,7 @@ window.LOVELAB_DATA = {
     { handle: "1997.0127",   name: "정하윤", show: "lovelab", me: true,  initial: 0,     approx: false, note: "하트 왕게임 · 2026-08-02 등록 시점 비공개/팔로워 0에서 시작" },
     { handle: "__3.e7",      name: "강경호", show: "lovelab", initial: 56000, approx: true  },
     { handle: "0616gy",      name: "박가연", show: "lovelab", initial: 20000, approx: true  },
+    { handle: "da_l_in",     name: "문채린", show: "lovelab", initial: 8731,  approx: false, note: "web_profile_info API가 400을 반환해 프로필 페이지 표기값으로 수동 수집 — 자동 수집분에는 빠질 수 있음" },
     { handle: "xogunnnn",    name: "박도건", show: "lovelab", initial: 3994,  approx: false },
     { handle: "a_ct_p",      name: "박정민", show: "lovelab", initial: 7571,  approx: false },
     { handle: "yrimirey",    name: "이예림", show: "lovelab", initial: 7002,  approx: false },
@@ -35,11 +36,13 @@ window.LOVELAB_DATA = {
     { handle: "pairanisblue",name: "유진우", show: "noona",   initial: 4362,  approx: false },
     { handle: "jung__won.k", name: "김정원", show: "noona",   initial: 76000, approx: true  },
     { handle: "yoonso_.lee", name: "이윤소", show: "noona",   initial: 2238,  approx: false, note: "이후 별도 캡처 시점 약 1.3만" },
-    // 자동 수집 불가로 제외 (2026-08-02):
-    //   da_l_in  문채린 (연실)  — initial 8731,  마지막 수집 2026-08-02 9310
-    //   le.siwon 이시원 (누난2) — initial 3123,  마지막 수집 2026-08-02 15198
-    // 인스타 web_profile_info API가 두 계정에만 400을 반환한다(계정 설정 이슈).
-    // 지금까지의 수치는 snapshots 에 그대로 남아 있으므로, 위 두 줄을 되살리면 이력까지 복구된다.
+    // 자동 수집 불가로 제외 (2026-08-02 ~):
+    //   le.siwon 이시원 (누난2) — initial 3123, 마지막 정확 수집 2026-08-02 15198
+    //   2026-08-06 프로필 표기는 "1.6만"으로 축약되어 정확값을 얻지 못해 계속 제외한다.
+    // 인스타 web_profile_info API가 da_l_in / le.siwon 두 계정에만 400을 반환한다
+    // (Asset asset://laser.provider/ig_business_category_subvertical — 계정 설정 이슈, 로그인 세션에서도 동일).
+    // da_l_in 은 팔로워가 1만 미만이라 프로필 og:description 에 정확값이 그대로 노출돼 2026-08-06 복구했다.
+    // le.siwon 도 1만 밑으로 내려가거나 API가 정상화되면 위 줄을 되살려 이력까지 복구할 수 있다.
   ],
   snapshots: {
     "2026-08-01": {
@@ -58,6 +61,15 @@ window.LOVELAB_DATA = {
       "_bellagenie": 9026, "joohee.yy": 14279, "_xx__hye": 42303, "dearmay___": 21924, "dr_jin0": 12287,
       "pairanisblue": 15440, "jung__won.k": 83104, "le.siwon": 15198, "yoonso_.lee": 14765,
       "1997.0127": 0,
+    },
+    // 2026-08-03 ~ 08-05 결측: 일일 자동 수집(launchd)이 이 PC에서 돌지 않아 3일치 공백.
+    // 아래는 로그인된 브라우저 세션에서 수동 수집한 값 (curl 직접 호출은 429로 차단됨).
+    "2026-08-06": {
+      "1997.0127": 0, "__3.e7": 61083, "0616gy": 21725, "da_l_in": 9393, "xogunnnn": 6097,
+      "a_ct_p": 7951, "yrimirey": 11281, "ellleybear": 10685, "ccmparc": 41765, "__kimmyungju": 34539,
+      "kj_woo0": 407, "hatmda_": 21865, "_see_hyunny": 21740, "lahhyunjin": 21441, "junnnssi": 10057,
+      "zzixyng": 8429, "_bellagenie": 13127, "joohee.yy": 16676, "_xx__hye": 44869, "dearmay___": 20794,
+      "dr_jin0": 13993, "pairanisblue": 17486, "jung__won.k": 84347, "yoonso_.lee": 15093,
     },
   },
 };
