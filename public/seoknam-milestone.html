@@ -214,7 +214,7 @@ body{background:#08080a;color:#E5E5E5;font-size:13px;line-height:1.5;
     <tbody id="rrbody"></tbody>
   </table></div>
 
-  <div class="sec"><h2>주요 마일스톤 일지</h2><p>핵심 이벤트를 시간순으로 기록합니다.</p></div>
+  <div class="sec"><h2>다가오는 마일스톤</h2><p>오늘 이후 예정된 이벤트만 표시합니다 — 날짜가 지나면 자동으로 사라집니다.</p></div>
   <div class="box"><div class="log" id="log"></div></div>
 </div>
 <div id="tip"></div>
@@ -543,10 +543,21 @@ const LOG = [
   ['8/11','보험','future','DB손해보험 본사 미팅 (예정)','이지스·UIB·국제손사·한백 참석 — 청구 절차·자료 협의'],
   ['10/12','대주단','future','대출이자 4,413백만 납부기일','임대료 미납 지속 시 보험금 가지급이 핵심 재원'],
 ];
-document.getElementById('log').innerHTML = LOG.map(([d,c,k,t,s]) =>
-  `<div class="log-item ${k==='key'?'key':''} ${k==='future'?'future':''}">
-     <div class="d">${d}</div><div class="tag">${c}</div>
-     <div class="t">${t}<small>${s}</small></div></div>`).join('');
+/* 오늘(접속 시점) 이후 항목만 표시 — 날짜가 바뀌면 페이지 로드 시 자동 갱신 */
+(function(){
+  const now = new Date();
+  const today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const toDate = (s) => { const [mo, d] = s.split('/').map(Number); return new Date(2026, mo - 1, d); };
+  const dday = (dt) => Math.round((dt - today0) / 86400000);
+  const upcoming = LOG.filter(([d]) => toDate(d) >= today0);
+  document.getElementById('log').innerHTML = upcoming.length ? upcoming.map(([d,c,k,t,s]) => {
+    const n = dday(toDate(d));
+    return `<div class="log-item ${k==='key'||n===0 ? 'key' : ''}">
+       <div class="d">${d}<small style="display:block;color:${n===0 ? '#ffb020' : '#86868B'};font-size:10px">${n===0 ? '오늘' : 'D-'+n}</small></div>
+       <div class="tag">${c}</div>
+       <div class="t">${t}<small>${s}</small></div></div>`;
+  }).join('') : '<div style="padding:14px 0;color:#86868B;font-size:12.5px">예정된 마일스톤이 없습니다.</div>';
+})();
 </script>
 </body>
 </html>
