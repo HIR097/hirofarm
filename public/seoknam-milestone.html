@@ -7,216 +7,299 @@
 <title>인천석남쿠팡물류TF Milestone</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{
-  --bg:#e7e7ea; --bg2:#f1f1f3; --surface:#ffffff; --surface2:#f3f3f5;
-  --text:#101012; --text-2:#71717a; --text-3:#a6a6ad; --line:#e8e8ec;
-  --shadow:0 1px 2px rgba(18,18,26,.04), 0 10px 30px rgba(18,18,26,.06);
-  --accent:#101012; --accent-text:#ffffff;
-  --good:#0ca678; --bad:#e03131; --warn:#f59f00;
-  --gate:#1c7ed6; --task:#7048e8;
-}
-:root[data-theme="dark"]{
-  --bg:#08080a; --bg2:#0f0f12; --surface:#161619; --surface2:#1f1f23;
-  --text:#f3f3f5; --text-2:#9a9aa2; --text-3:#62626a; --line:#26262b;
-  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 30px rgba(0,0,0,.55);
-  --accent:#f4f4f6; --accent-text:#0a0a0b;
-  --good:#38d9a9; --bad:#ff8787; --warn:#fcc419;
-  --gate:#4dabf7; --task:#9775fa;
-}
+/* ===== IGIS-Fund-Production-DP 마일스톤 탭 양식 재현 (다크 고정) ===== */
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Space Grotesk',-apple-system,'Apple SD Gothic Neo','Pretendard','Malgun Gothic',Helvetica,Arial,sans-serif;
-  background:var(--bg);color:var(--text);font-size:13.5px;line-height:1.55;transition:background .2s}
-.wrap{max-width:1180px;margin:0 auto;padding:28px 26px 70px}
-.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+body{background:#1d1d1c;color:#E5E5E5;font-size:13px;line-height:1.5;
+  font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Pretendard','Malgun Gothic','Inter',Helvetica,Arial,sans-serif}
+.page{max-width:1330px;margin:0 auto;padding:34px 20px 80px}
+a.back{position:absolute;right:22px;top:22px;font-size:11px;font-weight:700;color:#86868B;text-decoration:none;
+  border:1px solid #3c3c3c;background:#252524;padding:6px 12px;border-radius:9px}
+a.back:hover{color:#fff}
 
-.hero{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:6px}
-.hero h1{font-size:25px;font-weight:700;letter-spacing:-.02em}
-.hero h1 small{font-size:14px;font-weight:500;color:var(--text-2);margin-left:8px}
-.back{margin-left:auto;font:500 11px 'JetBrains Mono',monospace;color:var(--text-2);text-decoration:none;
-  border:1px solid var(--line);background:var(--surface);padding:6px 12px;border-radius:9px}
-.back:hover{color:var(--text)}
-.chips{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0 22px}
-.chip{font-size:12px;color:var(--text-2);border:1px solid var(--line);background:var(--surface);
-  padding:4px 11px;border-radius:9px;box-shadow:var(--shadow)}
-.chip b{color:var(--text);font-weight:600;margin-left:5px;font-variant-numeric:tabular-nums}
-.chip.hot b{color:var(--bad)}
+/* ---- 헤더 ---- */
+.hd{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:10px}
+.hd .l{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.hd h1{font-size:32px;font-weight:800;color:#fff;letter-spacing:-.02em;line-height:1}
+.hd .sub{font-size:15px;color:#86868B;line-height:1}
+.toggle{display:flex;height:30px;align-items:center;border-radius:9px;border:1px solid #3c3c3c;background:#252524}
+.toggle button{height:28px;border-radius:7px;border:1px solid transparent;padding:0 12px;font-size:11px;font-weight:700;
+  color:#86868B;background:transparent;cursor:pointer;transition:color .15s}
+.toggle button:hover{color:#fff}
+.toggle button.on{border-color:#263b52;background:#3b4f68;color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.035)}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0 60px}
+.chip{font-size:12px;color:#86868B;border:1px solid #3c3c3c;background:#252524;padding:4px 11px;border-radius:9px}
+.chip b{color:#E5E5E5;font-weight:700;margin-left:5px;font-family:'Inter',monospace}
+.chip.hot b{color:#ff5f57}
 
-.lbl{font:600 10px 'JetBrains Mono',monospace;letter-spacing:.12em;color:var(--text-3);
-  text-transform:uppercase;margin:28px 0 10px;display:flex;align-items:center;gap:8px}
-.lbl::after{content:'';flex:1;height:1px;background:var(--line)}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:15px;box-shadow:var(--shadow);padding:18px 20px}
-.card .sub{font-size:11.5px;color:var(--text-3);margin-bottom:12px}
+/* ---- 타임라인 컨테이너 ---- */
+.tlwrap{position:relative;margin-top:70px}
+.tl-legend{position:absolute;left:16px;top:-38px;display:flex;align-items:center;gap:16px;font-size:12px;font-weight:700}
+.tl-legend .i{display:flex;align-items:center;gap:6px;color:#E5E5E5}
+.tl-legend .dotb{display:inline-block;height:10px;width:10px;border-radius:50%;background:#2997ff}
+.tl-legend .diao{font-family:'Inter',monospace;font-size:16px;line-height:1;color:#F59E0B}
+.bubbles{position:absolute;top:-68px;left:0;width:100%;height:36px;pointer-events:none;z-index:5}
+.bubble{position:absolute;transform:translateX(-50%);border-radius:6px;font-size:11px;font-weight:700;text-align:center;
+  line-height:1.25;display:flex;flex-direction:column;justify-content:center;align-items:center;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+.bubble.orange{top:14px;background:#ff9f0a;color:#1c1c1e;width:64px;height:44px}
+.bubble.dark{top:4px;background:#2c2c2e;color:#fff;border:1px solid #3c3c3c;width:76px;height:54px}
+.bubble .tail{position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);width:0;height:0;
+  border-left:3px solid transparent;border-right:3px solid transparent}
+.bubble.orange .tail{border-top:6px solid #ff9f0a}
+.bubble.dark .tail{border-top:6px solid #2c2c2e}
 
-/* ---- 게이트 타임라인 (CFT 구조 차용) ---- */
-.tl-scroll{overflow-x:auto}
-table.tl{border-collapse:collapse;width:100%;min-width:900px}
-table.tl th, table.tl td{border:1px solid var(--line);padding:7px 9px;font-size:12px;vertical-align:top}
-table.tl thead th{background:var(--surface2);font:600 10.5px 'JetBrains Mono',monospace;letter-spacing:.02em;
-  color:var(--text-2);text-align:center;white-space:nowrap}
-table.tl thead th .top{display:block;font-size:9.5px;color:var(--text-3)}
-table.tl thead th.hl{color:var(--bad)}
-table.tl thead th.now{background:color-mix(in oklab, var(--gate) 12%, var(--surface2));color:var(--gate)}
-table.tl td.name{white-space:nowrap;font-weight:600;font-size:12.5px}
-table.tl td.name .cat{display:inline-block;font:600 9px 'JetBrains Mono',monospace;padding:1.5px 6px;border-radius:6px;
-  margin-right:7px;vertical-align:1px}
-table.tl td.name .cat.gate{color:var(--gate);border:1px solid color-mix(in oklab, var(--gate) 40%, transparent)}
-table.tl td.name .cat.task{color:var(--task);border:1px solid color-mix(in oklab, var(--task) 40%, transparent)}
-table.tl td.name .desc{display:block;font-weight:400;font-size:10.5px;color:var(--text-3);white-space:normal;max-width:230px}
-table.tl td.rr{font-size:10.5px;color:var(--text-2);white-space:nowrap}
-table.tl td.rr b{display:block;color:var(--text);font-size:11px}
-table.tl td.mark{text-align:center;font-size:13px;cursor:default;min-width:64px}
-table.tl td.mark.has{cursor:pointer}
-table.tl td.mark.has:hover{background:color-mix(in oklab, var(--gate) 9%, transparent)}
-.dot{color:var(--gate)} .dia{color:var(--bad);font-size:12px} .plan{color:var(--text-3)}
-.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:var(--text-2);margin-top:10px}
+.tlbox{border:1px solid #3c3c3c;background:#272726;border-radius:32px;overflow-x:auto;scrollbar-width:thin;
+  scrollbar-color:rgba(255,255,255,.12) rgba(255,255,255,.02)}
+table.tl{text-align:left;table-layout:fixed;width:1290px;min-width:1290px;border-collapse:collapse}
+table.tl thead tr{border-bottom:1px solid #3c3c3c;color:#86868B;font-weight:700;font-size:13px;height:48px}
+table.tl thead th{background:#272726}
+th.c-cat{padding-left:10px;padding-right:4px;width:94px;text-align:center;border-top-left-radius:31px}
+th.c-desc{padding-left:12px;width:258px}
+th.c-lead{padding:0 4px;width:94px;text-align:center}
+th.c-coop{padding:0 4px;width:94px;text-align:center;border-right:1px solid #3c3c3c}
+th.c-p{width:75px;text-align:center;font-family:'Inter',sans-serif;font-size:11px;line-height:1.25;padding:0 4px;font-weight:700;
+  color:#86868B;border-right:1px solid rgba(76,76,76,.5)}
+th.c-p.hl{background:rgba(255,255,255,.03);color:#60a5fa}
+th.c-p:last-child{border-right:0;border-top-right-radius:31px}
+th.c-p .b{font-size:11px;opacity:.75;margin-top:2px}
+table.tl tbody tr{height:50px;border-top:1px solid #3c3c3c;transition:background .15s}
+table.tl tbody tr:hover td{background:#333}
+table.tl td{background:#272726;transition:background .15s}
+td.cat{padding-left:10px;padding-right:4px;text-align:center;width:94px}
+td.cat .badge{display:block;padding:4px 6px;border-radius:6px;font-weight:700;font-size:12px;line-height:1.3}
+td.cat .badge.gate{background:rgba(41,151,255,.1);color:#60a5fa;border:1px solid rgba(41,151,255,.2)}
+td.cat .badge.task{background:rgba(161,161,170,.1);color:#e4e4e7;border:1px solid rgba(161,161,170,.2)}
+td.desc{padding-left:12px;padding-right:8px;font-weight:500;color:#bdbba7;line-height:1.35;font-size:13px;letter-spacing:-.01em;
+  white-space:normal;word-break:keep-all}
+td.lead{padding:0 4px;color:#E5E5E5;font-weight:600;text-align:center;font-size:12px;line-height:1.3;letter-spacing:-.01em;white-space:normal}
+td.coop{padding:0 4px;color:#c2c2c6;line-height:1.3;text-align:center;white-space:normal;border-right:1px solid #3c3c3c;font-size:11px}
+td.p{text-align:center;width:75px;border-right:1px solid rgba(76,76,76,.4)}
+td.p:last-child{border-right:0}
+td.p.hl{background:rgba(255,255,255,.015)}
+table.tl tbody tr:hover td.p.hl{background:rgba(255,255,255,.04)}
+td.p .dot{width:14px;height:14px;border-radius:50%;background:#2997ff;display:inline-block;box-shadow:0 1px 2px rgba(41,151,255,.2)}
+td.p .dia{color:#F59E0B;font-family:'Inter',monospace;font-size:28px;font-weight:800;display:block;transform:translateY(-1px);
+  animation:pulse 2s cubic-bezier(.4,0,.6,1) infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+td.p.has{cursor:pointer}
 
-/* ---- 히트맵 ---- */
-table.heat{border-collapse:collapse;width:100%;min-width:700px}
-table.heat th, table.heat td{border:1px solid var(--line);padding:6px 9px;font-size:11.5px;text-align:center}
-table.heat thead th{background:var(--surface2);font:600 10px 'JetBrains Mono',monospace;color:var(--text-2);white-space:nowrap}
-table.heat td.topic{text-align:left;font-weight:600;white-space:nowrap}
-table.heat td.c{font-family:'JetBrains Mono',monospace;font-size:11px;font-variant-numeric:tabular-nums}
+/* ---- 하단 섹션 (CFT 섹션 헤더 양식) ---- */
+.sec{display:flex;align-items:baseline;gap:16px;margin:41px 0 16px}
+.sec h2{font-size:32px;font-weight:800;color:#fff;letter-spacing:-.02em;line-height:1}
+.sec p{font-size:15px;color:#86868B;line-height:1}
+.box{border:1px solid #3c3c3c;background:#272726;border-radius:32px;overflow-x:auto;padding:6px 0;scrollbar-width:thin;
+  scrollbar-color:rgba(255,255,255,.12) rgba(255,255,255,.02)}
+.box table{border-collapse:collapse;width:100%;min-width:1000px}
+.box th{color:#86868B;font-weight:700;font-size:12px;height:44px;text-align:left;padding:0 14px;border-bottom:1px solid #3c3c3c;white-space:nowrap}
+.box td{padding:10px 14px;border-bottom:1px solid #303030;font-size:12.5px;vertical-align:top}
+.box tr:last-child td{border-bottom:0}
+.box td.c{text-align:center;font-family:'Inter',monospace;font-size:12px}
+.box td.topic{font-weight:700;color:#E5E5E5;white-space:nowrap}
+.box td .dim{color:#86868B}
+.box td.ws b{color:#E5E5E5;font-size:12.5px}
+.box td.who{color:#c2c2c6;font-size:11.5px}
+.box td.status{color:#bdbba7;font-size:11.5px;min-width:230px}
+.box td.next{color:#E5E5E5;font-size:11.5px;min-width:180px}
+.box td.next::before{content:'▸ ';color:#F59E0B}
 
-/* ---- R&R ---- */
-table.rr{border-collapse:collapse;width:100%;min-width:900px}
-table.rr th, table.rr td{border:1px solid var(--line);padding:8px 10px;font-size:12px;vertical-align:top;text-align:left}
-table.rr thead th{background:var(--surface2);font:600 10.5px 'JetBrains Mono',monospace;color:var(--text-2);white-space:nowrap}
-table.rr td b.ws{font-size:12.5px}
-table.rr td .who{font-size:11.5px}
-table.rr td .who small{color:var(--text-3)}
-table.rr td.status{font-size:11.5px;color:var(--text-2);min-width:220px}
-table.rr td.next{font-size:11.5px;min-width:180px}
-table.rr td.next::before{content:'▸ ';color:var(--warn)}
-
-/* ---- 마일스톤 일지 ---- */
-.log{display:flex;flex-direction:column;gap:0}
-.log-item{display:flex;gap:14px;padding:9px 4px;border-bottom:1px dashed var(--line)}
+/* 일지 */
+.log{padding:10px 22px}
+.log-item{display:flex;gap:14px;padding:10px 0;border-bottom:1px dashed #3c3c3c}
 .log-item:last-child{border-bottom:0}
-.log-item .d{font:600 11px 'JetBrains Mono',monospace;color:var(--text-2);white-space:nowrap;width:52px;padding-top:2px}
-.log-item .tag{font:600 9px 'JetBrains Mono',monospace;padding:2px 7px;border-radius:6px;height:fit-content;
-  margin-top:2px;white-space:nowrap;border:1px solid var(--line);color:var(--text-2)}
-.log-item.key .tag{color:var(--bad);border-color:color-mix(in oklab, var(--bad) 40%, transparent)}
-.log-item .t{font-size:12.5px}
-.log-item .t small{display:block;color:var(--text-3);font-size:11px}
-.log-item.future{opacity:.62}
+.log-item .d{font-family:'Inter',monospace;font-weight:700;font-size:11.5px;color:#86868B;white-space:nowrap;width:54px;padding-top:2px}
+.log-item .tag{font-size:9.5px;font-weight:700;padding:2.5px 8px;border-radius:6px;height:fit-content;margin-top:2px;white-space:nowrap;
+  border:1px solid #3c3c3c;color:#c2c2c6;background:rgba(161,161,170,.08)}
+.log-item.key .tag{color:#F59E0B;border-color:rgba(245,158,11,.35);background:rgba(245,158,11,.08)}
+.log-item .t{font-size:13px;color:#E5E5E5;font-weight:600}
+.log-item .t small{display:block;color:#86868B;font-size:11.5px;font-weight:400}
+.log-item.future{opacity:.55}
 
 /* 툴팁 */
-#tip{position:fixed;z-index:50;max-width:360px;background:var(--surface);border:1px solid var(--line);
-  border-radius:11px;box-shadow:var(--shadow);padding:11px 13px;font-size:11.5px;pointer-events:none;display:none}
-#tip h5{font-size:11px;margin-bottom:5px;color:var(--text-2);font-family:'JetBrains Mono',monospace}
+#tip{position:fixed;z-index:50;max-width:380px;background:#2c2c2e;border:1px solid #3c3c3c;border-radius:11px;
+  box-shadow:0 12px 32px rgba(0,0,0,.55);padding:11px 13px;font-size:11.5px;pointer-events:none;display:none;color:#E5E5E5}
+#tip h5{font-size:11px;margin-bottom:5px;color:#86868B;font-weight:700}
 #tip li{margin-left:14px;margin-bottom:3px}
-@media(max-width:700px){.wrap{padding:20px 14px 60px}.hero h1{font-size:20px}}
+#tip .dot2{color:#2997ff} #tip .dia2{color:#F59E0B}
+@media(max-width:760px){.hd h1{font-size:24px}.sec h2{font-size:22px}.page{padding:24px 10px 60px}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="hero">
-    <h1>인천석남쿠팡물류TF <small>Milestone · R&amp;R</small></h1>
-    <a class="back" href="/">← hirofarm</a>
+<a class="back" href="/">← hirofarm</a>
+<div class="page">
+  <div class="hd">
+    <div class="l">
+      <h1>마일스톤</h1>
+      <div class="sub">인천석남쿠팡물류 화재 대응 TF — 메일 <span id="n-mails">–</span>건 분석 기반</div>
+    </div>
+    <div class="toggle" id="filter">
+      <button data-f="All" class="on">전체</button>
+      <button data-f="Gate">Gate</button>
+      <button data-f="Task">기능별</button>
+    </div>
   </div>
   <div class="chips">
     <div class="chip">화재 발생 <b>2026-07-18</b></div>
-    <div class="chip">분석 메일 <b id="chip-mails">–</b></div>
-    <div class="chip">수집 기간 <b>07-14 ~ 08-07</b></div>
-    <div class="chip">TF 계정 <b class="mono">iig24tf@igisam.com</b></div>
+    <div class="chip">수집 기간 <b>07-20 ~ 08-07</b></div>
+    <div class="chip">TF 계정 <b>iig24tf@igisam.com</b></div>
     <div class="chip hot">7월 임대료 미납 <b>11.49억</b></div>
     <div class="chip hot">10월 이자 <b>44.1억</b></div>
   </div>
 
-  <div class="lbl">게이트 &amp; 타임라인 — 업무분장 진행 현황</div>
-  <div class="card">
-    <div class="sub">IGIS-Fund-Production-DP 마일스톤 구조 차용 · ● 진행 활동 / ◆ 핵심 이벤트 / ○ 예정 — 마커에 마우스를 올리면 해당 주의 상세 이벤트가 표시됩니다</div>
-    <div class="tl-scroll"><table class="tl" id="tl"></table></div>
-    <div class="legend">
-      <span><span class="dot">●</span> 진행 활동</span>
-      <span><span class="dia">◆</span> 핵심 이벤트</span>
-      <span><span class="plan">○</span> 예정</span>
-      <span>주관 <b>굵게</b> / 협조 회색</span>
+  <div class="tlwrap">
+    <div class="tl-legend">
+      <div class="i"><span class="dotb"></span><span>수행 진행 기간</span></div>
+      <div class="i"><span class="diao">◆</span><span>마일스톤 달성</span></div>
     </div>
+    <div class="bubbles" id="bubbles"></div>
+    <div class="tlbox"><table class="tl" id="tl"></table></div>
   </div>
 
-  <div class="lbl">주간 메일 활동 히트맵 — 토픽 × 주차 (메일 262건 자동 집계)</div>
-  <div class="card">
-    <div class="sub">각 셀은 해당 주에 그 토픽을 다룬 메일 수 (한 메일이 여러 토픽에 걸릴 수 있음)</div>
-    <div class="tl-scroll"><table class="heat" id="heat"></table></div>
-  </div>
+  <div class="sec"><h2>주간 활동 집계</h2><p>토픽 × 주차별 관련 메일 수를 자동 집계합니다.</p></div>
+  <div class="box"><table id="heat"></table></div>
 
-  <div class="lbl">R&amp;R — 워크스트림별 업무분장</div>
-  <div class="card">
-    <div class="tl-scroll"><table class="rr" id="rrtbl">
-      <thead><tr><th>워크스트림</th><th>이지스 주관</th><th>협조·지원</th><th>외부 파트너</th><th>현재 현황 (8/7 기준)</th><th>Next Action</th></tr></thead>
-      <tbody id="rrbody"></tbody>
-    </table></div>
-  </div>
+  <div class="sec"><h2>R&amp;R 및 필요산출물</h2><p>워크스트림별 주관·협조 부서와 현황, 다음 액션을 조회합니다.</p></div>
+  <div class="box"><table id="rrtbl">
+    <thead><tr><th>워크스트림</th><th>이지스 주관</th><th>협조·지원</th><th>외부 파트너</th><th>현재 현황 (8/7 기준)</th><th>Next Action</th></tr></thead>
+    <tbody id="rrbody"></tbody>
+  </table></div>
 
-  <div class="lbl">주요 마일스톤 일지</div>
-  <div class="card"><div class="log" id="log"></div></div>
+  <div class="sec"><h2>주요 마일스톤 일지</h2><p>핵심 이벤트를 시간순으로 기록합니다.</p></div>
+  <div class="box"><div class="log" id="log"></div></div>
 </div>
 <div id="tip"></div>
 
 <script src="/seoknam-tf-data.js"></script>
 <script>
-/* ---- hirofarm 테마 연동 ---- */
-(function(){
-  try{
-    const q = new URLSearchParams(location.search).get('theme');
-    document.documentElement.dataset.theme = q || localStorage.getItem('hy_theme') || 'light';
-  }catch(e){}
-})();
-
-const WEEKS = [
-  { key:'w0', top:'2026.07', bot:'~7/19', hl:true,  range:['2026-07-13','2026-07-19'] },
-  { key:'w1', top:'07',      bot:'7/20~26',          range:['2026-07-20','2026-07-26'] },
-  { key:'w2', top:'07-08',   bot:'7/27~8/2',         range:['2026-07-27','2026-08-02'] },
-  { key:'w3', top:'08',      bot:'8/3~9', now:true,  range:['2026-08-03','2026-08-09'] },
-  { key:'w4', top:'08',      bot:'8/10~16',          range:['2026-08-10','2026-08-16'] },
-  { key:'w5', top:'08',      bot:'8월 하순',          range:null },
-  { key:'w6', top:'09-10',   bot:'보험청구·이자', hl:true, range:null },
-  { key:'w7', top:'이후',    bot:'복구·정산',         range:null },
+/* CFT COLUMNS 구조 그대로 — labelTop / labelBottom / highlight */
+const COLUMNS = [
+  { key:'c1',  top:'2026.07',    bot:'~7/19',      range:['2026-07-01','2026-07-19'] },
+  { key:'c2',  top:'07',         bot:'7/20~26',    range:['2026-07-20','2026-07-26'] },
+  { key:'c3',  top:'07-08',      bot:'7/27~8/2',   range:['2026-07-27','2026-08-02'] },
+  { key:'c4',  top:'08',         bot:'8/3~9',      range:['2026-08-03','2026-08-09'] },
+  { key:'c5',  top:'2026.08.11', bot:'DB손보',      highlight:true },
+  { key:'c6',  top:'08',         bot:'하순' },
+  { key:'c7',  top:'09',         bot:'청구 준비' },
+  { key:'c8',  top:'2026.10.12', bot:'이자기일',    highlight:true },
+  { key:'c9',  top:'10-11',      bot:'가지급 협상' },
+  { key:'c10', top:'이후',       bot:'복구·정산',   highlight:true },
 ];
 
-/* 게이트/워크스트림 정의 — 메일 262건 분석 기반 수기 큐레이션 */
-const ROWS = [
-  { cat:'Gate', name:'G0 초동대응·TF 구성', desc:'킥오프, TF 편성, 전용 메일 체계', lead:'운용그룹', coop:'전 TF',
-    sch:{ w0:['◆ 7/18 화재 발생'], w1:['◆ 7/22 수사대응 킥오프(율촌) 15시','◆ 7/23 계약분야 킥오프 14:30 — 5대 쟁점(인수인계·증거·임대차·EOD·대관) 논의','● 요청자료 6건 목록 접수·회신 개시'], w2:['◆ 7/29 TF 전용 계정 iig24tf@igisam.com 개설 안내(정하윤)','● TF 메일 일괄 관리 체계 가동'] } },
-  { cat:'Gate', name:'G1 증거·수사 대응', desc:'증거보전·정보공개·경찰조사', lead:'법무팀 · 율촌', coop:'운용그룹',
-    sch:{ w1:['◆ 7/24 인천지법 증거보전신청 2건 인용(CCTV·소방기록)','● 정보공개청구 율촌 대리 전환·재접수','● 경찰 수사 메인타겟=쿠팡 확인, 7/30 출석 확정'], w2:['● 7/29 경찰조사 프렙(율촌, 예상질의 36+)','◆ 7/30 인천경찰청 참고인 조사 출석(김지현) + 참고자료 1~13 제출','● 정보공개청구 인천경찰청 이송'], w3:['● 8/4 증거보전 즉시항고장·경정결정 대응','● 비공개처분 대비 불복절차 검토'], w5:['○ CCTV 등 확보, 무과실 입장 정리'] } },
-  { cat:'Gate', name:'G2 임차인(쿠팡) 대응', desc:'임대료·공문 대응·계약 전략', lead:'운용그룹 · 율촌', coop:'법무팀',
-    sch:{ w1:['● 판넬 철거·단전 통지 수령, 제3자 긴급구제·Umbrella 질의 회신(율촌 문안)'], w2:['◆ 7/31 쿠팡 임대료 유보 공문 — 7/1~18 일할 15.9억만 입금','● 토지사용승낙(가설건축물) 검토·날인'], w3:['◆ 8/3 임대료 미납(11.49억) 대응 공문 발송','● 지하1층 반출·옥상 차량 협조요청 회신 공문 2건','● 3기 연체 해지·원상복구 범위 검토 착수'], w4:['○ 원상복구의무·시공주체 지정전략 율촌 의견서','○ 기한 명시 역제안 공문'], w5:['○ 임대료 청구 소송/해지 여부 의사결정'], w6:['○ 8월분 임대료 청구·미납 대응'] } },
-  { cat:'Gate', name:'G3 보험금 청구', desc:'사고접수·손해사정·BI', lead:'운용그룹(오채은) · UIB', coop:'대주단(질권)',
-    sch:{ w1:['● 7/23 보험사고 접수서류 날인·송부','● 임차인측 보험 분석(패키지·영배 150억 한도)'], w2:['● 손해사정 미팅, 타사 사례(덕평 가지급 70%) 수집'], w3:['● 독립손사 3사 PT(태양·파인·한백) 8/5','◆ 8/7 독립손사 한백손해사정 선정·착수 요청','● 국제손사 NDA 체결, 임대차계약서 제공'], w4:['◆ 8/11 DB손해보험 본사 미팅(이지스·UIB·국제·한백)','○ 보험금 청구서류 리스트 대응'], w5:['○ 손해액 산정·BI(기업휴지) 검토'], w6:['◆ 가지급금 협상(목표: 10월 이자 재원)'], w7:['○ 본지급·정산'] } },
-  { cat:'Gate', name:'G4 대주단 관리', desc:'EOD 방어·보고·자금계획', lead:'운용그룹', coop:'율촌(김은주)',
-    sch:{ w2:['◆ 7/27 율촌 EOD 미발생 검토 의견서 → 대주 설명자료','◆ 7/31 대주 1차 보고'], w3:['● 신한·전북·하나 개별 자료요청 대응','● 펀드 잔고 64억·월별 자금집행 스케줄 보고'], w4:['○ 대주단 정기 업데이트'], w6:['◆ 10/12 이자 4,413백만 납부 — 재원 확보 핵심'], w7:['○ 보험금 질권 해지·상환 구조 협의'] } },
-  { cat:'Gate', name:'G5 현장·복구', desc:'출입통제·안전·복구 준비', lead:'황준하 · 한화PM', coop:'쿠팡',
-    sch:{ w0:['● 7/22~ 외벽 판넬 철거·전체 단전(임차인 시행)'], w2:['● 지하1층 재고 반출 협조(비상발전기 검토)'], w3:['● 관계기관 출입 가능여부 일일 유선확인 체계(한화PM)','● 쿠팡 층별 구조안전검토 진행, 도로통제 금주 해제 전망','● 안전점검보고서 확보(FMS)'], w4:['○ 8/5~ 쿠팡 재고 반출 실행 모니터링'], w5:['◆ 감식 종료 → 건물 인수인계','○ 시공주체 지정 전략 확정'], w7:['◆ 철거·복구 착수(이천 사례 벤치마킹)'] } },
-  { cat:'Gate', name:'G6 펀드·CF·Exit', desc:'수익자 대응·CF모델·매각', lead:'운용그룹', coop:'판매사',
-    sch:{ w2:['● 이천물류 화재복구 벤치마킹(크리에이트)','● CBRE 시장임대료 의견 수령'], w3:['● 시나리오별 CF모델 v2·손해액 산정 보드','● 수익자 월간보고(삼성운용 등)'], w5:['○ 12월말 매각가정 업데이트'], w7:['○ 복구 후 Exit 전략 재수립'] } },
+/* CFT TIMELINE_DATA 구조 그대로 — category/name/desc/lead/coop + schedule{col:'●'|'◆'} + 툴팁 이벤트 */
+const TIMELINE_DATA = [
+  { category:'Gate', name:'G0 초동대응', desc:'킥오프, TF 편성, 전용 메일 관리체계 구축', lead:'운용그룹', coop:'전 TF',
+    schedule:{ c1:'◆', c2:'◆', c3:'●' },
+    ev:{ c1:['◆ 7/18 화재 발생 — 임차인 6층 메자닌(B동) 구조물 관련'],
+         c2:['◆ 7/22 수사대응 킥오프(율촌 15시)','◆ 7/23 계약분야 킥오프 14:30 — 5대 쟁점 논의','● 요청자료 6건 회신 개시'],
+         c3:['● 7/29 TF 전용 계정 iig24tf@igisam.com 개설(정하윤)'] } },
+  { category:'Gate', name:'G1 증거·수사', desc:'증거보전·정보공개청구·경찰조사 대응', lead:'법무팀 율촌', coop:'운용그룹',
+    schedule:{ c2:'◆', c3:'◆', c4:'●', c6:'●' },
+    ev:{ c2:['◆ 7/24 인천지법 증거보전신청 2건 인용(CCTV·소방기록)','● 정보공개청구 율촌 대리 재접수','● 수사 메인타겟=쿠팡 확인'],
+         c3:['● 7/29 경찰조사 프렙(예상질의 36+)','◆ 7/30 인천경찰청 참고인 조사 출석(김지현) + 참고자료 1~13 제출'],
+         c4:['● 8/4 증거보전 즉시항고장·경정결정 대응'],
+         c6:['● CCTV 확보·무과실 입장 정리'] } },
+  { category:'Gate', name:'G2 임차인 대응', desc:'임대료 청구·공문 대응·계약(해지/유지) 전략', lead:'운용그룹 율촌', coop:'법무팀',
+    schedule:{ c2:'●', c3:'◆', c4:'◆', c5:'●', c6:'●', c7:'●', c8:'●' },
+    ev:{ c2:['● 판넬 철거·단전 통지 수령, 긴급구제·Umbrella 질의 회신'],
+         c3:['◆ 7/31 쿠팡 임대료 유보 공문 — 7/1~18 일할 15.9억만 입금','● 토지사용승낙(가설건축물) 검토·날인'],
+         c4:['◆ 8/3 임대료 미납(11.49억) 대응 공문 발송','● 협조요청 공문 3건 회신(지하1층·옥상·가설)','● 3기 연체 해지·원상복구 범위 검토 착수'],
+         c5:['● 원상복구·시공주체 지정전략 율촌 의견서'],
+         c6:['● 기한 명시 역제안 공문'], c7:['● 청구 소송/해지 의사결정'], c8:['● 8~10월분 임대료 대응'] } },
+  { category:'Gate', name:'G3 보험금 청구', desc:'사고접수·독립손사·손해액 산정·BI·청구', lead:'운용그룹 UIB', coop:'대주단(질권)',
+    schedule:{ c2:'●', c3:'●', c4:'◆', c5:'◆', c6:'●', c7:'●', c9:'◆', c10:'●' },
+    ev:{ c2:['● 7/23 보험사고 접수서류 날인·송부','● 임차인측 보험 분석(영배 150억 한도)'],
+         c3:['● 손해사정 미팅, 타사 사례(덕평 가지급 70%) 수집'],
+         c4:['● 8/5 독립손사 3사 PT(태양·파인·한백)','◆ 8/7 독립손사 한백 선정·착수','● 국제손사 NDA·임대차계약서 제공'],
+         c5:['◆ 8/11 DB손해보험 본사 미팅(이지스·UIB·국제·한백)'],
+         c6:['● 청구서류 리스트 대응'], c7:['● 손해액 산정·BI 검토'],
+         c9:['◆ 가지급금 협상 — 10월 이자 재원'], c10:['● 본지급·정산'] } },
+  { category:'Gate', name:'G4 대주단 관리', desc:'EOD 방어·정기 보고·자금계획', lead:'운용그룹', coop:'율촌',
+    schedule:{ c3:'◆', c4:'●', c6:'●', c8:'◆', c10:'●' },
+    ev:{ c3:['◆ 7/27 율촌 EOD 미발생 검토 의견서 → 대주 설명자료','◆ 7/31 대주 1차 보고'],
+         c4:['● 신한·전북·하나 개별 자료 대응','● 펀드 잔고 64억·자금집행 스케줄 보고'],
+         c6:['● 대주단 정기 업데이트'],
+         c8:['◆ 10/12 이자 4,413백만 납부 — 재원 확보 핵심'],
+         c10:['● 보험금 질권 해지·상환 구조 협의'] } },
+  { category:'Gate', name:'G5 현장·복구', desc:'출입통제·안전·감식·복구 착수 준비', lead:'황준하 한화PM', coop:'쿠팡',
+    schedule:{ c1:'●', c3:'●', c4:'●', c5:'●', c6:'◆', c7:'●', c10:'◆' },
+    ev:{ c1:['● 7/22~ 외벽 판넬 철거·전체 단전(임차인 시행)'],
+         c3:['● 지하1층 재고 반출 협조(비상발전기 검토)'],
+         c4:['● 출입 가능여부 일일 유선확인 체계(한화PM)','● 쿠팡 구조안전검토, 도로통제 금주 해제 전망'],
+         c5:['● 재고 반출 실행 모니터링'],
+         c6:['◆ 감식 종료 → 건물 인수인계 목표'],
+         c7:['● 시공주체 지정 전략 확정'], c10:['◆ 철거·복구 착수(이천 사례 벤치마킹)'] } },
+  { category:'Gate', name:'G6 펀드·Exit', desc:'수익자 보고·CF모델·매각가정 검토', lead:'운용그룹', coop:'판매사',
+    schedule:{ c3:'●', c4:'●', c6:'●', c10:'●' },
+    ev:{ c3:['● 이천물류 벤치마킹(크리에이트)','● CBRE 시장임대료 의견 수령'],
+         c4:['● CF모델 v2·손해액 산정보드','● 수익자 월간보고'],
+         c6:['● 12월말 매각가정 업데이트'], c10:['● 복구 후 Exit 전략 재수립'] } },
+  /* 기능별 Task 행 — CFT의 Task 행 구조 */
+  { category:'Task', name:'법무', desc:'수사·소송 대응, 의견서, 임차인 공문 법률검토', lead:'율촌', coop:'법무팀;운용그룹', topic:'법무',
+    schedule:{ c2:'●', c3:'●', c4:'●', c5:'●', c6:'●', c7:'●' } },
+  { category:'Task', name:'임대차', desc:'임대료 청구·미납 관리, 협조요청 공문 대응', lead:'운용그룹', coop:'율촌', topic:'임대차',
+    schedule:{ c2:'●', c3:'●', c4:'●', c5:'●', c6:'●', c8:'●' } },
+  { category:'Task', name:'보험', desc:'원수사·중개·손해사정 협의, 청구 실무', lead:'오채은', coop:'UIB;손해사정', topic:'보험',
+    schedule:{ c2:'●', c3:'●', c4:'●', c5:'●', c7:'●', c9:'●' } },
+  { category:'Task', name:'대주단', desc:'대주 보고·질의 대응·근질권 협의', lead:'오채은', coop:'김지현', topic:'대주단',
+    schedule:{ c3:'●', c4:'●', c6:'●', c8:'●' } },
+  { category:'Task', name:'현장/복구', desc:'출입·안전·PM 관리, 복구 벤치마킹', lead:'황준하', coop:'한화PM', topic:'복구',
+    schedule:{ c1:'●', c3:'●', c4:'●', c5:'●', c6:'●' } },
+  { category:'Task', name:'펀드/보고', desc:'수익자·판매사 보고, CF모델·매각 검토', lead:'김수현 오채은', coop:'박준규', topic:'펀드매각',
+    schedule:{ c3:'●', c4:'●', c7:'●' } },
+  { category:'Task', name:'TF 운영', desc:'TF 계정·메일 일괄 관리, 대시보드 갱신', lead:'정하윤', coop:'전 TF', topic:'운영',
+    schedule:{ c2:'●', c3:'●', c4:'●', c5:'●', c6:'●', c7:'●', c8:'●', c9:'●', c10:'●' } },
 ];
 
-const TOPICS = ['법무','임대차','보험','대주단','복구','운영','펀드매각'];
-
-/* ---- 타임라인 렌더 ---- */
-const tl = document.getElementById('tl');
-let thead = '<thead><tr><th style="text-align:left">구분</th><th style="text-align:left">주관 / 협조</th>';
-for (const w of WEEKS) thead += `<th class="${w.hl?'hl':''} ${w.now?'now':''}"><span class="top">${w.top}</span>${w.bot}${w.now?' ▾':''}</th>`;
-thead += '</tr></thead>';
-let tbody = '<tbody>';
-for (const r of ROWS) {
-  tbody += `<tr><td class="name"><span class="cat ${r.cat==='Gate'?'gate':'task'}">${r.cat.toUpperCase()}</span>${r.name}<span class="desc">${r.desc}</span></td>`;
-  tbody += `<td class="rr"><b>${r.lead}</b><small>${r.coop}</small></td>`;
-  for (const w of WEEKS) {
-    const ev = r.sch[w.key];
-    if (!ev) { tbody += '<td class="mark"></td>'; continue; }
-    const hasKey = ev.some(e => e.startsWith('◆'));
-    const isPlan = ev.every(e => e.startsWith('○'));
-    const sym = hasKey ? '<span class="dia">◆</span>' : isPlan ? '<span class="plan">○</span>' : '<span class="dot">●</span>';
-    tbody += `<td class="mark has" data-tip="${encodeURIComponent(JSON.stringify({t:`${r.name} — ${w.bot}`, ev}))}">${sym}</td>`;
-  }
-  tbody += '</tr>';
+/* ---- 데이터 집계 (토픽×주차) ---- */
+const M = (window.TF_DATA || {mails:[]}).mails;
+document.getElementById('n-mails').textContent = M.length;
+function colOf(date){ for (const c of COLUMNS) if (c.range && date >= c.range[0] && date <= c.range[1]) return c.key; return null; }
+const cnt = {};
+for (const m of M) {
+  const ck = colOf(m.date); if (!ck) continue;
+  for (const t of (m.topics.length ? m.topics : ['운영'])) { cnt[t] = cnt[t] || {}; cnt[t][ck] = (cnt[t][ck]||0)+1; }
 }
-tl.innerHTML = thead + tbody + '</tbody>';
+
+/* ---- 말풍선 (CFT Speech Bubbles) ---- */
+const LEFT_W = 94 + 258 + 94 + 94; // 540
+function colCenter(i){ return LEFT_W + (i + 0.5) * 75; }
+document.getElementById('bubbles').innerHTML =
+  `<div class="bubble orange" style="left:${colCenter(4)}px"><div>DB손보</div><div>미팅 8/11</div><span class="tail"></span></div>` +
+  `<div class="bubble dark" style="left:${colCenter(7)}px"><div>이자 납부</div><div>4,413백만</div><div>10/12</div><span class="tail"></span></div>`;
+
+/* ---- 타임라인 테이블 ---- */
+function renderTL(filter){
+  const rows = TIMELINE_DATA.filter(r => filter === 'All' || r.category === filter);
+  let h = '<thead><tr><th class="c-cat">구분</th><th class="c-desc">세부업무</th><th class="c-lead">실행주관</th><th class="c-coop">협업</th>';
+  for (const c of COLUMNS)
+    h += `<th class="c-p ${c.highlight ? 'hl' : ''}"><div>${c.top}</div>${c.bot ? `<div class="b">${c.bot}</div>` : ''}</th>`;
+  h += '</tr></thead><tbody>';
+  for (const r of rows) {
+    h += `<tr><td class="cat"><span class="badge ${r.category === 'Gate' ? 'gate' : 'task'}">${r.name}</span></td>`;
+    h += `<td class="desc">${r.desc}</td>`;
+    h += `<td class="lead">${r.lead.split(' ').map(p => `<div>${p}</div>`).join('')}</td>`;
+    h += `<td class="coop">${r.coop.split(';').map(p => p && `<div>${p}</div>`).filter(Boolean).join('')}</td>`;
+    for (const c of COLUMNS) {
+      const mark = r.schedule[c.key];
+      let ev = r.ev && r.ev[c.key];
+      if (!ev && r.topic && c.range) {
+        const n = (cnt[r.topic] || {})[c.key] || 0;
+        if (n) ev = [`● 관련 메일 ${n}건`];
+      }
+      const tipAttr = (mark && ev) ? ` data-tip="${encodeURIComponent(JSON.stringify({t:`${r.name} — ${c.bot || c.top}`, ev}))}"` : '';
+      h += `<td class="p ${c.highlight ? 'hl' : ''} ${tipAttr ? 'has' : ''}"${tipAttr}>` +
+           (mark === '●' ? '<span class="dot"></span>' : mark === '◆' ? '<span class="dia">◆</span>' : '') + '</td>';
+    }
+    h += '</tr>';
+  }
+  document.getElementById('tl').innerHTML = h + '</tbody>';
+}
+renderTL('All');
+document.getElementById('filter').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  document.querySelectorAll('#filter button').forEach(x => x.classList.toggle('on', x === b));
+  renderTL(b.dataset.f);
+});
 
 /* ---- 툴팁 ---- */
 const tip = document.getElementById('tip');
@@ -225,38 +308,27 @@ document.addEventListener('mousemove', (e) => {
   const cell = e.target.closest('[data-tip]');
   if (!cell) { tip.style.display = 'none'; return; }
   const d = JSON.parse(decodeURIComponent(cell.dataset.tip));
-  tip.innerHTML = `<h5>${d.t}</h5><ul>` + d.ev.map(x=>`<li>${x.replace(/^[◆●○]\s*/, m=>({['◆ ']:'<b class="dia">◆</b> ',['● ']:'<b class="dot">●</b> ',['○ ']:'<b class="plan">○</b> '}[m]||m))}</li>`).join('') + '</ul>';
+  tip.innerHTML = `<h5>${d.t}</h5><ul>` + d.ev.map(x =>
+    x.replace(/^◆\s*/, '<li><b class="dia2">◆</b> ').replace(/^●\s*/, '<li><b class="dot2">●</b> ') + '</li>').join('') + '</ul>';
   tip.style.display = 'block';
-  const x = Math.min(e.clientX + 14, innerWidth - 380), y = Math.min(e.clientY + 14, innerHeight - tip.offsetHeight - 12);
-  tip.style.left = x + 'px'; tip.style.top = y + 'px';
+  const x = Math.min(e.clientX + 14, innerWidth - 396), y = Math.min(e.clientY + 14, innerHeight - tip.offsetHeight - 12);
+  tip.style.left = Math.max(6, x) + 'px'; tip.style.top = Math.max(6, y) + 'px';
 });
 
-/* ---- 히트맵 (자동 집계) ---- */
-const M = (window.TF_DATA || {mails:[]}).mails;
-document.getElementById('chip-mails').textContent = M.length + '건';
-function weekOf(date) {
-  for (const w of WEEKS) if (w.range && date >= w.range[0] && date <= w.range[1]) return w.key;
-  return null;
-}
-const counts = {};
-for (const m of M) {
-  const wk = weekOf(m.date); if (!wk) continue;
-  for (const t of (m.topics.length ? m.topics : ['운영'])) {
-    counts[t] = counts[t] || {}; counts[t][wk] = (counts[t][wk] || 0) + 1;
-  }
-}
-const dataWeeks = WEEKS.filter(w => w.range);
-let hh = '<thead><tr><th style="text-align:left">토픽</th>' + dataWeeks.map(w=>`<th>${w.bot}</th>`).join('') + '<th>계</th></tr></thead><tbody>';
-const maxC = Math.max(1, ...TOPICS.flatMap(t => dataWeeks.map(w => (counts[t]||{})[w.key] || 0)));
+/* ---- 주간 활동 집계 ---- */
+const TOPICS = ['법무','임대차','보험','대주단','복구','운영','펀드매각'];
+const dataCols = COLUMNS.filter(c => c.range);
+let hh = '<thead><tr><th>토픽</th>' + dataCols.map(c => `<th style="text-align:center">${c.bot}</th>`).join('') + '<th style="text-align:center">계</th></tr></thead><tbody>';
+const maxC = Math.max(1, ...TOPICS.flatMap(t => dataCols.map(c => (cnt[t]||{})[c.key] || 0)));
 for (const t of TOPICS) {
   let tot = 0;
   hh += `<tr><td class="topic">${t}</td>`;
-  for (const w of dataWeeks) {
-    const c = (counts[t]||{})[w.key] || 0; tot += c;
-    const a = c ? (0.10 + 0.55 * c / maxC).toFixed(2) : 0;
-    hh += `<td class="c" style="${c?`background:color-mix(in oklab, var(--gate) ${Math.round(a*100)}%, transparent)`:''}">${c||''}</td>`;
+  for (const c of dataCols) {
+    const n = (cnt[t]||{})[c.key] || 0; tot += n;
+    const a = n ? (8 + 40 * n / maxC).toFixed(0) : 0;
+    hh += `<td class="c" style="${n ? `background:rgba(41,151,255,.${String(a).padStart(2,'0')})` : ''}">${n || '<span class=dim>·</span>'}</td>`;
   }
-  hh += `<td class="c" style="font-weight:600">${tot}</td></tr>`;
+  hh += `<td class="c" style="font-weight:700">${tot}</td></tr>`;
 }
 document.getElementById('heat').innerHTML = hh + '</tbody>';
 
@@ -265,10 +337,10 @@ const RR = [
   { ws:'법무·수사 대응', lead:'김지현 이사 · 임현빈/김진욱(법무팀)', coop:'이치형 전무(준법감시인) 총괄', ext:'율촌 — 백승태·안범진(수사), 김석희(자료)',
     st:'7/30 참고인 조사 완료, 참고자료 1~13 경찰 제출. 정보공개청구 인천경찰청 이송, 증거보전 즉시항고 대응 중', nx:'무과실 입장 자료 보강, CCTV 확보' },
   { ws:'임차인(쿠팡) 대응', lead:'오채은 매니저 · 김지현 이사', coop:'정조민 부대표(전략)', ext:'율촌 — 맹주한·이승호·김은주 / 쿠팡측: 김앤장 선임',
-    st:'임대료 미납 11.49억 대응 공문 발송(8/3). 협조요청 공문 3건 회신(지하1층·옥상·가설건축물). 쿠팡 법무팀 총괄 체제 확인', nx:'원상복구 범위·3기 연체 해지 의견서, 기한 역제안' },
+    st:'임대료 미납 11.49억 대응 공문 발송(8/3). 협조요청 공문 3건 회신. 쿠팡 법무팀 총괄 체제 확인', nx:'원상복구 범위·3기 연체 해지 의견서, 기한 역제안' },
   { ws:'보험금 청구', lead:'오채은 매니저', coop:'정하윤 매니저(TF 계정·자료)', ext:'UIB 배진효 / 국제손사 현기범 / 한백손사(독립) / DB손보 이강훈',
     st:'독립손사 한백 선정·착수(8/7). 국제손사 NDA 체결, 임대차계약서 제공. 임차인측 손사 인코크(메리츠 지정)', nx:'8/11 DB손보 본사 미팅, 청구서류 준비' },
-  { ws:'대주단 관리', lead:'오채은 매니저 · 김지현 이사', coop:'정조민 부대표', ext:'율촌 김은주(EOD) / 신한·전북·하나·KB / DB손보(간사)',
+  { ws:'대주단 관리', lead:'오채은 매니저 · 김지현 이사', coop:'정조민 부대표', ext:'율촌 김은주(EOD) / 신한·전북·하나 / DB손보(간사)',
     st:'EOD 미발생 의견서 공유(7/27), 1차 보고(7/31). 펀드 잔고 64억·자금스케줄 개별 보고 완료', nx:'10월 이자 44.1억 재원계획(가지급 연계)' },
   { ws:'현장·복구', lead:'황준하 팀장', coop:'박준규 매니저(벤치마킹)', ext:'한화PM 송아련 / 크리에이트(이천 사례) / 서해구청·소방·경찰',
     st:'출입 가능여부 일일확인 체계 가동. 쿠팡 구조안전검토 진행, 도로통제 금주 해제 전망. 안전점검보고서 확보', nx:'감식종료 후 인수인계, 시공주체 지정전략' },
@@ -278,9 +350,9 @@ const RR = [
     st:'TF 전용 계정(iig24tf) 운영, 수발신 메일 일괄 관리·기록', nx:'일일 메일 업데이트 → 본 대시보드 갱신' },
 ];
 document.getElementById('rrbody').innerHTML = RR.map(r =>
-  `<tr><td><b class="ws">${r.ws}</b></td><td class="who">${r.lead}</td><td class="who"><small>${r.coop}</small></td><td class="who"><small>${r.ext}</small></td><td class="status">${r.st}</td><td class="next">${r.nx}</td></tr>`).join('');
+  `<tr><td class="ws"><b>${r.ws}</b></td><td class="who">${r.lead}</td><td class="who">${r.coop}</td><td class="who">${r.ext}</td><td class="status">${r.st}</td><td class="next">${r.nx}</td></tr>`).join('');
 
-/* ---- 마일스톤 일지 ---- */
+/* ---- 일지 ---- */
 const LOG = [
   ['7/18','화재','key','인천 석남 쿠팡물류센터 화재 발생','임차인 6층 메자닌(B동) 구조물 관련 — 원인 수사 중'],
   ['7/22','법무','key','율촌 수사대응 킥오프(15시)','수사대응팀 우선 구성, 익일 계약분야 미팅 확정'],

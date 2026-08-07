@@ -142,7 +142,8 @@ text.ecnt{font:600 10.5px 'JetBrains Mono',monospace;cursor:pointer}
       <button class="navbtn" id="prevd">‹</button>
       <div class="dstrip" id="dstrip"></div>
       <button class="navbtn" id="nextd">›</button>
-      <input class="dpick" type="date" id="dpick" min="2026-07-14" max="2026-08-07">
+      <button class="navbtn" id="calbtn" title="달력에서 날짜 선택" style="width:auto;padding:0 10px;font-size:12px">📅 달력</button>
+      <input class="dpick" type="date" id="dpick">
     </div>
   </div>
 
@@ -203,9 +204,15 @@ dstrip.addEventListener('click', e => {
 });
 document.getElementById('prevd').onclick = () => { const i = sel==='all' ? DATES.length : DATES.indexOf(sel); if (i>0){ sel = DATES[i-1]; pick=null; renderAll(); } };
 document.getElementById('nextd').onclick = () => { if (sel==='all') return; const i = DATES.indexOf(sel); if (i < DATES.length-1){ sel = DATES[i+1]; pick=null; renderAll(); } else { sel='all'; pick=null; renderAll(); } };
-document.getElementById('dpick').addEventListener('change', e => {
+const dpick = document.getElementById('dpick');
+dpick.min = DATES[0]; dpick.max = DATES[DATES.length-1];
+// 달력에서 직접 선택 — 입력칸/달력 버튼 클릭 시 네이티브 달력을 바로 연다
+function openCal(){ try { dpick.showPicker(); } catch (e) { dpick.focus(); } }
+dpick.addEventListener('click', openCal);
+document.getElementById('calbtn').addEventListener('click', openCal);
+dpick.addEventListener('change', e => {
   const v = e.target.value; if (!v) return;
-  sel = byDate[v] ? v : v; pick = null; renderAll();
+  sel = v; pick = null; renderAll();
 });
 
 function curMails(){ return sel==='all' ? MAILS : (byDate[sel] || []); }
@@ -391,7 +398,7 @@ function renderDetail(){
   });
 })();
 
-function renderAll(){ renderStrip(); renderDiag(); renderDetail(); }
+function renderAll(){ renderStrip(); renderDiag(); renderDetail(); dpick.value = sel === 'all' ? '' : sel; }
 sel = DATES[DATES.length-1];   // 초기값: 최신 날짜
 renderAll();
 </script>
