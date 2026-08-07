@@ -402,11 +402,11 @@ function renderDetail(){
   if (cp) cp.onclick = (e)=>{ e.preventDefault(); pick=null; renderDetail(); };
 }
 
-/* ---- 당일 흐름 요약 — 신문 기사처럼 한 문단으로 ---- */
+/* ---- 당일 흐름 요약 — 주제별 흐름을 잇는 스토리텔링 한 문단 ---- */
 function renderFlow(){
   const body = document.getElementById('flow-body');
   if (sel === 'all') {
-    body.innerHTML = '<div class="dhint">날짜를 선택하면 그날의 교신 흐름이 한 문단으로 요약됩니다.</div>';
+    body.innerHTML = '<div class="dhint">날짜를 선택하면 그날의 교신 흐름이 이야기처럼 요약됩니다.</div>';
     return;
   }
   const all = chrono(curMails());
@@ -424,10 +424,24 @@ function renderFlow(){
       (internal ? `고, 이지스 내부 공유도 ${internal}건 있었다.` : `다.`);
     else if (internal) intro += ` 이지스 내부 공유는 ${internal}건이었다.`;
   }
-  const am = list.filter(m => m.time < '12:00'), pm = list.filter(m => m.time >= '12:00');
-  const seg = (arr, label) => arr.length
-    ? `<span class="fd">${label}</span> ` + arr.map(m => first(m.summary)).join(' ') : '';
-  body.innerHTML = `<p class="fpara">${intro} ${seg(am, '오전에는')} ${seg(pm, '오후 들어서는')}</p>`;
+  /* 같은 토픽끼리 하나의 이야기 줄기로 묶고, 줄기 안에서는 요청→회신 흐름을 접속사로 잇는다 */
+  const threads = {};
+  for (const m of list) {
+    const t = (m.topics && m.topics[0]) || '운영';
+    (threads[t] = threads[t] || []).push(m);
+  }
+  const ko = (t) => { const [h, mi] = t.split(':').map(Number);
+    return `${h < 12 ? '오전' : '오후'} ${h % 12 || 12}시${mi ? ' ' + mi + '분' : ''}`; };
+  const isReply = (m) => /회신|답변|수령.*확인/.test(m.summary) ||
+    (m.requests || []).some(r => r.status === '회신' || r.status === '확정');
+  const story = Object.values(threads)
+    .sort((x, y) => (x[0].date + x[0].time).localeCompare(y[0].date + y[0].time))
+    .map((ms, ti) => ms.map((m, i) => {
+      const s = first(m.summary);
+      if (i === 0) return (ti ? '<span class="fd">한편</span> ' : '') + `${ko(m.time)} ${s}`;
+      return `<span class="fd">${isReply(m) ? '이에' : '이어'}</span> ${ko(m.time)}에는 ${s}`;
+    }).join(' ')).join(' ');
+  body.innerHTML = `<p class="fpara">${intro} ${story}</p>`;
 }
 
 /* ---- 담당자 (석남 TF 무관 인원 제외 + 회사별 소그룹) ---- */
