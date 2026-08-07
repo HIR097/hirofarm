@@ -19,6 +19,33 @@ export const darkCard = {
 
 export const mono = "600 11px 'JetBrains Mono'"
 
+// 날짜는 긴급/일반 구분 없이 항상 '밝은 파란색'으로 표시한다.
+export const BLUE = '#3b9eff'
+export const BLUE_BG = 'rgba(59,158,255,.14)'
+
+// 업무 기한/일자 칩 — 어떤 경우든 밝은 파란색.
+export function DueChip({ value, size = 11, label = '기한' }) {
+  if (!value) return null
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
+      {label && (
+        <span style={{ font: "600 10px 'JetBrains Mono'", color: 'var(--text-3)', letterSpacing: '.04em' }}>{label}</span>
+      )}
+      <span
+        style={{
+          font: `700 ${size}px 'JetBrains Mono'`,
+          padding: '2px 9px',
+          borderRadius: 8,
+          background: BLUE_BG,
+          color: BLUE,
+        }}
+      >
+        {value}
+      </span>
+    </span>
+  )
+}
+
 // Generic surface card.
 export function Card({ children, style }) {
   return <div style={{ ...card, ...style }}>{children}</div>

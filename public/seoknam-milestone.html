@@ -9,83 +9,129 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-/* ===== IGIS-Fund-Production-DP 마일스톤 탭 양식 재현 (다크 고정) ===== */
+/* ===== IGIS 통합 상세 일정(간트) 양식 재현 — 다크 고정 ===== */
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#1d1d1c;color:#E5E5E5;font-size:13px;line-height:1.5;
   font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Pretendard','Malgun Gothic','Inter',Helvetica,Arial,sans-serif}
-.page{max-width:1330px;margin:0 auto;padding:34px 20px 80px}
+.page{max-width:1500px;margin:0 auto;padding:34px 20px 80px}
 a.back{position:absolute;right:22px;top:22px;font-size:11px;font-weight:700;color:#86868B;text-decoration:none;
   border:1px solid #3c3c3c;background:#252524;padding:6px 12px;border-radius:9px}
 a.back:hover{color:#fff}
 
 /* ---- 헤더 ---- */
-.hd{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:10px}
-.hd .l{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.hd h1{font-size:32px;font-weight:800;color:#fff;letter-spacing:-.02em;line-height:1}
-.hd .sub{font-size:15px;color:#86868B;line-height:1}
-.toggle{display:flex;height:30px;align-items:center;border-radius:9px;border:1px solid #3c3c3c;background:#252524}
-.toggle button{height:28px;border-radius:7px;border:1px solid transparent;padding:0 12px;font-size:11px;font-weight:700;
+.hd{display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+.hd h1{font-size:34px;font-weight:800;color:#fff;letter-spacing:-.02em;line-height:1}
+.toggle{display:flex;height:32px;align-items:center;border-radius:10px;border:1px solid #3c3c3c;background:#252524;padding:2px}
+.toggle button{height:26px;border-radius:8px;border:1px solid transparent;padding:0 14px;font-size:12px;font-weight:700;
   color:#86868B;background:transparent;cursor:pointer;transition:color .15s}
 .toggle button:hover{color:#fff}
-.toggle button.on{border-color:#263b52;background:#3b4f68;color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.035)}
-.chips{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0 60px}
-.chip{font-size:12px;color:#86868B;border:1px solid #3c3c3c;background:#252524;padding:4px 11px;border-radius:9px}
-.chip b{color:#E5E5E5;font-weight:700;margin-left:5px;font-family:'Inter',monospace}
-.chip.hot b{color:#ff5f57}
+.toggle button.on{border-color:#31445c;background:#3b4f68;color:#fff}
 
-/* ---- 타임라인 컨테이너 ---- */
-.tlwrap{position:relative;margin-top:70px}
-.tl-legend{position:absolute;left:16px;top:-38px;display:flex;align-items:center;gap:16px;font-size:12px;font-weight:700}
-.tl-legend .i{display:flex;align-items:center;gap:6px;color:#E5E5E5}
-.tl-legend .dotb{display:inline-block;height:10px;width:10px;border-radius:50%;background:#2997ff}
-.tl-legend .diao{font-family:'Inter',monospace;font-size:16px;line-height:1;color:#F59E0B}
-.bubbles{position:absolute;top:-68px;left:0;width:100%;height:36px;pointer-events:none;z-index:5}
-.bubble{position:absolute;transform:translateX(-50%);border-radius:6px;font-size:11px;font-weight:700;text-align:center;
-  line-height:1.25;display:flex;flex-direction:column;justify-content:center;align-items:center;box-shadow:0 6px 18px rgba(0,0,0,.4)}
-.bubble.orange{top:14px;background:#ff9f0a;color:#1c1c1e;width:64px;height:44px}
-.bubble.dark{top:4px;background:#2c2c2e;color:#fff;border:1px solid #3c3c3c;width:76px;height:54px}
-.bubble .tail{position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);width:0;height:0;
-  border-left:3px solid transparent;border-right:3px solid transparent}
-.bubble.orange .tail{border-top:6px solid #ff9f0a}
-.bubble.dark .tail{border-top:6px solid #2c2c2e}
+/* ---- 카드 ---- */
+.card{border:1px solid #3c3c3c;background:#26282c;border-radius:26px;padding:22px 24px 8px;overflow:hidden}
+.card-hd{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.card-hd h2{font-size:19px;font-weight:800;color:#fff;letter-spacing:-.01em}
+.tagpill{font-size:11px;font-weight:700;color:#60a5fa;border:1px solid rgba(41,151,255,.4);border-radius:999px;padding:3px 11px;background:rgba(41,151,255,.07)}
+.card-hd .desc{font-size:12.5px;color:#86868B}
+.card-hd .sp{flex:1}
+.sel{height:34px;border-radius:9px;border:1px solid #47494e;background:#2f3136;color:#d8d8dc;font-size:12px;font-weight:600;
+  padding:0 30px 0 12px;appearance:none;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23a0a0a6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 11px center}
+.sel:hover{border-color:#5a5c62}
 
-.tlbox{border:1px solid #3c3c3c;background:#272726;border-radius:32px;overflow-x:auto;scrollbar-width:thin;
-  scrollbar-color:rgba(255,255,255,.12) rgba(255,255,255,.02)}
-table.tl{text-align:left;table-layout:fixed;width:1290px;min-width:1290px;border-collapse:collapse}
-table.tl thead tr{border-bottom:1px solid #3c3c3c;color:#86868B;font-weight:700;font-size:13px;height:48px}
-table.tl thead th{background:#272726}
-th.c-cat{padding-left:10px;padding-right:4px;width:94px;text-align:center;border-top-left-radius:31px}
-th.c-desc{padding-left:12px;width:258px}
-th.c-lead{padding:0 4px;width:94px;text-align:center}
-th.c-coop{padding:0 4px;width:94px;text-align:center;border-right:1px solid #3c3c3c}
-th.c-p{width:75px;text-align:center;font-family:'Inter',sans-serif;font-size:11px;line-height:1.25;padding:0 4px;font-weight:700;
-  color:#86868B;border-right:1px solid rgba(76,76,76,.5)}
-th.c-p.hl{background:rgba(255,255,255,.03);color:#60a5fa}
-th.c-p:last-child{border-right:0;border-top-right-radius:31px}
-th.c-p .b{font-size:11px;opacity:.75;margin-top:2px}
-table.tl tbody tr{height:50px;border-top:1px solid #3c3c3c;transition:background .15s}
-table.tl tbody tr:hover td{background:#333}
-table.tl td{background:#272726;transition:background .15s}
-td.cat{padding-left:10px;padding-right:4px;text-align:center;width:94px}
-td.cat .badge{display:block;padding:4px 6px;border-radius:6px;font-weight:700;font-size:12px;line-height:1.3}
-td.cat .badge.gate{background:rgba(41,151,255,.1);color:#60a5fa;border:1px solid rgba(41,151,255,.2)}
-td.cat .badge.task{background:rgba(161,161,170,.1);color:#e4e4e7;border:1px solid rgba(161,161,170,.2)}
-td.desc{padding-left:12px;padding-right:8px;font-weight:500;color:#bdbba7;line-height:1.35;font-size:13px;letter-spacing:-.01em;
-  white-space:normal;word-break:keep-all}
-td.lead{padding:0 4px;color:#E5E5E5;font-weight:600;text-align:center;font-size:12px;line-height:1.3;letter-spacing:-.01em;white-space:normal}
-td.coop{padding:0 4px;color:#c2c2c6;line-height:1.3;text-align:center;white-space:normal;border-right:1px solid #3c3c3c;font-size:11px}
-td.p{text-align:center;width:75px;border-right:1px solid rgba(76,76,76,.4)}
-td.p:last-child{border-right:0}
-td.p.hl{background:rgba(255,255,255,.015)}
-table.tl tbody tr:hover td.p.hl{background:rgba(255,255,255,.04)}
-td.p .dot{width:14px;height:14px;border-radius:50%;background:#2997ff;display:inline-block;box-shadow:0 1px 2px rgba(41,151,255,.2)}
-td.p .dia{color:#F59E0B;font-family:'Inter',monospace;font-size:28px;font-weight:800;display:block;transform:translateY(-1px);
-  animation:pulse 2s cubic-bezier(.4,0,.6,1) infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
-td.p.has{cursor:pointer}
+/* ---- KPI + 검색 ---- */
+.kpis{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.kpi{display:flex;align-items:center;gap:14px;min-width:150px;height:52px;padding:0 18px;border-radius:13px;
+  border:1px solid #45474c;background:#2b2d31;cursor:pointer;transition:border-color .15s}
+.kpi:hover{border-color:#6a6c72}
+.kpi.on{border-color:#4e7bb8;box-shadow:inset 0 0 0 1px #4e7bb8}
+.kpi .lab{font-size:12.5px;font-weight:700;color:#c9c9cd}
+.kpi .num{font-family:'Inter',sans-serif;font-size:23px;font-weight:800;color:#fff;margin-left:auto}
+.kpi .num.blue{color:#4da3ff}.kpi .num.red{color:#ff5f57}.kpi .num.orange{color:#ffb020}
+.search{flex:1;min-width:220px;height:52px;border-radius:13px;border:1px solid #45474c;background:#2b2d31;
+  display:flex;align-items:center;gap:10px;padding:0 16px}
+.search svg{flex:none;opacity:.5}
+.search input{flex:1;background:none;border:0;outline:0;color:#E5E5E5;font-size:13px;font-family:inherit}
+.search input::placeholder{color:#7b7b80}
 
-/* ---- 하단 섹션 (CFT 섹션 헤더 양식) ---- */
-.sec{display:flex;align-items:baseline;gap:16px;margin:41px 0 16px}
+/* ---- 오늘 논의 스트립 ---- */
+.todaybar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:12px 0 4px;font-size:12px}
+.todaybar .tt{font-weight:800;color:#ffb020}
+.todaybar .tc{border:1px solid rgba(255,159,10,.35);background:rgba(255,159,10,.08);color:#ffcf87;
+  border-radius:999px;padding:2.5px 10px;font-weight:700;font-size:11.5px}
+.todaybar .tc b{font-family:'Inter',monospace;margin-left:4px}
+.todaybar .dim{color:#86868B}
+
+/* ---- 간트 ---- */
+.gscroll{overflow-x:auto;margin:14px -24px 0;padding-bottom:14px;
+  scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.14) rgba(255,255,255,.02)}
+.ginner{width:max-content;position:relative;padding:0 0 4px}
+.grow{display:flex;align-items:stretch;border-top:1px solid #323236}
+.grow .lcell{width:500px;flex:none;display:flex;align-items:center;gap:10px;padding:0 14px 0 24px;
+  position:sticky;left:0;z-index:3;background:#26282c}
+.grow .tcell{position:relative;flex:none}
+.grow:hover .lcell{background:#2c2e33}
+.grow:hover{background:rgba(255,255,255,.025)}
+
+/* 헤더 행 */
+.ghead{border-top:0}
+.ghead .lcell{height:76px;color:#86868B;font-weight:700;font-size:12.5px;align-items:flex-end;padding-bottom:12px;z-index:4}
+.mrow{display:flex;height:40px}
+.mcell{display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13.5px;color:#c9c9cd;
+  border-left:1px solid #37393e}
+.wrow{display:flex;height:36px}
+.wcell{display:flex;align-items:center;justify-content:center;font-family:'Inter',sans-serif;font-size:11px;font-weight:700;
+  color:#7b7b80;border-left:1px solid rgba(70,72,78,.45)}
+
+/* 레벨별 행 */
+.grow.lv0{background:#31394a}
+.grow.lv0 .lcell{background:#31394a}
+.grow.lv0:hover .lcell,.grow.lv0:hover{background:#374053}
+.grow.lv0 .name{font-size:14.5px;font-weight:800;color:#fff}
+.grow.lv1 .lcell{padding-left:46px}
+.grow.lv1 .name{font-size:13.5px;font-weight:800;color:#f0f0f2}
+.grow.leaf .lcell{padding-left:70px}
+.grow.leaf .name{font-size:13px;font-weight:600;color:#d9d9dc}
+.grow .h-row{height:58px}
+.caret{flex:none;width:14px;font-size:10px;color:#a0a0a6;cursor:pointer;user-select:none;transition:transform .15s}
+.caret.closed{transform:rotate(-90deg)}
+.bullet{flex:none;width:5px;height:5px;border-radius:50%;background:#5c5e64}
+.ltxt{min-width:0;flex:1;padding:9px 0}
+.ltxt .name{line-height:1.3;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.ltxt .sub{font-size:11px;color:#83838a;margin-top:2px}
+.ltxt .sub .cnt{color:#86868B}
+.badge{flex:none;font-size:10px;font-weight:700;border-radius:999px;padding:1.5px 8px;line-height:1.5}
+.badge.ing{color:#4da3ff;border:1px solid rgba(41,151,255,.45);background:rgba(41,151,255,.08)}
+.badge.todo{color:#a8a8ae;border:1px solid #4b4d53;background:rgba(161,161,170,.07)}
+.badge.done{color:#3ddc84;border:1px solid rgba(61,220,132,.4);background:rgba(61,220,132,.07)}
+.badge.hot{color:#ffb020;border:1px solid rgba(255,159,10,.5);background:rgba(255,159,10,.1)}
+.per{flex:none;font-size:12px;font-weight:700;color:#4da3ff;white-space:nowrap;font-family:'Inter',sans-serif;letter-spacing:-.01em}
+.grow.lv0 .per{color:#8ec2ff}
+
+/* 주차 그리드 배경 + 바 */
+.tcell .grid{position:absolute;inset:0;display:flex;pointer-events:none}
+.tcell .grid i{flex:none;border-left:1px solid rgba(70,72,78,.35)}
+.bar{position:absolute;top:50%;transform:translateY(-50%);height:13px;border-radius:999px;background:#2e7cd6;cursor:pointer}
+.bar.group{background:#46587a;height:12px}
+.bar.donebar{background:#2a5d94}
+.bar.todaybar-hit{box-shadow:0 0 0 1.5px rgba(255,159,10,.65),0 0 14px rgba(255,159,10,.3)}
+.ms{position:absolute;top:50%;transform:translate(-50%,-54%);color:#ffb020;font-size:15px;line-height:1;z-index:2;
+  text-shadow:0 1px 4px rgba(0,0,0,.6);cursor:pointer}
+.ms.pulse{animation:pulse 2s cubic-bezier(.4,0,.6,1) infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+
+/* 오늘 라인 */
+.today-line{position:absolute;top:66px;bottom:0;width:2px;background:#ff9f0a;z-index:2;pointer-events:none;
+  box-shadow:0 0 10px rgba(255,159,10,.5)}
+.today-badge{position:absolute;top:34px;transform:translateX(-50%);z-index:5;background:#ff9f0a;color:#1c1c1e;
+  font-size:12px;font-weight:800;border-radius:8px;padding:4px 11px;white-space:nowrap;pointer-events:none}
+.today-badge::after{content:'';position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);
+  border-left:5px solid transparent;border-right:5px solid transparent;border-top:5px solid #ff9f0a}
+.gempty{padding:28px 24px;color:#86868B;font-size:13px}
+
+/* ---- 하단 섹션 ---- */
+.sec{display:flex;align-items:baseline;gap:16px;margin:44px 0 16px}
 .sec h2{font-size:32px;font-weight:800;color:#fff;letter-spacing:-.02em;line-height:1}
 .sec p{font-size:15px;color:#86868B;line-height:1}
 .box{border:1px solid #3c3c3c;background:#272726;border-radius:32px;overflow-x:auto;padding:6px 0;scrollbar-width:thin;
@@ -116,43 +162,55 @@ td.p.has{cursor:pointer}
 .log-item.future{opacity:.55}
 
 /* 툴팁 */
-#tip{position:fixed;z-index:50;max-width:380px;background:#2c2c2e;border:1px solid #3c3c3c;border-radius:11px;
+#tip{position:fixed;z-index:50;max-width:400px;background:#2c2c2e;border:1px solid #3c3c3c;border-radius:11px;
   box-shadow:0 12px 32px rgba(0,0,0,.55);padding:11px 13px;font-size:11.5px;pointer-events:none;display:none;color:#E5E5E5}
-#tip h5{font-size:11px;margin-bottom:5px;color:#86868B;font-weight:700}
-#tip li{margin-left:14px;margin-bottom:3px}
-#tip .dot2{color:#2997ff} #tip .dia2{color:#F59E0B}
-@media(max-width:760px){.hd h1{font-size:24px}.sec h2{font-size:22px}.page{padding:24px 10px 60px}}
+#tip h5{font-size:11.5px;margin-bottom:5px;color:#fff;font-weight:800}
+#tip .row{color:#c2c2c6;margin-bottom:3px}
+#tip .row b{color:#ffb020}
+#tip .row .bl{color:#4da3ff}
+@media(max-width:760px){.hd h1{font-size:24px}.sec h2{font-size:22px}.page{padding:24px 10px 60px}
+  .grow .lcell{width:300px}.card{border-radius:20px;padding:16px 14px 6px}.gscroll{margin:14px -14px 0}}
 </style>
 </head>
 <body>
 <a class="back" href="/">← hirofarm</a>
 <div class="page">
   <div class="hd">
-    <div class="l">
-      <h1>마일스톤</h1>
-      <div class="sub">인천석남쿠팡물류 화재 대응 TF — 메일 <span id="n-mails">–</span>건 분석 기반</div>
+    <h1>마일스톤</h1>
+    <div class="toggle" id="viewToggle">
+      <button data-v="detail" class="on">상세 일정</button>
+      <button data-v="gate">Gate 요약</button>
     </div>
-    <div class="toggle" id="filter">
-      <button data-f="All" class="on">전체</button>
-      <button data-f="Gate">Gate</button>
-      <button data-f="Task">기능별</button>
-    </div>
-  </div>
-  <div class="chips">
-    <div class="chip">화재 발생 <b>2026-07-18</b></div>
-    <div class="chip">수집 기간 <b>07-20 ~ 08-07</b></div>
-    <div class="chip">TF 계정 <b>iig24tf@igisam.com</b></div>
-    <div class="chip hot">7월 임대료 미납 <b>11.49억</b></div>
-    <div class="chip hot">10월 이자 <b>44.1억</b></div>
   </div>
 
-  <div class="tlwrap">
-    <div class="tl-legend">
-      <div class="i"><span class="dotb"></span><span>수행 진행 기간</span></div>
-      <div class="i"><span class="diao">◆</span><span>마일스톤 달성</span></div>
+  <div class="card">
+    <div class="card-hd">
+      <h2>2026 화재 대응 상세 일정</h2>
+      <span class="tagpill">메일 <span id="n-mails">–</span>건 원장</span>
+      <span class="desc">대분류·중분류를 펼쳐 세부업무의 주차별 수행기간과 마일스톤을 확인합니다.</span>
+      <span class="sp"></span>
+      <select class="sel" id="fCat"><option value="">대분류 전체</option></select>
+      <select class="sel" id="fLead"><option value="">실행주관 전체</option></select>
+      <select class="sel" id="fStatus">
+        <option value="">일정 전체</option><option value="ing">진행중</option>
+        <option value="todo">미착수</option><option value="done">완료</option>
+      </select>
     </div>
-    <div class="bubbles" id="bubbles"></div>
-    <div class="tlbox"><table class="tl" id="tl"></table></div>
+
+    <div class="kpis">
+      <div class="kpi" data-k=""><span class="lab">전체업무</span><span class="num" id="kAll">0</span></div>
+      <div class="kpi" data-k="ing"><span class="lab">진행중</span><span class="num blue" id="kIng">0</span></div>
+      <div class="kpi" data-k="todo"><span class="lab">미착수</span><span class="num red" id="kTodo">0</span></div>
+      <div class="kpi" data-k="ms" style="cursor:default"><span class="lab">마일스톤</span><span class="num orange" id="kMs">0</span></div>
+      <div class="search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a0a0a6" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="q" type="text" placeholder="일정·업무·실행주관 검색">
+      </div>
+    </div>
+
+    <div class="todaybar" id="todaybar"></div>
+
+    <div class="gscroll"><div class="ginner" id="gantt"></div></div>
   </div>
 
   <div class="sec"><h2>주간 활동 집계</h2><p>토픽 × 주차별 관련 메일 수를 자동 집계합니다.</p></div>
@@ -171,134 +229,275 @@ td.p.has{cursor:pointer}
 
 <script src="/seoknam-tf-data.js"></script>
 <script>
-/* CFT COLUMNS 구조 그대로 — labelTop / labelBottom / highlight */
-const COLUMNS = [
-  { key:'c1',  top:'2026.07',    bot:'~7/19',      range:['2026-07-01','2026-07-19'] },
-  { key:'c2',  top:'07',         bot:'7/20~26',    range:['2026-07-20','2026-07-26'] },
-  { key:'c3',  top:'07-08',      bot:'7/27~8/2',   range:['2026-07-27','2026-08-02'] },
-  { key:'c4',  top:'08',         bot:'8/3~9',      range:['2026-08-03','2026-08-09'] },
-  { key:'c5',  top:'2026.08.11', bot:'DB손보',      highlight:true },
-  { key:'c6',  top:'08',         bot:'하순' },
-  { key:'c7',  top:'09',         bot:'청구 준비' },
-  { key:'c8',  top:'2026.10.12', bot:'이자기일',    highlight:true },
-  { key:'c9',  top:'10-11',      bot:'가지급 협상' },
-  { key:'c10', top:'이후',       bot:'복구·정산',   highlight:true },
+/* ================= 주차 그리드 ================= */
+const MONTHS = [
+  { m: 7,  label: '7월',  weeks: 4, days: 31 },
+  { m: 8,  label: '8월',  weeks: 4, days: 31 },
+  { m: 9,  label: '9월',  weeks: 4, days: 30 },
+  { m: 10, label: '10월', weeks: 4, days: 31 },
+  { m: 11, label: '11월', weeks: 2, days: 30 },
+];
+const COLW = 70, LEFTW = 500;
+const TOTALW = MONTHS.reduce((s, m) => s + m.weeks, 0) * COLW;
+const OFFSET = {}; { let o = 0; for (const m of MONTHS) { OFFSET[m.m] = o; o += m.weeks; } }
+const widx = (k) => { const [m, w] = k.split('-').map(Number); return OFFSET[m] + (w - 1); };
+const wfmt = (k) => { const [m, w] = k.split('-'); return `${m}월 ${w}W`; };
+/* 날짜 → 주차 인덱스(소수부 = 주 내 진행률). 4주차는 22일~말일 */
+function dayX(mo, day) {
+  const M = MONTHS.find(x => x.m === mo); if (!M) return null;
+  const w = Math.min(M.weeks, Math.ceil(day / 7));
+  const lo = (w - 1) * 7, hi = (w === M.weeks) ? M.days : w * 7;
+  return OFFSET[mo] + (w - 1) + (day - lo) / (hi - lo);
+}
+
+/* ================= 업무 데이터 =================
+   s/e: '월-주차', ms: 마일스톤 [{w, d, label}], topic: 메일 토픽 매핑 */
+const TREE = [
+  { name: '법무·수사', sub: '법무팀 · 율촌', topic: '법무', groups: [
+    { name: '수사·증거 대응', sub: '율촌 백승태·안범진', tasks: [
+      { name: '증거보전·정보공개청구', lead: '율촌', part: '법무팀 · 운용그룹', s: '7-3', e: '8-2', st: 'ing',
+        ms: [{ w: '7-4', d: '7/24', label: '인천지법 증거보전 2건 인용 (CCTV·소방기록)' }],
+        desc: '증거보전신청 인용 → 즉시항고·경정결정 대응, 정보공개청구 재접수' },
+      { name: '경찰 참고인 조사 대응', lead: '김지현', part: '율촌 백승태 입회', s: '7-4', e: '8-1', st: 'done',
+        ms: [{ w: '7-4', d: '7/30', label: '인천경찰청 참고인 조사 출석 + 참고자료 1~13 제출' }],
+        desc: '예상질의 36+ 프렙, 참고자료 제출 완료. 수사 메인타겟은 쿠팡' },
+      { name: '무과실 입장 정리·CCTV 확보', lead: '율촌', part: '법무팀', s: '8-1', e: '8-4', st: 'ing',
+        desc: '무과실 입증자료 보강, 증거보전 인용분 CCTV 확보 절차' },
+    ]},
+  ]},
+  { name: '임차인(쿠팡) 대응', sub: '운용그룹 · 율촌', topic: '임대차', groups: [
+    { name: '임대료·계약', sub: '율촌 맹주한·이승호 / 쿠팡측 김앤장', tasks: [
+      { name: '임대료 청구·미납 대응', lead: '오채은', part: '운용그룹 · 율촌', s: '7-4', e: '9-2', st: 'ing',
+        ms: [{ w: '8-1', d: '8/3', label: '미납 11.49억 대응 공문 발송 — 선관주의 입증 없이 차임거절 불가' }],
+        desc: '7/31 쿠팡 임대료 유보(15.9억만 입금) → 미납 11.49억 청구, 8~10월분 연쇄 대응' },
+      { name: '원상복구·해지 전략', lead: '김지현', part: '율촌 의견서', s: '8-1', e: '9-4', st: 'ing',
+        desc: '원상복구 범위·시공주체 지정전략·3기 연체 해지 검토, 기한 명시 역제안' },
+      { name: '청구 소송/해지 의사결정', lead: '운용그룹', part: '율촌 · 경영진', s: '9-1', e: '10-2', st: 'todo',
+        desc: '임대료 청구 소송 여부·계약 해지/유지 최종 의사결정' },
+    ]},
+  ]},
+  { name: '보험금 청구', sub: 'UIB · 손해사정 · DB손보', topic: '보험', groups: [
+    { name: '손해사정·청구', sub: 'UIB 배진효 / 국제·한백손사', tasks: [
+      { name: '사고 접수·서류 날인', lead: '오채은', part: 'UIB', s: '7-3', e: '7-4', st: 'done',
+        desc: '7/23 보험사고 접수서류 날인·송부, 임차인측 보험(영배 150억) 분석' },
+      { name: '독립손해사정사 선정', lead: '오채은', part: '율촌 화상 PT', s: '8-1', e: '8-1', st: 'done',
+        ms: [{ w: '8-1', d: '8/7', label: '한백손해사정 선정·착수 (태양·파인·한백 3사 PT)' }],
+        desc: '8/5 3사 PT → 8/7 한백 선정·착수, CA 날인. 국제손사 NDA·계약서 제공' },
+      { name: 'DB손보 협의·청구서류', lead: '오채은', part: 'UIB · 국제 · 한백', s: '8-2', e: '8-4', st: 'ing',
+        ms: [{ w: '8-2', d: '8/11', label: 'DB손해보험 본사 미팅 — 청구 절차·자료 협의' }],
+        desc: '8/11 본사 미팅(이지스·UIB·국제·한백), 청구서류 리스트 대응' },
+      { name: '손해액 산정·BI 검토', lead: '한백·국제', part: '운용그룹', s: '8-3', e: '10-1', st: 'todo',
+        desc: '재물·기업휴지(BI) 손해액 산정, 타사 사례(덕평 가지급 70%) 벤치마킹' },
+      { name: '가지급금 협상', lead: '오채은', part: 'UIB · DB손보', s: '10-1', e: '10-4', st: 'todo',
+        desc: '10월 이자 재원 확보용 가지급금 협상 → 본지급·정산' },
+    ]},
+  ]},
+  { name: '대주단 관리', sub: '신한·전북·하나 / DB손보(간사)', topic: '대주단', groups: [
+    { name: 'EOD 방어·보고', sub: '율촌 김은주(EOD)', tasks: [
+      { name: 'EOD 방어·1차 보고', lead: '김지현', part: '율촌 · 운용그룹', s: '7-4', e: '8-1', st: 'done',
+        ms: [{ w: '7-4', d: '7/27', label: '율촌 EOD 미발생 검토 의견서 → 대주 설명자료' }],
+        desc: '7/27 EOD 미발생 의견서, 7/31 대주 1차 보고 완료' },
+      { name: '개별 대주 자료·정기 보고', lead: '오채은', part: '김지현', s: '8-1', e: '10-4', st: 'ing',
+        desc: '신한(자금스케줄)·전북(입금증빙) 개별 대응, 펀드 잔고 64억 보고' },
+      { name: '10월 이자 재원 확보 (44.1억)', lead: '운용그룹', part: '보험 가지급 연계', s: '9-3', e: '10-2', st: 'todo',
+        ms: [{ w: '10-2', d: '10/12', label: '대출이자 4,413백만 납부기일 — 가지급이 핵심 재원' }],
+        desc: '임대료 미납 지속 시 보험금 가지급이 핵심 재원' },
+    ]},
+  ]},
+  { name: '현장·복구', sub: '황준하 · 한화PM', topic: '복구', groups: [
+    { name: '현장 관리·복구 준비', sub: '한화PM 송아련', tasks: [
+      { name: '출입통제·안전 일일확인', lead: '황준하', part: '한화PM', s: '7-3', e: '8-4', st: 'ing',
+        desc: '출입 가능여부 일일 유선확인, 쿠팡 구조안전검토·도로통제 해제 협의' },
+      { name: '감식 종료·건물 인수인계', lead: '황준하', part: '쿠팡 · 소방·경찰', s: '8-3', e: '9-2', st: 'todo',
+        desc: '감식 종료 후 임차인으로부터 건물 인수인계 목표' },
+      { name: '철거·복구 착수 준비', lead: '황준하', part: '박준규(벤치마킹)', s: '9-3', e: '11-2', st: 'todo',
+        desc: '시공주체 지정전략 확정 → 철거·복구 착수 (이천 사례 벤치마킹)' },
+    ]},
+  ]},
+  { name: '펀드·Exit', sub: '수익자·판매사 · CBRE', topic: '펀드매각', groups: [
+    { name: 'CF·수익자 보고', sub: '삼성운용·핀커스 / CBRE', tasks: [
+      { name: '수익자 보고·CF모델', lead: '김수현·오채은', part: '박준규', s: '7-4', e: '8-2', st: 'ing',
+        desc: '월간보고 송부, CF모델 v2·손해액 산정보드. CBRE 시장임대료 의견 수령' },
+      { name: '매각가정 업데이트 (12월말)', lead: '김수현', part: '운용그룹', s: '8-4', e: '9-4', st: 'todo',
+        desc: '복구 시나리오 반영 12월말 매각가정 업데이트' },
+    ]},
+  ]},
+  { name: 'TF 운영', sub: '정하윤 · 전 TF', topic: '운영', groups: [
+    { name: 'PMO', sub: 'iig24tf@igisam.com', tasks: [
+      { name: 'TF 계정·메일 관리·대시보드', lead: '정하윤', part: '전 TF', s: '7-4', e: '11-2', st: 'ing',
+        desc: '수발신 메일 일괄 관리 → 일일 대시보드 갱신' },
+    ]},
+  ]},
 ];
 
-/* CFT TIMELINE_DATA 구조 그대로 — category/name/desc/lead/coop + schedule{col:'●'|'◆'} + 툴팁 이벤트 */
-const TIMELINE_DATA = [
-  { category:'Gate', name:'G0 초동대응', desc:'킥오프, TF 편성, 전용 메일 관리체계 구축', lead:'운용그룹', coop:'전 TF',
-    schedule:{ c1:'◆', c2:'◆', c3:'●' },
-    ev:{ c1:['◆ 7/18 화재 발생 — 임차인 6층 메자닌(B동) 구조물 관련'],
-         c2:['◆ 7/22 수사대응 킥오프(율촌 15시)','◆ 7/23 계약분야 킥오프 14:30 — 5대 쟁점 논의','● 요청자료 6건 회신 개시'],
-         c3:['● 7/29 TF 전용 계정 iig24tf@igisam.com 개설(정하윤)'] } },
-  { category:'Gate', name:'G1 증거·수사', desc:'증거보전·정보공개청구·경찰조사 대응', lead:'법무팀 율촌', coop:'운용그룹',
-    schedule:{ c2:'◆', c3:'◆', c4:'●', c6:'●' },
-    ev:{ c2:['◆ 7/24 인천지법 증거보전신청 2건 인용(CCTV·소방기록)','● 정보공개청구 율촌 대리 재접수','● 수사 메인타겟=쿠팡 확인'],
-         c3:['● 7/29 경찰조사 프렙(예상질의 36+)','◆ 7/30 인천경찰청 참고인 조사 출석(김지현) + 참고자료 1~13 제출'],
-         c4:['● 8/4 증거보전 즉시항고장·경정결정 대응'],
-         c6:['● CCTV 확보·무과실 입장 정리'] } },
-  { category:'Gate', name:'G2 임차인 대응', desc:'임대료 청구·공문 대응·계약(해지/유지) 전략', lead:'운용그룹 율촌', coop:'법무팀',
-    schedule:{ c2:'●', c3:'◆', c4:'◆', c5:'●', c6:'●', c7:'●', c8:'●' },
-    ev:{ c2:['● 판넬 철거·단전 통지 수령, 긴급구제·Umbrella 질의 회신'],
-         c3:['◆ 7/31 쿠팡 임대료 유보 공문 — 7/1~18 일할 15.9억만 입금','● 토지사용승낙(가설건축물) 검토·날인'],
-         c4:['◆ 8/3 임대료 미납(11.49억) 대응 공문 발송','● 협조요청 공문 3건 회신(지하1층·옥상·가설)','● 3기 연체 해지·원상복구 범위 검토 착수'],
-         c5:['● 원상복구·시공주체 지정전략 율촌 의견서'],
-         c6:['● 기한 명시 역제안 공문'], c7:['● 청구 소송/해지 의사결정'], c8:['● 8~10월분 임대료 대응'] } },
-  { category:'Gate', name:'G3 보험금 청구', desc:'사고접수·독립손사·손해액 산정·BI·청구', lead:'운용그룹 UIB', coop:'대주단(질권)',
-    schedule:{ c2:'●', c3:'●', c4:'◆', c5:'◆', c6:'●', c7:'●', c9:'◆', c10:'●' },
-    ev:{ c2:['● 7/23 보험사고 접수서류 날인·송부','● 임차인측 보험 분석(영배 150억 한도)'],
-         c3:['● 손해사정 미팅, 타사 사례(덕평 가지급 70%) 수집'],
-         c4:['● 8/5 독립손사 3사 PT(태양·파인·한백)','◆ 8/7 독립손사 한백 선정·착수','● 국제손사 NDA·임대차계약서 제공'],
-         c5:['◆ 8/11 DB손해보험 본사 미팅(이지스·UIB·국제·한백)'],
-         c6:['● 청구서류 리스트 대응'], c7:['● 손해액 산정·BI 검토'],
-         c9:['◆ 가지급금 협상 — 10월 이자 재원'], c10:['● 본지급·정산'] } },
-  { category:'Gate', name:'G4 대주단 관리', desc:'EOD 방어·정기 보고·자금계획', lead:'운용그룹', coop:'율촌',
-    schedule:{ c3:'◆', c4:'●', c6:'●', c8:'◆', c10:'●' },
-    ev:{ c3:['◆ 7/27 율촌 EOD 미발생 검토 의견서 → 대주 설명자료','◆ 7/31 대주 1차 보고'],
-         c4:['● 신한·전북·하나 개별 자료 대응','● 펀드 잔고 64억·자금집행 스케줄 보고'],
-         c6:['● 대주단 정기 업데이트'],
-         c8:['◆ 10/12 이자 4,413백만 납부 — 재원 확보 핵심'],
-         c10:['● 보험금 질권 해지·상환 구조 협의'] } },
-  { category:'Gate', name:'G5 현장·복구', desc:'출입통제·안전·감식·복구 착수 준비', lead:'황준하 한화PM', coop:'쿠팡',
-    schedule:{ c1:'●', c3:'●', c4:'●', c5:'●', c6:'◆', c7:'●', c10:'◆' },
-    ev:{ c1:['● 7/22~ 외벽 판넬 철거·전체 단전(임차인 시행)'],
-         c3:['● 지하1층 재고 반출 협조(비상발전기 검토)'],
-         c4:['● 출입 가능여부 일일 유선확인 체계(한화PM)','● 쿠팡 구조안전검토, 도로통제 금주 해제 전망'],
-         c5:['● 재고 반출 실행 모니터링'],
-         c6:['◆ 감식 종료 → 건물 인수인계 목표'],
-         c7:['● 시공주체 지정 전략 확정'], c10:['◆ 철거·복구 착수(이천 사례 벤치마킹)'] } },
-  { category:'Gate', name:'G6 펀드·Exit', desc:'수익자 보고·CF모델·매각가정 검토', lead:'운용그룹', coop:'판매사',
-    schedule:{ c3:'●', c4:'●', c6:'●', c10:'●' },
-    ev:{ c3:['● 이천물류 벤치마킹(크리에이트)','● CBRE 시장임대료 의견 수령'],
-         c4:['● CF모델 v2·손해액 산정보드','● 수익자 월간보고'],
-         c6:['● 12월말 매각가정 업데이트'], c10:['● 복구 후 Exit 전략 재수립'] } },
-  /* 기능별 Task 행 — CFT의 Task 행 구조 */
-  { category:'Task', name:'법무', desc:'수사·소송 대응, 의견서, 임차인 공문 법률검토', lead:'율촌', coop:'법무팀;운용그룹', topic:'법무',
-    schedule:{ c2:'●', c3:'●', c4:'●', c5:'●', c6:'●', c7:'●' } },
-  { category:'Task', name:'임대차', desc:'임대료 청구·미납 관리, 협조요청 공문 대응', lead:'운용그룹', coop:'율촌', topic:'임대차',
-    schedule:{ c2:'●', c3:'●', c4:'●', c5:'●', c6:'●', c8:'●' } },
-  { category:'Task', name:'보험', desc:'원수사·중개·손해사정 협의, 청구 실무', lead:'오채은', coop:'UIB;손해사정', topic:'보험',
-    schedule:{ c2:'●', c3:'●', c4:'●', c5:'●', c7:'●', c9:'●' } },
-  { category:'Task', name:'대주단', desc:'대주 보고·질의 대응·근질권 협의', lead:'오채은', coop:'김지현', topic:'대주단',
-    schedule:{ c3:'●', c4:'●', c6:'●', c8:'●' } },
-  { category:'Task', name:'현장/복구', desc:'출입·안전·PM 관리, 복구 벤치마킹', lead:'황준하', coop:'한화PM', topic:'복구',
-    schedule:{ c1:'●', c3:'●', c4:'●', c5:'●', c6:'●' } },
-  { category:'Task', name:'펀드/보고', desc:'수익자·판매사 보고, CF모델·매각 검토', lead:'김수현 오채은', coop:'박준규', topic:'펀드매각',
-    schedule:{ c3:'●', c4:'●', c7:'●' } },
-  { category:'Task', name:'TF 운영', desc:'TF 계정·메일 일괄 관리, 대시보드 갱신', lead:'정하윤', coop:'전 TF', topic:'운영',
-    schedule:{ c2:'●', c3:'●', c4:'●', c5:'●', c6:'●', c7:'●', c8:'●', c9:'●', c10:'●' } },
-];
-
-/* ---- 데이터 집계 (토픽×주차) ---- */
-const M = (window.TF_DATA || {mails:[]}).mails;
+/* ================= 메일 데이터 집계 ================= */
+const TF = window.TF_DATA || { mails: [], updated: '2026-08-07' };
+const M = TF.mails || [];
 document.getElementById('n-mails').textContent = M.length;
-function colOf(date){ for (const c of COLUMNS) if (c.range && date >= c.range[0] && date <= c.range[1]) return c.key; return null; }
-const cnt = {};
-for (const m of M) {
-  const ck = colOf(m.date); if (!ck) continue;
-  for (const t of (m.topics.length ? m.topics : ['운영'])) { cnt[t] = cnt[t] || {}; cnt[t][ck] = (cnt[t][ck]||0)+1; }
+const TODAY = TF.updated;                       // 'YYYY-MM-DD'
+const [ , tMo, tDay ] = TODAY.split('-').map(Number);
+const todayX = dayX(tMo, tDay);
+
+/* 오늘 논의 토픽 집계 */
+const todayCnt = {};
+for (const m of M) if (m.date === TODAY)
+  for (const t of (m.topics.length ? m.topics : ['운영'])) todayCnt[t] = (todayCnt[t] || 0) + 1;
+const todayTotal = Object.values(todayCnt).reduce((a, b) => a + b, 0);
+document.getElementById('todaybar').innerHTML =
+  `<span class="tt">오늘 ${tMo}/${tDay} 논의 중</span>` +
+  (todayTotal
+    ? Object.entries(todayCnt).sort((a, b) => b[1] - a[1])
+        .map(([t, n]) => `<span class="tc">${t}<b>${n}</b></span>`).join('') +
+      `<span class="dim">— 메일 ${todayTotal}건 · 타임라인의 주황 라인이 오늘 위치, 테두리 강조된 막대가 오늘 논의된 업무입니다</span>`
+    : `<span class="dim">오늘 수신·발신된 메일이 없습니다</span>`);
+
+/* ================= KPI ================= */
+const leaves = TREE.flatMap(c => c.groups.flatMap(g => g.tasks));
+const msAll = leaves.flatMap(t => t.ms || []);
+document.getElementById('kAll').textContent = leaves.length;
+document.getElementById('kIng').textContent = leaves.filter(t => t.st === 'ing').length;
+document.getElementById('kTodo').textContent = leaves.filter(t => t.st === 'todo').length;
+document.getElementById('kMs').textContent = msAll.length;
+
+/* 필터 옵션 채우기 */
+const fCat = document.getElementById('fCat'), fLead = document.getElementById('fLead'),
+      fStatus = document.getElementById('fStatus'), q = document.getElementById('q');
+for (const c of TREE) fCat.insertAdjacentHTML('beforeend', `<option>${c.name}</option>`);
+for (const l of [...new Set(leaves.map(t => t.lead))]) fLead.insertAdjacentHTML('beforeend', `<option>${l}</option>`);
+
+/* ================= 간트 렌더 ================= */
+const STLBL = { ing: ['진행중', 'ing'], todo: ['미착수', 'todo'], done: ['완료', 'done'] };
+const collapsed = new Set();
+let view = 'detail';
+
+const spanOf = (tasks) => {
+  const si = Math.min(...tasks.map(t => widx(t.s))), ei = Math.max(...tasks.map(t => widx(t.e)));
+  return [si, ei];
+};
+const perTxt = (si, ei) => {
+  const flat = MONTHS.flatMap(m => Array.from({ length: m.weeks }, (_, i) => `${m.m}-${i + 1}`));
+  return `${wfmt(flat[si])} ~ ${wfmt(flat[ei])}`;
+};
+const gridBG = () =>
+  `<div class="grid">${MONTHS.flatMap(m => Array.from({ length: m.weeks }, () => `<i style="width:${COLW}px"></i>`)).join('')}</div>`;
+const crossToday = (si, ei) => todayX !== null && todayX >= si && todayX <= ei + 1;
+
+function tipData(title, rows) { return encodeURIComponent(JSON.stringify({ t: title, rows })); }
+
+function barHTML(si, ei, cls, tip) {
+  const l = si * COLW + 3, w = (ei - si + 1) * COLW - 6;
+  return `<div class="bar ${cls}" style="left:${l}px;width:${w}px"${tip ? ` data-tip="${tip}"` : ''}></div>`;
+}
+function msHTML(t) {
+  return (t.ms || []).map(m =>
+    `<span class="ms ${m.w.startsWith(tMo + '-') ? 'pulse' : ''}" style="left:${(widx(m.w) + .5) * COLW}px"
+       data-tip="${tipData('◆ ' + m.d + ' 마일스톤', [m.label])}">◆</span>`).join('');
 }
 
-/* ---- 말풍선 (CFT Speech Bubbles) ---- */
-const LEFT_W = 94 + 258 + 94 + 94; // 540
-function colCenter(i){ return LEFT_W + (i + 0.5) * 75; }
-document.getElementById('bubbles').innerHTML =
-  `<div class="bubble orange" style="left:${colCenter(4)}px"><div>DB손보</div><div>미팅 8/11</div><span class="tail"></span></div>` +
-  `<div class="bubble dark" style="left:${colCenter(7)}px"><div>이자 납부</div><div>4,413백만</div><div>10/12</div><span class="tail"></span></div>`;
+function render() {
+  const term = q.value.trim().toLowerCase();
+  const stF = fStatus.value, catF = fCat.value, leadF = fLead.value;
+  const matches = (t, cat) =>
+    (!stF || t.st === stF) && (!catF || cat === catF) && (!leadF || t.lead === leadF) &&
+    (!term || (t.name + t.lead + t.part + (t.desc || '') + cat).toLowerCase().includes(term));
 
-/* ---- 타임라인 테이블 ---- */
-function renderTL(filter){
-  const rows = TIMELINE_DATA.filter(r => filter === 'All' || r.category === filter);
-  let h = '<thead><tr><th class="c-cat">구분</th><th class="c-desc">세부업무</th><th class="c-lead">실행주관</th><th class="c-coop">협업</th>';
-  for (const c of COLUMNS)
-    h += `<th class="c-p ${c.highlight ? 'hl' : ''}"><div>${c.top}</div>${c.bot ? `<div class="b">${c.bot}</div>` : ''}</th>`;
-  h += '</tr></thead><tbody>';
-  for (const r of rows) {
-    h += `<tr><td class="cat"><span class="badge ${r.category === 'Gate' ? 'gate' : 'task'}">${r.name}</span></td>`;
-    h += `<td class="desc">${r.desc}</td>`;
-    h += `<td class="lead">${r.lead.split(' ').map(p => `<div>${p}</div>`).join('')}</td>`;
-    h += `<td class="coop">${r.coop.split(';').map(p => p && `<div>${p}</div>`).filter(Boolean).join('')}</td>`;
-    for (const c of COLUMNS) {
-      const mark = r.schedule[c.key];
-      let ev = r.ev && r.ev[c.key];
-      if (!ev && r.topic && c.range) {
-        const n = (cnt[r.topic] || {})[c.key] || 0;
-        if (n) ev = [`● 관련 메일 ${n}건`];
+  let h = `<div class="grow ghead">
+    <div class="lcell">업무명 / 실행주관 / 기간</div>
+    <div class="tcell" style="width:${TOTALW}px">
+      <div class="mrow">${MONTHS.map(m => `<div class="mcell" style="width:${m.weeks * COLW}px">${m.label}</div>`).join('')}</div>
+      <div class="wrow">${MONTHS.flatMap(m => Array.from({ length: m.weeks }, (_, i) => `<div class="wcell" style="width:${COLW}px">${i + 1}W</div>`)).join('')}</div>
+    </div></div>`;
+
+  let visibleAny = false;
+  for (const cat of TREE) {
+    const catTasks = cat.groups.flatMap(g => g.tasks).filter(t => matches(t, cat.name));
+    if (!catTasks.length) continue;
+    visibleAny = true;
+    const [si, ei] = spanOf(catTasks);
+    const nOpen = !collapsed.has(cat.name) && view === 'detail';
+    const catHot = crossToday(si, ei) && todayCnt[cat.topic];
+    h += `<div class="grow lv0" data-toggle="${cat.name}">
+      <div class="lcell h-row">
+        <span class="caret ${nOpen ? '' : 'closed'}">▼</span>
+        <div class="ltxt"><div class="name">${cat.name}${catHot ? `<span class="badge hot">오늘 논의 ${todayCnt[cat.topic]}</span>` : ''}</div>
+          <div class="sub">${cat.sub} · <span class="cnt">일정 ${catTasks.length}</span></div></div>
+        <span class="per">${perTxt(si, ei)}</span></div>
+      <div class="tcell" style="width:${TOTALW}px">${gridBG()}${barHTML(si, ei, 'group')}</div></div>`;
+    if (!nOpen) continue;
+
+    for (const g of cat.groups) {
+      const gTasks = g.tasks.filter(t => matches(t, cat.name));
+      if (!gTasks.length) continue;
+      const [gsi, gei] = spanOf(gTasks);
+      const gKey = cat.name + '/' + g.name;
+      const gOpen = !collapsed.has(gKey);
+      h += `<div class="grow lv1" data-toggle="${gKey}">
+        <div class="lcell h-row">
+          <span class="caret ${gOpen ? '' : 'closed'}">▼</span>
+          <div class="ltxt"><div class="name">${g.name}</div>
+            <div class="sub">${g.sub} · <span class="cnt">일정 ${gTasks.length}</span></div></div>
+          <span class="per">${perTxt(gsi, gei)}</span></div>
+        <div class="tcell" style="width:${TOTALW}px">${gridBG()}${barHTML(gsi, gei, 'group')}</div></div>`;
+      if (!gOpen) continue;
+
+      for (const t of gTasks) {
+        const tsi = widx(t.s), tei = widx(t.e);
+        const hot = crossToday(tsi, tei) && t.st !== 'done' && todayCnt[cat.topic];
+        const [stTxt, stCls] = STLBL[t.st];
+        const tip = tipData(t.name, [
+          `<span class="bl">기간</span> ${perTxt(tsi, tei)} · ${stTxt}`,
+          `<span class="bl">주관</span> ${t.lead} (${t.part})`,
+          ...(t.desc ? [t.desc] : []),
+          ...(t.ms || []).map(m => `<b>◆ ${m.d}</b> ${m.label}`),
+          ...(hot ? [`<b>오늘 ${tMo}/${tDay}</b> ${cat.topic} 관련 메일 ${todayCnt[cat.topic]}건 논의 중`] : []),
+        ]);
+        h += `<div class="grow leaf">
+          <div class="lcell h-row"><span class="bullet"></span>
+            <div class="ltxt"><div class="name">${t.name}
+                <span class="badge ${stCls}">${stTxt}</span>
+                ${(t.ms || []).length ? `<span class="badge hot">◆ ${t.ms.length}</span>` : ''}
+                ${hot ? `<span class="badge hot">오늘 논의</span>` : ''}</div>
+              <div class="sub">${t.lead} · ${t.part}</div></div>
+            <span class="per">${perTxt(tsi, tei)}</span></div>
+          <div class="tcell" style="width:${TOTALW}px">${gridBG()}
+            ${barHTML(tsi, tei, (t.st === 'done' ? 'donebar' : '') + (hot ? ' todaybar-hit' : ''), tip)}
+            ${msHTML(t)}</div></div>`;
       }
-      const tipAttr = (mark && ev) ? ` data-tip="${encodeURIComponent(JSON.stringify({t:`${r.name} — ${c.bot || c.top}`, ev}))}"` : '';
-      h += `<td class="p ${c.highlight ? 'hl' : ''} ${tipAttr ? 'has' : ''}"${tipAttr}>` +
-           (mark === '●' ? '<span class="dot"></span>' : mark === '◆' ? '<span class="dia">◆</span>' : '') + '</td>';
     }
-    h += '</tr>';
   }
-  document.getElementById('tl').innerHTML = h + '</tbody>';
+  if (!visibleAny) h += `<div class="gempty">조건에 맞는 업무가 없습니다.</div>`;
+
+  if (todayX !== null) {
+    const x = LEFTW + todayX * COLW;
+    h += `<div class="today-line" style="left:${x}px"></div>
+          <div class="today-badge" style="left:${x}px">오늘 ${tMo}.${tDay}</div>`;
+  }
+  document.getElementById('gantt').innerHTML = h;
 }
-renderTL('All');
-document.getElementById('filter').addEventListener('click', e => {
+render();
+
+/* ================= 인터랙션 ================= */
+document.getElementById('gantt').addEventListener('click', e => {
+  const row = e.target.closest('[data-toggle]'); if (!row) return;
+  const k = row.dataset.toggle;
+  collapsed.has(k) ? collapsed.delete(k) : collapsed.add(k);
+  render();
+});
+document.getElementById('viewToggle').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
-  document.querySelectorAll('#filter button').forEach(x => x.classList.toggle('on', x === b));
-  renderTL(b.dataset.f);
+  view = b.dataset.v;
+  document.querySelectorAll('#viewToggle button').forEach(x => x.classList.toggle('on', x === b));
+  render();
+});
+for (const el of [fCat, fLead, fStatus]) el.addEventListener('change', render);
+q.addEventListener('input', render);
+document.querySelectorAll('.kpi[data-k]').forEach(k => {
+  if (k.dataset.k === 'ms') return;
+  k.addEventListener('click', () => {
+    fStatus.value = k.dataset.k;
+    document.querySelectorAll('.kpi').forEach(x => x.classList.toggle('on', x === k && k.dataset.k !== ''));
+    render();
+  });
 });
 
 /* ---- 툴팁 ---- */
@@ -308,22 +507,33 @@ document.addEventListener('mousemove', (e) => {
   const cell = e.target.closest('[data-tip]');
   if (!cell) { tip.style.display = 'none'; return; }
   const d = JSON.parse(decodeURIComponent(cell.dataset.tip));
-  tip.innerHTML = `<h5>${d.t}</h5><ul>` + d.ev.map(x =>
-    x.replace(/^◆\s*/, '<li><b class="dia2">◆</b> ').replace(/^●\s*/, '<li><b class="dot2">●</b> ') + '</li>').join('') + '</ul>';
+  tip.innerHTML = `<h5>${d.t}</h5>` + d.rows.map(r => `<div class="row">${r}</div>`).join('');
   tip.style.display = 'block';
-  const x = Math.min(e.clientX + 14, innerWidth - 396), y = Math.min(e.clientY + 14, innerHeight - tip.offsetHeight - 12);
+  const x = Math.min(e.clientX + 14, innerWidth - 416), y = Math.min(e.clientY + 14, innerHeight - tip.offsetHeight - 12);
   tip.style.left = Math.max(6, x) + 'px'; tip.style.top = Math.max(6, y) + 'px';
 });
 
-/* ---- 주간 활동 집계 ---- */
+/* ================= 주간 활동 집계 (토픽×주차) ================= */
+const COLUMNS = [
+  { key: 'c1', bot: '~7/19',    range: ['2026-07-01', '2026-07-19'] },
+  { key: 'c2', bot: '7/20~26',  range: ['2026-07-20', '2026-07-26'] },
+  { key: 'c3', bot: '7/27~8/2', range: ['2026-07-27', '2026-08-02'] },
+  { key: 'c4', bot: '8/3~9',    range: ['2026-08-03', '2026-08-09'] },
+  { key: 'c5', bot: '8/10~16',  range: ['2026-08-10', '2026-08-16'] },
+];
+function colOf(date){ for (const c of COLUMNS) if (c.range && date >= c.range[0] && date <= c.range[1]) return c.key; return null; }
+const cnt = {};
+for (const m of M) {
+  const ck = colOf(m.date); if (!ck) continue;
+  for (const t of (m.topics.length ? m.topics : ['운영'])) { cnt[t] = cnt[t] || {}; cnt[t][ck] = (cnt[t][ck] || 0) + 1; }
+}
 const TOPICS = ['법무','임대차','보험','대주단','복구','운영','펀드매각'];
-const dataCols = COLUMNS.filter(c => c.range);
-let hh = '<thead><tr><th>토픽</th>' + dataCols.map(c => `<th style="text-align:center">${c.bot}</th>`).join('') + '<th style="text-align:center">계</th></tr></thead><tbody>';
-const maxC = Math.max(1, ...TOPICS.flatMap(t => dataCols.map(c => (cnt[t]||{})[c.key] || 0)));
+let hh = '<thead><tr><th>토픽</th>' + COLUMNS.map(c => `<th style="text-align:center">${c.bot}</th>`).join('') + '<th style="text-align:center">계</th></tr></thead><tbody>';
+const maxC = Math.max(1, ...TOPICS.flatMap(t => COLUMNS.map(c => (cnt[t]||{})[c.key] || 0)));
 for (const t of TOPICS) {
   let tot = 0;
   hh += `<tr><td class="topic">${t}</td>`;
-  for (const c of dataCols) {
+  for (const c of COLUMNS) {
     const n = (cnt[t]||{})[c.key] || 0; tot += n;
     const a = n ? (8 + 40 * n / maxC).toFixed(0) : 0;
     hh += `<td class="c" style="${n ? `background:rgba(41,151,255,.${String(a).padStart(2,'0')})` : ''}">${n || '<span class=dim>·</span>'}</td>`;
@@ -332,7 +542,7 @@ for (const t of TOPICS) {
 }
 document.getElementById('heat').innerHTML = hh + '</tbody>';
 
-/* ---- R&R ---- */
+/* ================= R&R ================= */
 const RR = [
   { ws:'법무·수사 대응', lead:'김지현 이사 · 임현빈/김진욱(법무팀)', coop:'이치형 전무(준법감시인) 총괄', ext:'율촌 — 백승태·안범진(수사), 김석희(자료)',
     st:'7/30 참고인 조사 완료, 참고자료 1~13 경찰 제출. 정보공개청구 인천경찰청 이송, 증거보전 즉시항고 대응 중', nx:'무과실 입장 자료 보강, CCTV 확보' },
@@ -352,7 +562,7 @@ const RR = [
 document.getElementById('rrbody').innerHTML = RR.map(r =>
   `<tr><td class="ws"><b>${r.ws}</b></td><td class="who">${r.lead}</td><td class="who">${r.coop}</td><td class="who">${r.ext}</td><td class="status">${r.st}</td><td class="next">${r.nx}</td></tr>`).join('');
 
-/* ---- 일지 ---- */
+/* ================= 일지 ================= */
 const LOG = [
   ['7/18','화재','key','인천 석남 쿠팡물류센터 화재 발생','임차인 6층 메자닌(B동) 구조물 관련 — 원인 수사 중'],
   ['7/22','법무','key','율촌 수사대응 킥오프(15시)','수사대응팀 우선 구성, 익일 계약분야 미팅 확정'],

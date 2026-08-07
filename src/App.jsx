@@ -2,10 +2,13 @@ import { useState } from 'react'
 import { buildCssVars } from './theme.js'
 import { useLocalStorage } from './hooks/useLocalStorage.js'
 import { useIsMobile } from './hooks/useIsMobile.js'
+import { useWorkStore } from './hooks/useWorkStore.js'
+import { useMailSuggestions } from './hooks/useMailSuggestions.js'
 import { PAGE_TITLES, INITIAL_TODOS } from './data.js'
 import Sidebar from './components/Sidebar.jsx'
 import Header from './components/Header.jsx'
 import SettingsModal from './components/SettingsModal.jsx'
+import NotifyPanel from './components/NotifyPanel.jsx'
 import Home from './pages/Home.jsx'
 import WorkStatus from './pages/WorkStatus.jsx'
 import FundSchedule from './pages/FundSchedule.jsx'
@@ -30,9 +33,15 @@ export default function App() {
   const [homeVar, setHomeVar] = useState('A')
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false) // 모바일 사이드바
+  const [notifyOpen, setNotifyOpen] = useState(false)
   const [todos, setTodos] = useState(INITIAL_TODOS)
 
   const isMobile = useIsMobile()
+
+  // 업무현황 저장소 + Outlook 메일 제안 (WorkStatus·NotifyPanel 공유)
+  const work = useWorkStore()
+  const mail = useMailSuggestions()
+
   const isDark = theme === 'dark'
   const toggleTheme = () => setTheme(isDark ? 'light' : 'dark')
   const toggleTodo = (i) =>
@@ -79,6 +88,8 @@ export default function App() {
           onToggleTheme={toggleTheme}
           mobile={isMobile}
           onOpenMenu={() => setDrawerOpen(true)}
+          notifyCount={mail.suggestions.length}
+          onToggleNotify={() => setNotifyOpen((o) => !o)}
         />
 
         <div
@@ -92,7 +103,7 @@ export default function App() {
           {tab === 'home' && (
             <Home homeVar={homeVar} setHomeVar={setHomeVar} todos={todos} onToggle={toggleTodo} />
           )}
-          {tab === 'status' && <WorkStatus />}
+          {tab === 'status' && <WorkStatus work={work} />}
           {tab === 'fund' && <FundSchedule />}
           {tab === 'calendar' && <Calendar />}
           {tab === 'calorie' && <Calories />}
@@ -110,6 +121,14 @@ export default function App() {
           onClose={() => setSettingsOpen(false)}
         />
       )}
+
+      <NotifyPanel
+        open={notifyOpen}
+        onClose={() => setNotifyOpen(false)}
+        assets={work.assets}
+        mail={mail}
+        onAdd={work.addTask}
+      />
     </div>
   )
 }

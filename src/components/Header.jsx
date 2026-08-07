@@ -1,4 +1,4 @@
-import { IconSearch, IconSun, IconMoon, WeatherIcon } from './icons.jsx'
+import { IconSearch, IconSun, IconMoon, IconBell, WeatherIcon } from './icons.jsx'
 import { useWeather } from '../hooks/useWeather.js'
 
 const pill = {
@@ -18,7 +18,7 @@ function IconMenu({ size = 20 }) {
   )
 }
 
-export default function Header({ title, sub, isDark, onToggleTheme, mobile, onOpenMenu }) {
+export default function Header({ title, sub, isDark, onToggleTheme, mobile, onOpenMenu, notifyCount = 0, onToggleNotify }) {
   const round = mobile ? 36 : 42
   // 서울 실황 온도 — 로딩/실패 시 알약 자체를 숨기지 않고 마지막 더미 값 표시
   const weather = useWeather()
@@ -89,6 +89,48 @@ export default function Header({ title, sub, isDark, onToggleTheme, mobile, onOp
             </div>
           </>
         )}
+        <button
+          onClick={onToggleNotify}
+          aria-label="메일 알림"
+          style={{
+            position: 'relative',
+            width: round,
+            height: round,
+            borderRadius: 999,
+            border: '1px solid var(--line)',
+            background: 'var(--surface)',
+            boxShadow: 'var(--shadow)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--text)',
+          }}
+        >
+          <IconBell />
+          {notifyCount > 0 && (
+            <span
+              style={{
+                position: 'absolute',
+                top: -3,
+                right: -3,
+                minWidth: 18,
+                height: 18,
+                padding: '0 5px',
+                borderRadius: 999,
+                background: '#e5484d',
+                color: '#fff',
+                font: "700 10px 'JetBrains Mono'",
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '2px solid var(--bg)',
+              }}
+            >
+              {notifyCount}
+            </span>
+          )}
+        </button>
         <button
           onClick={onToggleTheme}
           aria-label="테마 전환"
