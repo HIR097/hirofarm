@@ -150,14 +150,6 @@ function ProjectOverlay({ project, left, onClose }) {
           {project.tag}
         </span>
         <div style={{ flex: 1 }} />
-        <a
-          href={project.href}
-          target="_blank"
-          rel="noreferrer"
-          style={{ fontSize: 12, color: 'var(--text-3)', textDecoration: 'none' }}
-        >
-          새 탭에서 열기 ↗
-        </a>
         <button
           onClick={onClose}
           style={{

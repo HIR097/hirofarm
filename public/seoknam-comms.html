@@ -90,6 +90,27 @@ text.ecnt{font:600 10.5px 'JetBrains Mono',monospace;cursor:pointer}
 #tip .m .r{color:var(--warn);font-size:10.5px}
 #tip .more{color:var(--text-3);font-size:10.5px}
 
+/* ---- 당일 흐름 요약 ---- */
+#flow .fsum{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:12px;font-size:12px;color:var(--text-2)}
+#flow .fsum .fp{border:1px solid var(--line);background:var(--surface2);border-radius:8px;padding:3px 10px;
+  font-size:11.5px;font-weight:600;color:var(--text);cursor:pointer}
+#flow .fsum .fp:hover{border-color:var(--text-3)}
+#flow .fsum .fp b{font-family:'JetBrains Mono',monospace;font-weight:600;margin-left:5px;color:var(--text-2)}
+.frow{display:flex;gap:11px;align-items:flex-start;padding:7px 2px;border-bottom:1px dashed var(--line);cursor:pointer}
+.frow:last-child{border-bottom:0}
+.frow:hover{background:var(--surface2)}
+.frow .ft{font:600 11px 'JetBrains Mono',monospace;color:var(--text-3);width:38px;flex:none;padding-top:2px}
+.frow .fdot{width:8px;height:8px;border-radius:50%;flex:none;margin-top:5px}
+.frow .ftxt{min-width:0;flex:1;font-size:12.5px}
+.frow .ftxt b{font-weight:600}
+.frow .ftxt .arr{color:var(--text-3);margin:0 3px}
+.frow .fst{font:600 9.5px 'JetBrains Mono',monospace;border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:1px}
+.frow .fst.s-요청{color:var(--warn);border:1px solid rgba(245,159,0,.4)}
+.frow .fst.s-회신{color:var(--info);border:1px solid rgba(28,126,214,.4)}
+.frow .fst.s-확정{color:var(--good);border:1px solid rgba(12,166,120,.4)}
+.frow .fst.s-공유{color:var(--text-3);border:1px solid var(--line)}
+.frow .fsub{color:var(--text-2);font-size:11.5px;margin-top:1px}
+
 /* ---- 상세 패널 ---- */
 #detail .mailcard{border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-bottom:9px;background:var(--surface2)}
 #detail .mailcard .head{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline;margin-bottom:3px}
@@ -114,6 +135,10 @@ text.ecnt{font:600 10.5px 'JetBrains Mono',monospace;cursor:pointer}
 .gsec .gname{font-size:13.5px;font-weight:700}
 .gsec .gsub{font-size:11px;color:var(--text-3)}
 .gsec .gcnt{font:600 10px 'JetBrains Mono',monospace;color:var(--text-3);margin-left:auto}
+.osub{font:600 10px 'JetBrains Mono',monospace;color:var(--text-3);letter-spacing:.08em;margin:10px 0 6px;
+  display:flex;align-items:center;gap:7px}
+.osub::after{content:'';flex:1;height:1px;background:var(--line)}
+.gsec.closed .osub{display:none}
 .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px}
 .pcard{border:1px solid var(--line);border-radius:11px;padding:9px 11px;background:var(--surface2)}
 .pcard .pn{font-size:12.5px;font-weight:600}
@@ -127,7 +152,6 @@ text.ecnt{font:600 10.5px 'JetBrains Mono',monospace;cursor:pointer}
 <div class="wrap">
   <div class="hero">
     <h1>인천석남쿠팡물류 <small>의사소통 현황</small></h1>
-    <a class="back" href="/">← hirofarm</a>
   </div>
   <div class="chips">
     <div class="chip">분석 메일 <b id="chip-total">–</b></div>
@@ -149,9 +173,12 @@ text.ecnt{font:600 10.5px 'JetBrains Mono',monospace;cursor:pointer}
 
   <div class="lbl">당사자 간 이메일 흐름 <span id="diag-date" style="text-transform:none;letter-spacing:0"></span></div>
   <div class="card">
-    <div class="sub">화살표 = 메일 방향(굵기·숫자 = 건수) · 화살표/노드에 마우스를 올리면 내용 미리보기, 클릭하면 아래에 상세 표시 · 이지스 원형 화살표 = 내부 공유</div>
+    <div class="sub">선 = 교신 관계(굵기·숫자 = 건수, 양쪽 화살촉 = 상호 교신) · 단발성(1건) 교신은 표시 생략 · 클릭하면 그날 시간순 교신이 아래에 정리됩니다 · 점선 루프 = 이지스 내부 공유</div>
     <div id="diagwrap"><svg id="diag" viewBox="0 0 1000 560"></svg></div>
   </div>
+
+  <div class="lbl">당일 흐름 요약</div>
+  <div class="card" id="flow"><div id="flow-body"></div></div>
 
   <div class="lbl">교신 상세</div>
   <div class="card" id="detail"><div class="dhint">위 다이어그램에서 화살표나 당사자를 클릭하면 해당 교신의 메일이 여기 표시됩니다. (기본: 선택 날짜 전체 메일)</div><div id="detail-list"></div></div>
@@ -166,7 +193,7 @@ text.ecnt{font:600 10.5px 'JetBrains Mono',monospace;cursor:pointer}
 (function(){
   try{
     const q = new URLSearchParams(location.search).get('theme');
-    document.documentElement.dataset.theme = q || localStorage.getItem('hy_theme') || 'light';
+    document.documentElement.dataset.theme = q || localStorage.getItem('hy_theme') || 'dark';
   }catch(e){}
 })();
 
@@ -231,18 +258,19 @@ const POS = {   // 1000×560 기준 노드 배치 (이지스 중앙)
   investors: {x:112, y:170, w:140, h:50},
   advisors:  {x:220, y:66,  w:110, h:50},
 };
-function edgesOf(list){
-  const e = {}; let internal = 0;
+/* 그룹 쌍(무방향) 단위로 교신 취합 — ab: a→b, ba: b→a (a < b 정렬 키) */
+function pairsOf(list){
+  const pairs = {}; let internal = 0;
   for (const m of list) {
-    if (m.internal) { internal++; continue; }
+    if (m.internal || !m.toGs.some(t => t !== m.fromG)) { internal++; continue; }
     for (const t of m.toGs) {
       if (t === m.fromG) continue;
-      const k = m.fromG + '>' + t;
-      (e[k] = e[k] || []).push(m);
+      const [a, b] = [m.fromG, t].sort();
+      const p = (pairs[a + '|' + b] = pairs[a + '|' + b] || { ab: [], ba: [] });
+      (m.fromG === a ? p.ab : p.ba).push(m);
     }
-    if (!m.toGs.some(t => t !== m.fromG)) internal++;
   }
-  return {edges: e, internal};
+  return { pairs, internal };
 }
 function nodeEdgePoint(a, b){ // a 사각형 경계에서 b 방향 접점
   const dx = b.x - a.x, dy = b.y - a.y;
@@ -252,32 +280,38 @@ function nodeEdgePoint(a, b){ // a 사각형 경계에서 b 방향 접점
 }
 function renderDiag(){
   const list = curMails();
-  const {edges, internal} = edgesOf(list);
+  const {pairs, internal} = pairsOf(list);
+  /* 단발성(합계 1건) 교신은 다이어그램에서 생략 */
+  const drawn = Object.entries(pairs).filter(([,p]) => p.ab.length + p.ba.length >= 2);
   const active = new Set();
-  for (const k of Object.keys(edges)) { const [a,b] = k.split('>'); active.add(a); active.add(b); }
+  for (const [k] of drawn) { const [a,b] = k.split('|'); active.add(a); active.add(b); }
   if (internal) active.add('igis');
 
   let defs = '<defs>';
-  for (const g of GROUPS) defs += `<marker id="ah-${g.key}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${g.color}"/></marker>`;
+  for (const g of GROUPS) defs += `<marker id="ah-${g.key}" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.6" markerHeight="4.6" orient="auto-start-reverse"><path d="M0.5 1L9.5 5L0.5 9z" fill="${g.color}"/></marker>`;
   defs += '</defs>';
 
   let eh = '';
-  const maxN = Math.max(1, ...Object.values(edges).map(v => v.length));
-  for (const [k, ms] of Object.entries(edges)) {
-    const [a, b] = k.split('>');
+  const maxN = Math.max(1, ...drawn.map(([,p]) => p.ab.length + p.ba.length));
+  for (const [k, p] of drawn) {
+    const [a, b] = k.split('|');
     const A = POS[a], B = POS[b]; if (!A || !B) continue;
-    const p1 = nodeEdgePoint(A, B), p2 = nodeEdgePoint(B, A);
+    const total = p.ab.length + p.ba.length;
+    const mutual = p.ab.length > 0 && p.ba.length > 0;
+    /* 단방향이면 화살표가 수신 쪽을 향하게 시점·종점을 정한다 */
+    const fromKey = (!mutual && p.ba.length) ? b : a;
+    const toKey = fromKey === a ? b : a;
+    const F = POS[fromKey], T = POS[toKey];
+    const p1 = nodeEdgePoint(F, T), p2 = nodeEdgePoint(T, F);
     const mx = (p1.x + p2.x)/2, my = (p1.y + p2.y)/2;
     const dx = p2.x - p1.x, dy = p2.y - p1.y, L = Math.hypot(dx, dy) || 1;
-    const off = 16;                       // 양방향 분리 오프셋 (진행방향 왼쪽)
-    const ox = -dy/L*off, oy = dx/L*off;
-    const cx = mx + ox, cy = my + oy;
-    const w = 1.4 + 3.2 * ms.length / maxN;
-    const col = GBY[a].color;
-    const lx = mx + ox*1.35, ly = my + oy*1.35;
-    eh += `<path class="edge" d="M${p1.x} ${p1.y} Q${cx} ${cy} ${p2.x} ${p2.y}" stroke="${col}" stroke-width="${w.toFixed(1)}" opacity=".78" marker-end="url(#ah-${a})"/>`;
-    eh += `<path class="hit" d="M${p1.x} ${p1.y} Q${cx} ${cy} ${p2.x} ${p2.y}" data-edge="${k}"/>`;
-    eh += `<g data-edge="${k}" style="cursor:pointer"><rect class="ecnt-bg" x="${lx-11}" y="${ly-9}" width="22" height="17" rx="6"/><text class="ecnt" x="${lx}" y="${ly+3.5}" text-anchor="middle" fill="${col}">${ms.length}</text></g>`;
+    const ox = -dy/L*13, oy = dx/L*13;      // 건수 라벨을 선에서 살짝 띄운다
+    const w = 1.1 + 2.2 * total / maxN;
+    const colKey = a === 'igis' ? b : a;    // 상대 그룹 색으로 통일
+    const col = GBY[colKey].color;
+    eh += `<path class="edge" d="M${p1.x} ${p1.y} L${p2.x} ${p2.y}" stroke="${col}" stroke-width="${w.toFixed(1)}" stroke-linecap="round" opacity=".62"${mutual ? ` marker-start="url(#ah-${colKey})"` : ''} marker-end="url(#ah-${colKey})"/>`;
+    eh += `<path class="hit" d="M${p1.x} ${p1.y} L${p2.x} ${p2.y}" data-edge="${k}"/>`;
+    eh += `<g data-edge="${k}" style="cursor:pointer"><rect class="ecnt-bg" x="${mx+ox-11}" y="${my+oy-9}" width="22" height="17" rx="8"/><text class="ecnt" x="${mx+ox}" y="${my+oy+3.5}" text-anchor="middle" fill="${col}">${total}</text></g>`;
   }
 
   let nh = '';
@@ -312,10 +346,16 @@ const tip = document.getElementById('tip');
 addEventListener('scroll', () => tip.style.display = 'none', true);
 function mailsForPick(p, list){
   if (!p) return list;
-  if (p.type === 'edge') { const [a,b] = p.key.split('>'); return list.filter(m => !m.internal && m.fromG===a && m.toGs.includes(b)); }
+  if (p.type === 'edge') {
+    const [a,b] = p.key.split('|');
+    return list.filter(m => !m.internal &&
+      ((m.fromG===a && m.toGs.includes(b)) || (m.fromG===b && m.toGs.includes(a))));
+  }
   if (p.key === 'igis-internal') return list.filter(m => m.internal || !m.toGs.some(t=>t!==m.fromG));
   return list.filter(m => m.fromG===p.key || m.toGs.includes(p.key));
 }
+/* 시간순 정렬(날짜+시각 오름차순) */
+const chrono = (ms) => [...ms].sort((x,y) => (x.date+x.time).localeCompare(y.date+y.time));
 svg.addEventListener('mousemove', e => {
   const t = e.target.closest('[data-edge],[data-node]');
   if (!t) { tip.style.display='none'; return; }
@@ -323,13 +363,16 @@ svg.addEventListener('mousemove', e => {
   let ms, title;
   if (t.dataset.edge) {
     ms = mailsForPick({type:'edge', key:t.dataset.edge}, list);
-    const [a,b] = t.dataset.edge.split('>');
-    title = `${GBY[a].label} → ${GBY[b].label} · ${ms.length}건`;
+    const [a,b] = t.dataset.edge.split('|');
+    const nAB = ms.filter(m=>m.fromG===a).length, nBA = ms.length - nAB;
+    title = `${GBY[a].label} ↔ ${GBY[b].label} · ${ms.length}건` +
+      (nAB && nBA ? ` (→ ${nAB} · ← ${nBA})` : '');
   } else {
     const k = t.dataset.node;
     ms = mailsForPick({type:'node', key:k}, list);
     title = (k==='igis-internal' ? '이지스 내부 공유' : GBY[k].label) + ` · ${ms.length}건`;
   }
+  ms = chrono(ms);
   const top = ms.slice(0, 5);
   tip.innerHTML = `<h5>${title}${sel==='all'?' (전체 기간)':''}</h5>` + top.map(m => {
     const req = (m.requests||[])[0];
@@ -352,12 +395,12 @@ svg.addEventListener('click', e => {
 /* ---- 상세 패널 ---- */
 function renderDetail(){
   const list = curMails();
-  const ms = mailsForPick(pick, list);
+  const ms = chrono(mailsForPick(pick, list));
   let title = '';
   if (pick) {
-    if (pick.type==='edge'){ const [a,b]=pick.key.split('>'); title = `${GBY[a].label} → ${GBY[b].label}`; }
+    if (pick.type==='edge'){ const [a,b]=pick.key.split('|'); title = `${GBY[a].label} ↔ ${GBY[b].label} · 시간순`; }
     else title = pick.key==='igis-internal' ? '이지스 내부 공유' : GBY[pick.key].label + ' 관련';
-  } else title = sel==='all' ? '전체 기간 전체 메일' : sel + ' 전체 메일';
+  } else title = sel==='all' ? '전체 기간 전체 메일 (시간순)' : sel + ' 전체 메일 (시간순)';
   const hint = `<div class="dhint" style="margin-bottom:10px"><b>${title}</b> · ${ms.length}건 ${pick?'<a href="#" id="clearpick" style="color:var(--text-3);margin-left:8px">선택 해제</a>':''}</div>`;
   document.getElementById('detail').firstElementChild.remove();
   document.getElementById('detail').insertAdjacentHTML('afterbegin', hint);
@@ -376,21 +419,78 @@ function renderDetail(){
   if (cp) cp.onclick = (e)=>{ e.preventDefault(); pick=null; renderDetail(); };
 }
 
-/* ---- 담당자 ---- */
+/* ---- 당일 흐름 요약 ---- */
+function renderFlow(){
+  const body = document.getElementById('flow-body');
+  if (sel === 'all') {
+    body.innerHTML = '<div class="dhint">날짜를 선택하면 그날의 교신 흐름이 시간순으로 요약됩니다.</div>';
+    return;
+  }
+  const list = chrono(curMails());
+  if (!list.length) { body.innerHTML = '<div class="dhint">해당 날짜의 메일이 없습니다.</div>'; return; }
+  const {pairs, internal} = pairsOf(list);
+  /* 활발한 교신 쌍 상위 정렬 — 클릭하면 해당 쌍 상세로 */
+  const ranked = Object.entries(pairs)
+    .map(([k, p]) => [k, p.ab.length + p.ba.length]).sort((x,y) => y[1]-x[1]).slice(0, 4);
+  const fsum = `<div class="fsum"><span>${sel} · 교신 ${list.length}건</span>` +
+    ranked.map(([k, n]) => { const [a,b]=k.split('|');
+      return `<span class="fp" data-pair="${k}">${GBY[a].label} ↔ ${GBY[b].label}<b>${n}</b></span>`; }).join('') +
+    (internal ? `<span>내부 공유 ${internal}건</span>` : '') + '</div>';
+  /* 첫 문장만 추려 시간순 타임라인 */
+  const first = (s) => { const m = s.match(/^.*?다\./); return m ? m[0] : s; };
+  const rows = list.map(m => {
+    const st = [...new Set((m.requests||[]).map(r => r.status))];
+    return `<div class="frow" data-mid="${m.id}">
+      <span class="ft">${m.time}</span>
+      <span class="fdot" style="background:${(GBY[m.fromG]||{}).color || '#888'}"></span>
+      <div class="ftxt"><b>${m.fromOrg}</b><span class="arr">→</span><b>${m.internal ? '내부' : m.toOrgs.join('·')}</b>
+        ${st.map(s => `<span class="fst s-${s}">${s}</span>`).join('')}
+        <div class="fsub">${first(m.summary)}</div></div></div>`;
+  }).join('');
+  body.innerHTML = fsum + rows;
+}
+document.getElementById('flow').addEventListener('click', e => {
+  const fp = e.target.closest('[data-pair]');
+  if (fp) { pick = {type:'edge', key:fp.dataset.pair}; renderDetail();
+    document.getElementById('detail').scrollIntoView({behavior:'smooth', block:'nearest'}); return; }
+  const fr = e.target.closest('[data-mid]');
+  if (fr) { pick = null; renderDetail();
+    document.getElementById('detail').scrollIntoView({behavior:'smooth', block:'nearest'}); }
+});
+
+/* ---- 담당자 (석남 TF 무관 인원 제외 + 회사별 소그룹) ---- */
 (function(){
+  /* 이지스 내부 광역 참조로 딸려 들어온 타 펀드·타 자산 담당자는 제외 */
+  const UNREL = /Q&A 담당|메일그룹|자산 담당|^운용역$|평택/;
+  const SHOWN = PEOPLE.filter(p => {
+    if (p.g !== 'igis') return true;
+    const role = (p.role || '').trim(), team = (p.team || '').trim();
+    return !(UNREL.test(role) || (!role && !team));
+  });
+  document.getElementById('chip-people').textContent = SHOWN.length + '명';
   const byG = {};
-  for (const p of PEOPLE) (byG[p.g] = byG[p.g] || []).push(p);
+  for (const p of SHOWN) (byG[p.g] = byG[p.g] || []).push(p);
   let h = '';
   for (const g of GROUPS) {
     const ps = byG[g.key] || []; if (!ps.length) continue;
     ps.sort((a,b) => (b.role?1:0)-(a.role?1:0) || a.name.localeCompare(b.name,'ko'));
+    /* 같은 회사끼리 소그룹 — 회사가 2곳 이상일 때만 서브헤더 표시 */
+    const byOrg = {};
+    for (const p of ps) (byOrg[p.org || g.label] = byOrg[p.org || g.label] || []).push(p);
+    const orgs = Object.keys(byOrg).sort((a,b) => byOrg[b].length - byOrg[a].length || a.localeCompare(b,'ko'));
+    const card = (p) => `
+        <div class="pcard"><div class="pn">${p.name}</div>
+          <div class="pr">${[p.team, p.role].filter(Boolean).join(' · ') || '—'}</div>
+          ${p.email ? `<div class="pe">${p.email}</div>` : ''}</div>`;
+    let inner = '';
+    if (orgs.length > 1) {
+      for (const o of orgs)
+        inner += `<div class="osub">${o} · ${byOrg[o].length}명</div><div class="pgrid">${byOrg[o].map(card).join('')}</div>`;
+    } else inner = `<div class="pgrid">${ps.map(card).join('')}</div>`;
     h += `<div class="gsec" data-g="${g.key}">
       <div class="ghead"><span class="gdot" style="background:${g.color}"></span>
         <span class="gname">${g.label}</span><span class="gsub">${g.sub}</span><span class="gcnt">${ps.length}명 ▾</span></div>
-      <div class="pgrid">` + ps.map(p => `
-        <div class="pcard"><div class="pn">${p.name}</div>
-          <div class="pr">${[p.org !== g.label ? p.org : '', p.team, p.role].filter(Boolean).join(' · ') || '—'}</div>
-          ${p.email ? `<div class="pe">${p.email}</div>` : ''}</div>`).join('') + `</div></div>`;
+      ${inner}</div>`;
   }
   document.getElementById('people').innerHTML = h;
   document.getElementById('people').addEventListener('click', e => {
@@ -398,7 +498,7 @@ function renderDetail(){
   });
 })();
 
-function renderAll(){ renderStrip(); renderDiag(); renderDetail(); dpick.value = sel === 'all' ? '' : sel; }
+function renderAll(){ renderStrip(); renderDiag(); renderFlow(); renderDetail(); dpick.value = sel === 'all' ? '' : sel; }
 sel = DATES[DATES.length-1];   // 초기값: 최신 날짜
 renderAll();
 </script>

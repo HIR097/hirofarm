@@ -11,13 +11,9 @@
 <style>
 /* ===== IGIS 통합 상세 일정(간트) 양식 재현 — 다크 고정 ===== */
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#1d1d1c;color:#E5E5E5;font-size:13px;line-height:1.5;
+body{background:#08080a;color:#E5E5E5;font-size:13px;line-height:1.5;
   font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Pretendard','Malgun Gothic','Inter',Helvetica,Arial,sans-serif}
 .page{max-width:1500px;margin:0 auto;padding:34px 20px 80px}
-a.back{position:absolute;right:22px;top:22px;font-size:11px;font-weight:700;color:#86868B;text-decoration:none;
-  border:1px solid #3c3c3c;background:#252524;padding:6px 12px;border-radius:9px}
-a.back:hover{color:#fff}
-
 /* ---- 헤더 ---- */
 .hd{display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap}
 .hd h1{font-size:34px;font-weight:800;color:#fff;letter-spacing:-.02em;line-height:1}
@@ -173,7 +169,6 @@ a.back:hover{color:#fff}
 </style>
 </head>
 <body>
-<a class="back" href="/">← hirofarm</a>
 <div class="page">
   <div class="hd">
     <h1>마일스톤</h1>
@@ -212,9 +207,6 @@ a.back:hover{color:#fff}
 
     <div class="gscroll"><div class="ginner" id="gantt"></div></div>
   </div>
-
-  <div class="sec"><h2>주간 활동 집계</h2><p>토픽 × 주차별 관련 메일 수를 자동 집계합니다.</p></div>
-  <div class="box"><table id="heat"></table></div>
 
   <div class="sec"><h2>R&amp;R 및 필요산출물</h2><p>워크스트림별 주관·협조 부서와 현황, 다음 액션을 조회합니다.</p></div>
   <div class="box"><table id="rrtbl">
@@ -512,35 +504,6 @@ document.addEventListener('mousemove', (e) => {
   const x = Math.min(e.clientX + 14, innerWidth - 416), y = Math.min(e.clientY + 14, innerHeight - tip.offsetHeight - 12);
   tip.style.left = Math.max(6, x) + 'px'; tip.style.top = Math.max(6, y) + 'px';
 });
-
-/* ================= 주간 활동 집계 (토픽×주차) ================= */
-const COLUMNS = [
-  { key: 'c1', bot: '~7/19',    range: ['2026-07-01', '2026-07-19'] },
-  { key: 'c2', bot: '7/20~26',  range: ['2026-07-20', '2026-07-26'] },
-  { key: 'c3', bot: '7/27~8/2', range: ['2026-07-27', '2026-08-02'] },
-  { key: 'c4', bot: '8/3~9',    range: ['2026-08-03', '2026-08-09'] },
-  { key: 'c5', bot: '8/10~16',  range: ['2026-08-10', '2026-08-16'] },
-];
-function colOf(date){ for (const c of COLUMNS) if (c.range && date >= c.range[0] && date <= c.range[1]) return c.key; return null; }
-const cnt = {};
-for (const m of M) {
-  const ck = colOf(m.date); if (!ck) continue;
-  for (const t of (m.topics.length ? m.topics : ['운영'])) { cnt[t] = cnt[t] || {}; cnt[t][ck] = (cnt[t][ck] || 0) + 1; }
-}
-const TOPICS = ['법무','임대차','보험','대주단','복구','운영','펀드매각'];
-let hh = '<thead><tr><th>토픽</th>' + COLUMNS.map(c => `<th style="text-align:center">${c.bot}</th>`).join('') + '<th style="text-align:center">계</th></tr></thead><tbody>';
-const maxC = Math.max(1, ...TOPICS.flatMap(t => COLUMNS.map(c => (cnt[t]||{})[c.key] || 0)));
-for (const t of TOPICS) {
-  let tot = 0;
-  hh += `<tr><td class="topic">${t}</td>`;
-  for (const c of COLUMNS) {
-    const n = (cnt[t]||{})[c.key] || 0; tot += n;
-    const a = n ? (8 + 40 * n / maxC).toFixed(0) : 0;
-    hh += `<td class="c" style="${n ? `background:rgba(41,151,255,.${String(a).padStart(2,'0')})` : ''}">${n || '<span class=dim>·</span>'}</td>`;
-  }
-  hh += `<td class="c" style="font-weight:700">${tot}</td></tr>`;
-}
-document.getElementById('heat').innerHTML = hh + '</tbody>';
 
 /* ================= R&R ================= */
 const RR = [
