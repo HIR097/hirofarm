@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>인천석남쿠팡물류 의사소통 현황</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#e7e7ea; --bg2:#f1f1f3; --surface:#ffffff; --surface2:#f3f3f5;
+  --text:#101012; --text-2:#71717a; --text-3:#a6a6ad; --line:#e8e8ec;
+  --shadow:0 1px 2px rgba(18,18,26,.04), 0 10px 30px rgba(18,18,26,.06);
+  --accent:#101012; --accent-text:#ffffff;
+  --good:#0ca678; --bad:#e03131; --warn:#f59f00; --info:#1c7ed6;
+}
+:root[data-theme="dark"]{
+  --bg:#08080a; --bg2:#0f0f12; --surface:#161619; --surface2:#1f1f23;
+  --text:#f3f3f5; --text-2:#9a9aa2; --text-3:#62626a; --line:#26262b;
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 30px rgba(0,0,0,.55);
+  --accent:#f4f4f6; --accent-text:#0a0a0b;
+  --good:#38d9a9; --bad:#ff8787; --warn:#fcc419; --info:#4dabf7;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Space Grotesk',-apple-system,'Apple SD Gothic Neo','Pretendard','Malgun Gothic',Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--text);font-size:13.5px;line-height:1.55;transition:background .2s}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 26px 70px}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+.hero{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+.hero h1{font-size:25px;font-weight:700;letter-spacing:-.02em}
+.hero h1 small{font-size:14px;font-weight:500;color:var(--text-2);margin-left:8px}
+.back{margin-left:auto;font:500 11px 'JetBrains Mono',monospace;color:var(--text-2);text-decoration:none;
+  border:1px solid var(--line);background:var(--surface);padding:6px 12px;border-radius:9px}
+.back:hover{color:var(--text)}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0 18px}
+.chip{font-size:12px;color:var(--text-2);border:1px solid var(--line);background:var(--surface);
+  padding:4px 11px;border-radius:9px;box-shadow:var(--shadow)}
+.chip b{color:var(--text);font-weight:600;margin-left:5px;font-variant-numeric:tabular-nums}
+.lbl{font:600 10px 'JetBrains Mono',monospace;letter-spacing:.12em;color:var(--text-3);
+  text-transform:uppercase;margin:26px 0 10px;display:flex;align-items:center;gap:8px}
+.lbl::after{content:'';flex:1;height:1px;background:var(--line)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:15px;box-shadow:var(--shadow);padding:18px 20px}
+.card .sub{font-size:11.5px;color:var(--text-3);margin-bottom:12px}
+
+/* ---- 날짜 스트립 ---- */
+.datebar{display:flex;gap:8px;align-items:stretch}
+.datebar .navbtn{border:1px solid var(--line);background:var(--surface);color:var(--text-2);border-radius:10px;
+  width:34px;cursor:pointer;font-size:15px;flex:none}
+.datebar .navbtn:hover{color:var(--text)}
+.dstrip{display:flex;gap:5px;overflow-x:auto;padding:2px;flex:1;scrollbar-width:thin}
+.dcell{flex:none;min-width:52px;border:1px solid var(--line);background:var(--surface);border-radius:10px;
+  padding:6px 8px 5px;text-align:center;cursor:pointer;transition:border-color .15s}
+.dcell:hover{border-color:var(--text-3)}
+.dcell .dd{font:600 11.5px 'JetBrains Mono',monospace}
+.dcell .dw{font-size:9.5px;color:var(--text-3)}
+.dcell .dc{font:600 10px 'JetBrains Mono',monospace;color:var(--info);margin-top:1px}
+.dcell.sel{border-color:var(--accent);background:var(--accent);color:var(--accent-text)}
+.dcell.sel .dw,.dcell.sel .dc{color:var(--accent-text);opacity:.75}
+.dcell.empty{opacity:.42}
+.dcell.all{min-width:64px}
+input.dpick{border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:10px;
+  padding:0 8px;font:500 11.5px 'JetBrains Mono',monospace;flex:none;width:132px}
+
+/* ---- 다이어그램 ---- */
+#diagwrap{position:relative}
+#diag{width:100%;height:auto;display:block}
+.node rect{fill:var(--surface2);stroke:var(--line);rx:12}
+.node.on rect{stroke-width:1.6}
+.node.dim{opacity:.32}
+.node text{fill:var(--text);font-size:13px;font-weight:600;font-family:'Space Grotesk','Apple SD Gothic Neo',sans-serif}
+.node text.sub{fill:var(--text-3);font-size:9.5px;font-weight:400}
+.node .cnt{fill:var(--text-2);font:600 10px 'JetBrains Mono',monospace}
+.node{cursor:pointer}
+path.edge{fill:none;cursor:pointer}
+path.hit{fill:none;stroke:transparent;stroke-width:16;cursor:pointer}
+text.ecnt{font:600 10.5px 'JetBrains Mono',monospace;cursor:pointer}
+.ecnt-bg{fill:var(--surface);stroke:var(--line)}
+.selfloop{cursor:pointer}
+
+/* ---- 툴팁 ---- */
+#tip{position:fixed;z-index:50;max-width:400px;background:var(--surface);border:1px solid var(--line);
+  border-radius:11px;box-shadow:var(--shadow);padding:11px 13px;font-size:11.5px;pointer-events:none;display:none}
+#tip h5{font:600 10.5px 'JetBrains Mono',monospace;margin-bottom:6px;color:var(--text-2)}
+#tip .m{margin-bottom:6px;padding-bottom:6px;border-bottom:1px dashed var(--line)}
+#tip .m:last-child{border-bottom:0;margin-bottom:0;padding-bottom:0}
+#tip .m .h{font-weight:600;font-size:11px}
+#tip .m .s{color:var(--text-2);font-size:11px}
+#tip .m .r{color:var(--warn);font-size:10.5px}
+#tip .more{color:var(--text-3);font-size:10.5px}
+
+/* ---- 상세 패널 ---- */
+#detail .mailcard{border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-bottom:9px;background:var(--surface2)}
+#detail .mailcard .head{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline;margin-bottom:3px}
+#detail .mailcard .when{font:600 10.5px 'JetBrains Mono',monospace;color:var(--text-3)}
+#detail .mailcard .dir{font-size:12px;font-weight:600}
+#detail .mailcard .dir .arr{color:var(--text-3);margin:0 4px}
+#detail .mailcard .subj{font-size:11.5px;color:var(--text-2);font-weight:500}
+#detail .mailcard .sum{font-size:12px;margin-top:3px}
+#detail .req{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+#detail .req span{font-size:10.5px;border:1px solid var(--line);border-radius:7px;padding:2px 8px;color:var(--text-2)}
+#detail .req span b{font-weight:600;margin-right:4px}
+#detail .req span.s-요청 b{color:var(--warn)} #detail .req span.s-회신 b{color:var(--info)}
+#detail .req span.s-확정 b{color:var(--good)} #detail .req span.s-공유 b{color:var(--text-3)}
+#detail .topic{font:600 9px 'JetBrains Mono',monospace;border:1px solid var(--line);border-radius:6px;
+  padding:1.5px 6px;color:var(--text-3);margin-left:2px}
+.dhint{font-size:11.5px;color:var(--text-3)}
+
+/* ---- 담당자 ---- */
+.gsec{margin-bottom:16px}
+.gsec .ghead{display:flex;align-items:center;gap:9px;margin-bottom:8px;cursor:pointer}
+.gsec .gdot{width:9px;height:9px;border-radius:3px;flex:none}
+.gsec .gname{font-size:13.5px;font-weight:700}
+.gsec .gsub{font-size:11px;color:var(--text-3)}
+.gsec .gcnt{font:600 10px 'JetBrains Mono',monospace;color:var(--text-3);margin-left:auto}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px}
+.pcard{border:1px solid var(--line);border-radius:11px;padding:9px 11px;background:var(--surface2)}
+.pcard .pn{font-size:12.5px;font-weight:600}
+.pcard .pr{font-size:10.5px;color:var(--text-2)}
+.pcard .pe{font:400 9.5px 'JetBrains Mono',monospace;color:var(--text-3);word-break:break-all;margin-top:2px}
+.gsec.closed .pgrid{display:none}
+@media(max-width:700px){.wrap{padding:20px 14px 60px}.hero h1{font-size:20px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1>인천석남쿠팡물류 <small>의사소통 현황</small></h1>
+    <a class="back" href="/">← hirofarm</a>
+  </div>
+  <div class="chips">
+    <div class="chip">분석 메일 <b id="chip-total">–</b></div>
+    <div class="chip">기간 <b id="chip-range">–</b></div>
+    <div class="chip">당사자 그룹 <b id="chip-groups">–</b></div>
+    <div class="chip">담당자 <b id="chip-people">–</b></div>
+  </div>
+
+  <div class="lbl">날짜 선택</div>
+  <div class="card">
+    <div class="datebar">
+      <button class="navbtn" id="prevd">‹</button>
+      <div class="dstrip" id="dstrip"></div>
+      <button class="navbtn" id="nextd">›</button>
+      <input class="dpick" type="date" id="dpick" min="2026-07-14" max="2026-08-07">
+    </div>
+  </div>
+
+  <div class="lbl">당사자 간 이메일 흐름 <span id="diag-date" style="text-transform:none;letter-spacing:0"></span></div>
+  <div class="card">
+    <div class="sub">화살표 = 메일 방향(굵기·숫자 = 건수) · 화살표/노드에 마우스를 올리면 내용 미리보기, 클릭하면 아래에 상세 표시 · 이지스 원형 화살표 = 내부 공유</div>
+    <div id="diagwrap"><svg id="diag" viewBox="0 0 1000 560"></svg></div>
+  </div>
+
+  <div class="lbl">교신 상세</div>
+  <div class="card" id="detail"><div class="dhint">위 다이어그램에서 화살표나 당사자를 클릭하면 해당 교신의 메일이 여기 표시됩니다. (기본: 선택 날짜 전체 메일)</div><div id="detail-list"></div></div>
+
+  <div class="lbl">당사자 그룹 &amp; 담당자</div>
+  <div class="card" id="people"></div>
+</div>
+<div id="tip"></div>
+
+<script src="/seoknam-tf-data.js"></script>
+<script>
+(function(){
+  try{
+    const q = new URLSearchParams(location.search).get('theme');
+    document.documentElement.dataset.theme = q || localStorage.getItem('hy_theme') || 'light';
+  }catch(e){}
+})();
+
+const D = window.TF_DATA;
+const GROUPS = D.groups, MAILS = D.mails, PEOPLE = D.people;
+const GBY = Object.fromEntries(GROUPS.map(g => [g.key, g]));
+
+document.getElementById('chip-total').textContent = MAILS.length + '건';
+document.getElementById('chip-range').textContent = MAILS[0].date.slice(5) + ' ~ ' + MAILS[MAILS.length-1].date.slice(5);
+document.getElementById('chip-groups').textContent = GROUPS.length + '개';
+document.getElementById('chip-people').textContent = PEOPLE.length + '명';
+
+/* ---- 날짜 목록 ---- */
+const byDate = {};
+for (const m of MAILS) (byDate[m.date] = byDate[m.date] || []).push(m);
+const DATES = Object.keys(byDate).sort();
+const WD = ['일','월','화','수','목','금','토'];
+let sel = 'all';           // 'all' 또는 'YYYY-MM-DD'
+let pick = null;           // 선택된 edge/node {type:'edge',a,b} | {type:'node',g}
+
+const dstrip = document.getElementById('dstrip');
+function renderStrip(){
+  let h = `<div class="dcell all ${sel==='all'?'sel':''}" data-d="all"><div class="dd">전체</div><div class="dc">${MAILS.length}</div></div>`;
+  for (const d of DATES) {
+    const dt = new Date(d + 'T00:00:00');
+    h += `<div class="dcell ${sel===d?'sel':''}" data-d="${d}">
+      <div class="dd">${d.slice(5).replace('-','/')}</div><div class="dw">${WD[dt.getDay()]}</div><div class="dc">${byDate[d].length}</div></div>`;
+  }
+  dstrip.innerHTML = h;
+  const s = dstrip.querySelector('.sel'); if (s) s.scrollIntoView({block:'nearest', inline:'center'});
+}
+dstrip.addEventListener('click', e => {
+  const c = e.target.closest('.dcell'); if (!c) return;
+  sel = c.dataset.d; pick = null; renderAll();
+});
+document.getElementById('prevd').onclick = () => { const i = sel==='all' ? DATES.length : DATES.indexOf(sel); if (i>0){ sel = DATES[i-1]; pick=null; renderAll(); } };
+document.getElementById('nextd').onclick = () => { if (sel==='all') return; const i = DATES.indexOf(sel); if (i < DATES.length-1){ sel = DATES[i+1]; pick=null; renderAll(); } else { sel='all'; pick=null; renderAll(); } };
+document.getElementById('dpick').addEventListener('change', e => {
+  const v = e.target.value; if (!v) return;
+  sel = byDate[v] ? v : v; pick = null; renderAll();
+});
+
+function curMails(){ return sel==='all' ? MAILS : (byDate[sel] || []); }
+
+/* ---- 다이어그램 ---- */
+const svg = document.getElementById('diag');
+const POS = {   // 1000×560 기준 노드 배치 (이지스 중앙)
+  igis:      {x:500, y:280, w:170, h:56},
+  yulchon:   {x:500, y:70,  w:150, h:50},
+  coupang:   {x:868, y:120, w:120, h:50},
+  lenders:   {x:882, y:280, w:130, h:50},
+  insurer:   {x:868, y:440, w:130, h:50},
+  adjuster:  {x:560, y:492, w:150, h:50},
+  uib:       {x:255, y:492, w:120, h:50},
+  pm:        {x:118, y:400, w:110, h:50},
+  investors: {x:112, y:170, w:140, h:50},
+  advisors:  {x:220, y:66,  w:110, h:50},
+};
+function edgesOf(list){
+  const e = {}; let internal = 0;
+  for (const m of list) {
+    if (m.internal) { internal++; continue; }
+    for (const t of m.toGs) {
+      if (t === m.fromG) continue;
+      const k = m.fromG + '>' + t;
+      (e[k] = e[k] || []).push(m);
+    }
+    if (!m.toGs.some(t => t !== m.fromG)) internal++;
+  }
+  return {edges: e, internal};
+}
+function nodeEdgePoint(a, b){ // a 사각형 경계에서 b 방향 접점
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const sx = (a.w/2 + 6) / Math.abs(dx || .001), sy = (a.h/2 + 6) / Math.abs(dy || .001);
+  const s = Math.min(sx, sy);
+  return {x: a.x + dx * s, y: a.y + dy * s};
+}
+function renderDiag(){
+  const list = curMails();
+  const {edges, internal} = edgesOf(list);
+  const active = new Set();
+  for (const k of Object.keys(edges)) { const [a,b] = k.split('>'); active.add(a); active.add(b); }
+  if (internal) active.add('igis');
+
+  let defs = '<defs>';
+  for (const g of GROUPS) defs += `<marker id="ah-${g.key}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${g.color}"/></marker>`;
+  defs += '</defs>';
+
+  let eh = '';
+  const maxN = Math.max(1, ...Object.values(edges).map(v => v.length));
+  for (const [k, ms] of Object.entries(edges)) {
+    const [a, b] = k.split('>');
+    const A = POS[a], B = POS[b]; if (!A || !B) continue;
+    const p1 = nodeEdgePoint(A, B), p2 = nodeEdgePoint(B, A);
+    const mx = (p1.x + p2.x)/2, my = (p1.y + p2.y)/2;
+    const dx = p2.x - p1.x, dy = p2.y - p1.y, L = Math.hypot(dx, dy) || 1;
+    const off = 16;                       // 양방향 분리 오프셋 (진행방향 왼쪽)
+    const ox = -dy/L*off, oy = dx/L*off;
+    const cx = mx + ox, cy = my + oy;
+    const w = 1.4 + 3.2 * ms.length / maxN;
+    const col = GBY[a].color;
+    const lx = mx + ox*1.35, ly = my + oy*1.35;
+    eh += `<path class="edge" d="M${p1.x} ${p1.y} Q${cx} ${cy} ${p2.x} ${p2.y}" stroke="${col}" stroke-width="${w.toFixed(1)}" opacity=".78" marker-end="url(#ah-${a})"/>`;
+    eh += `<path class="hit" d="M${p1.x} ${p1.y} Q${cx} ${cy} ${p2.x} ${p2.y}" data-edge="${k}"/>`;
+    eh += `<g data-edge="${k}" style="cursor:pointer"><rect class="ecnt-bg" x="${lx-11}" y="${ly-9}" width="22" height="17" rx="6"/><text class="ecnt" x="${lx}" y="${ly+3.5}" text-anchor="middle" fill="${col}">${ms.length}</text></g>`;
+  }
+
+  let nh = '';
+  for (const g of GROUPS) {
+    const p = POS[g.key]; if (!p) continue;
+    const on = active.has(g.key);
+    const inv = list.filter(m => !m.internal && (m.fromG===g.key || m.toGs.includes(g.key))).length;
+    nh += `<g class="node ${on?'on':'dim'}" data-node="${g.key}" transform="translate(${p.x-p.w/2},${p.y-p.h/2})">
+      <rect width="${p.w}" height="${p.h}" rx="12" stroke="${g.color}"/>
+      <circle cx="14" cy="15" r="4" fill="${g.color}"/>
+      <text x="26" y="20">${g.label}</text>
+      <text class="sub" x="26" y="34">${g.sub}</text>
+      ${on && inv ? `<text class="cnt" x="${p.w-10}" y="20" text-anchor="end">${inv}</text>` : ''}
+    </g>`;
+  }
+  // 이지스 내부 공유 셀프 루프
+  if (internal) {
+    const P = POS.igis, col = GBY.igis.color;
+    nh += `<g class="selfloop" data-node="igis-internal">
+      <path d="M${P.x-30} ${P.y-P.h/2-4} C ${P.x-58} ${P.y-P.h/2-52}, ${P.x+58} ${P.y-P.h/2-52}, ${P.x+30} ${P.y-P.h/2-4}"
+        fill="none" stroke="${col}" stroke-width="1.6" stroke-dasharray="4 3" opacity=".55" marker-end="url(#ah-igis)"/>
+      <rect class="ecnt-bg" x="${P.x-34}" y="${P.y-P.h/2-58}" width="68" height="17" rx="6"/>
+      <text class="ecnt" x="${P.x}" y="${P.y-P.h/2-45.5}" text-anchor="middle" fill="${col}">내부 ${internal}</text>
+    </g>`;
+  }
+  svg.innerHTML = defs + eh + nh;
+  document.getElementById('diag-date').textContent = ' — ' + (sel==='all' ? '전체 기간' : sel + ' (' + (byDate[sel]||[]).length + '건)');
+}
+
+/* ---- 툴팁 ---- */
+const tip = document.getElementById('tip');
+addEventListener('scroll', () => tip.style.display = 'none', true);
+function mailsForPick(p, list){
+  if (!p) return list;
+  if (p.type === 'edge') { const [a,b] = p.key.split('>'); return list.filter(m => !m.internal && m.fromG===a && m.toGs.includes(b)); }
+  if (p.key === 'igis-internal') return list.filter(m => m.internal || !m.toGs.some(t=>t!==m.fromG));
+  return list.filter(m => m.fromG===p.key || m.toGs.includes(p.key));
+}
+svg.addEventListener('mousemove', e => {
+  const t = e.target.closest('[data-edge],[data-node]');
+  if (!t) { tip.style.display='none'; return; }
+  const list = curMails();
+  let ms, title;
+  if (t.dataset.edge) {
+    ms = mailsForPick({type:'edge', key:t.dataset.edge}, list);
+    const [a,b] = t.dataset.edge.split('>');
+    title = `${GBY[a].label} → ${GBY[b].label} · ${ms.length}건`;
+  } else {
+    const k = t.dataset.node;
+    ms = mailsForPick({type:'node', key:k}, list);
+    title = (k==='igis-internal' ? '이지스 내부 공유' : GBY[k].label) + ` · ${ms.length}건`;
+  }
+  const top = ms.slice(0, 5);
+  tip.innerHTML = `<h5>${title}${sel==='all'?' (전체 기간)':''}</h5>` + top.map(m => {
+    const req = (m.requests||[])[0];
+    return `<div class="m"><div class="h">${m.date.slice(5)} ${m.time} · ${m.fromOrg} → ${m.toOrgs.join('/')}</div>
+      <div class="s">${m.summary}</div>${req ? `<div class="r">▸ [${req.status}] ${req.what}</div>` : ''}</div>`;
+  }).join('') + (ms.length > 5 ? `<div class="more">… 외 ${ms.length-5}건 — 클릭하면 전체 표시</div>` : '');
+  tip.style.display = 'block';
+  const x = Math.min(e.clientX + 14, innerWidth - 420), y = Math.min(e.clientY + 14, innerHeight - tip.offsetHeight - 12);
+  tip.style.left = Math.max(6,x) + 'px'; tip.style.top = Math.max(6,y) + 'px';
+});
+svg.addEventListener('mouseleave', () => tip.style.display = 'none');
+svg.addEventListener('click', e => {
+  const t = e.target.closest('[data-edge],[data-node]');
+  if (!t) return;
+  pick = t.dataset.edge ? {type:'edge', key:t.dataset.edge} : {type:'node', key:t.dataset.node};
+  renderDetail();
+  document.getElementById('detail').scrollIntoView({behavior:'smooth', block:'nearest'});
+});
+
+/* ---- 상세 패널 ---- */
+function renderDetail(){
+  const list = curMails();
+  const ms = mailsForPick(pick, list);
+  let title = '';
+  if (pick) {
+    if (pick.type==='edge'){ const [a,b]=pick.key.split('>'); title = `${GBY[a].label} → ${GBY[b].label}`; }
+    else title = pick.key==='igis-internal' ? '이지스 내부 공유' : GBY[pick.key].label + ' 관련';
+  } else title = sel==='all' ? '전체 기간 전체 메일' : sel + ' 전체 메일';
+  const hint = `<div class="dhint" style="margin-bottom:10px"><b>${title}</b> · ${ms.length}건 ${pick?'<a href="#" id="clearpick" style="color:var(--text-3);margin-left:8px">선택 해제</a>':''}</div>`;
+  document.getElementById('detail').firstElementChild.remove();
+  document.getElementById('detail').insertAdjacentHTML('afterbegin', hint);
+  document.getElementById('detail-list').innerHTML = ms.map(m => `
+    <div class="mailcard">
+      <div class="head">
+        <span class="when">${m.date} ${m.time}</span>
+        <span class="dir">${m.fromOrg}<span class="arr">→</span>${m.internal ? '이지스 내부' : m.toOrgs.join(' · ')}</span>
+        ${(m.topics||[]).map(t=>`<span class="topic">${t}</span>`).join('')}
+      </div>
+      <div class="subj">${m.subject}</div>
+      <div class="sum">${m.summary}</div>
+      ${(m.requests && m.requests.length) ? `<div class="req">${m.requests.map(r=>`<span class="s-${r.status}"><b>${r.status}</b>${r.what}</span>`).join('')}</div>` : ''}
+    </div>`).join('') || '<div class="dhint">해당 조건의 메일이 없습니다.</div>';
+  const cp = document.getElementById('clearpick');
+  if (cp) cp.onclick = (e)=>{ e.preventDefault(); pick=null; renderDetail(); };
+}
+
+/* ---- 담당자 ---- */
+(function(){
+  const byG = {};
+  for (const p of PEOPLE) (byG[p.g] = byG[p.g] || []).push(p);
+  let h = '';
+  for (const g of GROUPS) {
+    const ps = byG[g.key] || []; if (!ps.length) continue;
+    ps.sort((a,b) => (b.role?1:0)-(a.role?1:0) || a.name.localeCompare(b.name,'ko'));
+    h += `<div class="gsec" data-g="${g.key}">
+      <div class="ghead"><span class="gdot" style="background:${g.color}"></span>
+        <span class="gname">${g.label}</span><span class="gsub">${g.sub}</span><span class="gcnt">${ps.length}명 ▾</span></div>
+      <div class="pgrid">` + ps.map(p => `
+        <div class="pcard"><div class="pn">${p.name}</div>
+          <div class="pr">${[p.org !== g.label ? p.org : '', p.team, p.role].filter(Boolean).join(' · ') || '—'}</div>
+          ${p.email ? `<div class="pe">${p.email}</div>` : ''}</div>`).join('') + `</div></div>`;
+  }
+  document.getElementById('people').innerHTML = h;
+  document.getElementById('people').addEventListener('click', e => {
+    const gh = e.target.closest('.ghead'); if (gh) gh.parentElement.classList.toggle('closed');
+  });
+})();
+
+function renderAll(){ renderStrip(); renderDiag(); renderDetail(); }
+sel = DATES[DATES.length-1];   // 초기값: 최신 날짜
+renderAll();
+</script>
+</body>
+</html>

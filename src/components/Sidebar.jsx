@@ -32,6 +32,24 @@ function IconPulse() {
   )
 }
 
+function IconGantt() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 5h8" /><path d="M7 12h10" /><path d="M11 19h8" />
+      <path d="M3 3v18" />
+    </svg>
+  )
+}
+
+function IconNetwork() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="5" r="2.2" /><circle cx="5" cy="19" r="2.2" /><circle cx="19" cy="19" r="2.2" />
+      <path d="M10.8 6.9 6.2 17.1" /><path d="M13.2 6.9l4.6 10.2" /><path d="M7.2 19h9.6" />
+    </svg>
+  )
+}
+
 // type: 'page' → 탭 전환, 'project' → 오버레이(iframe)로 바로 열린다
 export const MENU_ITEMS = [
   { key: 'home', label: '메인', Icon: IconHome, type: 'page' },
@@ -42,6 +60,8 @@ export const MENU_ITEMS = [
   { key: 'scratch', label: '낙서장', Icon: IconNote, type: 'page' },
   { key: 'mangrove', label: '맹그로브 신촌', Icon: IconStack, type: 'project', href: '/mangrove-building.html', tag: 'CONFIDENTIAL · 내부용' },
   { key: 'lovelab', label: '팔로워 트래커', Icon: IconPulse, type: 'project', href: '/lovelab-followers.html', tag: '연애실험실 · 인스타' },
+  { key: 'seoknam-ms', label: '인천석남쿠팡물류TF Milestone', Icon: IconGantt, type: 'project', href: '/seoknam-milestone.html', tag: '화재대응 TF · 내부용' },
+  { key: 'seoknam-comms', label: '인천석남쿠팡물류 의사소통 현황', Icon: IconNetwork, type: 'project', href: '/seoknam-comms.html', tag: '화재대응 TF · 메일맵' },
 ]
 
 const RAIL = 64
