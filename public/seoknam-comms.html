@@ -91,25 +91,8 @@ text.ecnt{font:600 10.5px 'JetBrains Mono',monospace;cursor:pointer}
 #tip .more{color:var(--text-3);font-size:10.5px}
 
 /* ---- 당일 흐름 요약 ---- */
-#flow .fsum{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:12px;font-size:12px;color:var(--text-2)}
-#flow .fsum .fp{border:1px solid var(--line);background:var(--surface2);border-radius:8px;padding:3px 10px;
-  font-size:11.5px;font-weight:600;color:var(--text);cursor:pointer}
-#flow .fsum .fp:hover{border-color:var(--text-3)}
-#flow .fsum .fp b{font-family:'JetBrains Mono',monospace;font-weight:600;margin-left:5px;color:var(--text-2)}
-.frow{display:flex;gap:11px;align-items:flex-start;padding:7px 2px;border-bottom:1px dashed var(--line);cursor:pointer}
-.frow:last-child{border-bottom:0}
-.frow:hover{background:var(--surface2)}
-.frow .ft{font:600 11px 'JetBrains Mono',monospace;color:var(--text-3);width:38px;flex:none;padding-top:2px}
-.frow .fdot{width:8px;height:8px;border-radius:50%;flex:none;margin-top:5px}
-.frow .ftxt{min-width:0;flex:1;font-size:12.5px}
-.frow .ftxt b{font-weight:600}
-.frow .ftxt .arr{color:var(--text-3);margin:0 3px}
-.frow .fst{font:600 9.5px 'JetBrains Mono',monospace;border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:1px}
-.frow .fst.s-요청{color:var(--warn);border:1px solid rgba(245,159,0,.4)}
-.frow .fst.s-회신{color:var(--info);border:1px solid rgba(28,126,214,.4)}
-.frow .fst.s-확정{color:var(--good);border:1px solid rgba(12,166,120,.4)}
-.frow .fst.s-공유{color:var(--text-3);border:1px solid var(--line)}
-.frow .fsub{color:var(--text-2);font-size:11.5px;margin-top:1px}
+#flow .fpara{font-size:13.5px;line-height:1.9;color:var(--text);word-break:keep-all}
+#flow .fpara .fd{color:var(--text-2)}
 
 /* ---- 상세 패널 ---- */
 #detail .mailcard{border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-bottom:9px;background:var(--surface2)}
@@ -419,44 +402,33 @@ function renderDetail(){
   if (cp) cp.onclick = (e)=>{ e.preventDefault(); pick=null; renderDetail(); };
 }
 
-/* ---- 당일 흐름 요약 ---- */
+/* ---- 당일 흐름 요약 — 신문 기사처럼 한 문단으로 ---- */
 function renderFlow(){
   const body = document.getElementById('flow-body');
   if (sel === 'all') {
-    body.innerHTML = '<div class="dhint">날짜를 선택하면 그날의 교신 흐름이 시간순으로 요약됩니다.</div>';
+    body.innerHTML = '<div class="dhint">날짜를 선택하면 그날의 교신 흐름이 한 문단으로 요약됩니다.</div>';
     return;
   }
-  const list = chrono(curMails());
-  if (!list.length) { body.innerHTML = '<div class="dhint">해당 날짜의 메일이 없습니다.</div>'; return; }
-  const {pairs, internal} = pairsOf(list);
-  /* 활발한 교신 쌍 상위 정렬 — 클릭하면 해당 쌍 상세로 */
-  const ranked = Object.entries(pairs)
-    .map(([k, p]) => [k, p.ab.length + p.ba.length]).sort((x,y) => y[1]-x[1]).slice(0, 4);
-  const fsum = `<div class="fsum"><span>${sel} · 교신 ${list.length}건</span>` +
-    ranked.map(([k, n]) => { const [a,b]=k.split('|');
-      return `<span class="fp" data-pair="${k}">${GBY[a].label} ↔ ${GBY[b].label}<b>${n}</b></span>`; }).join('') +
-    (internal ? `<span>내부 공유 ${internal}건</span>` : '') + '</div>';
-  /* 첫 문장만 추려 시간순 타임라인 */
+  const all = chrono(curMails());
+  if (!all.length) { body.innerHTML = '<div class="dhint">해당 날짜의 메일이 없습니다.</div>'; return; }
+  const list = all.filter(m => !/중복 저장본/.test(m.summary));   // 중복 보관본은 서술에서 제외
   const first = (s) => { const m = s.match(/^.*?다\./); return m ? m[0] : s; };
-  const rows = list.map(m => {
-    const st = [...new Set((m.requests||[]).map(r => r.status))];
-    return `<div class="frow" data-mid="${m.id}">
-      <span class="ft">${m.time}</span>
-      <span class="fdot" style="background:${(GBY[m.fromG]||{}).color || '#888'}"></span>
-      <div class="ftxt"><b>${m.fromOrg}</b><span class="arr">→</span><b>${m.internal ? '내부' : m.toOrgs.join('·')}</b>
-        ${st.map(s => `<span class="fst s-${s}">${s}</span>`).join('')}
-        <div class="fsub">${first(m.summary)}</div></div></div>`;
-  }).join('');
-  body.innerHTML = fsum + rows;
+  const {pairs, internal} = pairsOf(all);
+  const ranked = Object.entries(pairs)
+    .map(([k, p]) => [k, p.ab.length + p.ba.length]).sort((x,y) => y[1]-x[1]);
+  const mo = +sel.slice(5,7), dd = +sel.slice(8);
+  let intro = `${mo}월 ${dd}일에는 총 ${all.length}건의 메일이 오갔다.`;
+  if (ranked.length) {
+    const [k, n] = ranked[0]; const [a,b] = k.split('|');
+    if (n >= 2) intro += ` ${GBY[a].label}과 ${GBY[b].label} 간 교신(${n}건)이 가장 활발했` +
+      (internal ? `고, 이지스 내부 공유도 ${internal}건 있었다.` : `다.`);
+    else if (internal) intro += ` 이지스 내부 공유는 ${internal}건이었다.`;
+  }
+  const am = list.filter(m => m.time < '12:00'), pm = list.filter(m => m.time >= '12:00');
+  const seg = (arr, label) => arr.length
+    ? `<span class="fd">${label}</span> ` + arr.map(m => first(m.summary)).join(' ') : '';
+  body.innerHTML = `<p class="fpara">${intro} ${seg(am, '오전에는')} ${seg(pm, '오후 들어서는')}</p>`;
 }
-document.getElementById('flow').addEventListener('click', e => {
-  const fp = e.target.closest('[data-pair]');
-  if (fp) { pick = {type:'edge', key:fp.dataset.pair}; renderDetail();
-    document.getElementById('detail').scrollIntoView({behavior:'smooth', block:'nearest'}); return; }
-  const fr = e.target.closest('[data-mid]');
-  if (fr) { pick = null; renderDetail();
-    document.getElementById('detail').scrollIntoView({behavior:'smooth', block:'nearest'}); }
-});
 
 /* ---- 담당자 (석남 TF 무관 인원 제외 + 회사별 소그룹) ---- */
 (function(){
