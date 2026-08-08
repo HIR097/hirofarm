@@ -240,6 +240,8 @@ const b64encode = s => btoa(unescape(encodeURIComponent(s)));
   }catch(e){ console.warn('수집 결과 파싱 실패', e); }
   history.replaceState(null, '', location.pathname + location.search);
 })();
+/* 이미 이 페이지가 떠 있는 탭에 #snap 이 붙으면 해시만 바뀌어 스크립트가 다시 안 돈다 → 새로고침 */
+window.addEventListener('hashchange', () => { if(/^#snap=/.test(location.hash)) location.reload(); });
 
 const pending = readPend();
 Object.keys(pending).forEach(d => { if(D.snapshots[d]) delete pending[d]; });  // 커밋된 날짜는 임시본 폐기
