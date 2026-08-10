@@ -1,4 +1,4 @@
-import { HABITS, WEATHER, ACTIVITIES, WEEK } from '../data.js'
+import { HABITS, WEATHER, ACTIVITIES, getWeek } from '../data.js'
 import {
   card,
   darkCard,
@@ -13,16 +13,23 @@ import {
 import TodoList from '../components/TodoList.jsx'
 import { useIsMobile } from '../hooks/useIsMobile.js'
 import { useWeather } from '../hooks/useWeather.js'
+import { useNow } from '../hooks/useNow.js'
 
-// 오늘 날짜 라벨 — 매일 자동 갱신
-const _now = new Date()
+// 오늘 날짜·이번 주 — useNow가 분 단위로 갱신하므로 자정이 지나면 자동으로 바뀐다
 const _pad = (n) => String(n).padStart(2, '0')
-const DATE_LABEL = `${_now.getFullYear()} · ${_pad(_now.getMonth() + 1)} · ${_pad(_now.getDate())} · ${'일월화수목금토'[_now.getDay()]}`
-// 이번 주 범위 캡션 (예: "8월 3 – 9", 월이 걸치면 "7월 28 – 8월 3")
-const WEEK_CAPTION =
-  WEEK[0].m === WEEK[6].m
-    ? `${WEEK[0].m}월 ${WEEK[0].n} – ${WEEK[6].n}`
-    : `${WEEK[0].m}월 ${WEEK[0].n} – ${WEEK[6].m}월 ${WEEK[6].n}`
+function useToday() {
+  const now = useNow()
+  const week = getWeek(now)
+  return {
+    dateLabel: `${now.getFullYear()} · ${_pad(now.getMonth() + 1)} · ${_pad(now.getDate())} · ${'일월화수목금토'[now.getDay()]}`,
+    week,
+    // 이번 주 범위 캡션 (예: "8월 3 – 9", 월이 걸치면 "7월 28 – 8월 3")
+    weekCaption:
+      week[0].m === week[6].m
+        ? `${week[0].m}월 ${week[0].n} – ${week[6].n}`
+        : `${week[0].m}월 ${week[0].n} – ${week[6].m}월 ${week[6].n}`,
+  }
+}
 const fade = { animation: 'hyFade .4s ease' }
 
 // Layout-toggle pill (A / B / C)
@@ -43,9 +50,10 @@ function pillStyle(active) {
 // 모바일에서는 7칸이 안 들어가므로 가로 스크롤로 보여준다.
 function WeekCalendar() {
   const isMobile = useIsMobile()
+  const { week } = useToday()
   return (
     <div style={{ display: 'flex', gap: 7, ...(isMobile ? { overflowX: 'auto', paddingBottom: 6, minWidth: 0 } : {}) }}>
-      {WEEK.map((day) => (
+      {week.map((day) => (
         <div key={day.n} style={{ ...(isMobile ? { flex: 'none', width: 62 } : { flex: 1 }), display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 9 }}>
           <span style={{ font: mono, color: 'var(--text-3)' }}>{day.d}</span>
           <div
@@ -82,6 +90,7 @@ function WeekCalendar() {
 // ─────────── Variant A : Bento ───────────
 function VariantA({ todos, onToggle, done, total, weather }) {
   const isMobile = useIsMobile()
+  const { dateLabel, weekCaption } = useToday()
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18, ...fade }}>
       {/* 모바일: 인사 카드 전체 폭 + 지표 2×2, 데스크톱: 4열 벤토 */}
@@ -114,7 +123,7 @@ function VariantA({ todos, onToggle, done, total, weather }) {
             }}
           />
           <div>
-            <div style={{ font: mono, letterSpacing: '.1em', opacity: 0.6 }}>{DATE_LABEL}</div>
+            <div style={{ font: mono, letterSpacing: '.1em', opacity: 0.6 }}>{dateLabel}</div>
             <div style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-.02em', marginTop: 14, lineHeight: 1.2 }}>
               좋은 아침이에요,<br />하윤님
             </div>
@@ -165,7 +174,7 @@ function VariantA({ todos, onToggle, done, total, weather }) {
           <ActivityTimeline activities={ACTIVITIES} />
         </Card>
         <Card>
-          <CardHead title="이번 주 일정" caption={WEEK_CAPTION} mb={16} />
+          <CardHead title="이번 주 일정" caption={weekCaption} mb={16} />
           <WeekCalendar />
         </Card>
       </div>
@@ -176,12 +185,13 @@ function VariantA({ todos, onToggle, done, total, weather }) {
 // ─────────── Variant B : 3 Column ───────────
 function VariantB({ todos, onToggle, done, total, weather }) {
   const isMobile = useIsMobile()
+  const { dateLabel, week } = useToday()
   return (
     <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1.1fr 1fr', gap: 18, alignItems: 'start', ...fade }}>
       {/* col 1 */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div style={{ ...darkCard, padding: 22 }}>
-          <div style={{ font: mono, opacity: 0.6 }}>{DATE_LABEL}</div>
+          <div style={{ font: mono, opacity: 0.6 }}>{dateLabel}</div>
           <div style={{ fontSize: 23, fontWeight: 700, letterSpacing: '-.02em', margin: '12px 0 8px', lineHeight: 1.25 }}>
             좋은 아침이에요,<br />하윤님
           </div>
@@ -228,7 +238,7 @@ function VariantB({ todos, onToggle, done, total, weather }) {
         <Card style={{ padding: 20 }}>
           <CardHead title="이번 주 일정" size={15} mb={8} />
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {WEEK.map((day) => (
+            {week.map((day) => (
               <div key={day.n} style={{ display: 'flex', gap: 13, padding: '9px 0', borderTop: '1px solid var(--line)', alignItems: 'center' }}>
                 <div style={{ textAlign: 'center', minWidth: 30, flex: 'none' }}>
                   <div style={{ font: "600 10px 'JetBrains Mono'", color: 'var(--text-3)' }}>{day.d}</div>
@@ -253,13 +263,14 @@ function VariantB({ todos, onToggle, done, total, weather }) {
 // ─────────── Variant C : Focus ───────────
 function VariantC({ todos, onToggle, done, total, left, weather }) {
   const isMobile = useIsMobile()
+  const { dateLabel, weekCaption } = useToday()
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18, ...fade }}>
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.7fr 1fr', gap: 18 }}>
         <Card style={{ borderRadius: 24, padding: 26 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <div style={{ font: mono, color: 'var(--text-3)', letterSpacing: '.06em' }}>{DATE_LABEL}</div>
+              <div style={{ font: mono, color: 'var(--text-3)', letterSpacing: '.06em' }}>{dateLabel}</div>
               <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-.02em', marginTop: 8 }}>오늘의 집중</div>
             </div>
             <div style={{ textAlign: 'right' }}>
@@ -305,7 +316,7 @@ function VariantC({ todos, onToggle, done, total, left, weather }) {
       </div>
 
       <Card>
-        <CardHead title="이번 주 일정" caption={WEEK_CAPTION} mb={16} />
+        <CardHead title="이번 주 일정" caption={weekCaption} mb={16} />
         <WeekCalendar />
       </Card>
     </div>

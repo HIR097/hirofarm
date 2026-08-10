@@ -326,22 +326,29 @@ const TREE = [
 const TF = window.TF_DATA || { mails: [], updated: '2026-08-07' };
 const M = TF.mails || [];
 document.getElementById('n-mails').textContent = M.length;
-const TODAY = TF.updated;                       // 'YYYY-MM-DD'
-const [ , tMo, tDay ] = TODAY.split('-').map(Number);
-const todayX = dayX(tMo, tDay);
+/* 오늘 = 접속 시점의 실제 날짜 — 날짜가 바뀌면 라인·강조가 자동으로 이동한다 */
+const now = new Date();
+const tMo = now.getMonth() + 1, tDay = now.getDate();
+const todayX = now.getFullYear() === 2026 ? dayX(tMo, tDay) : null;
+const pad2 = (n) => String(n).padStart(2, '0');
+const TODAY_ISO = `${now.getFullYear()}-${pad2(tMo)}-${pad2(tDay)}`;
 
-/* 오늘 논의 토픽 집계 */
+/* 논의 토픽 집계 — 실제 오늘 메일이 있으면 오늘, 없으면 최신 수집일 기준으로 폴백 */
+const hasToday = M.some(m => m.date === TODAY_ISO);
+const chipDate = hasToday ? TODAY_ISO : (TF.updated || TODAY_ISO);
+const discLbl = hasToday ? `오늘 ${tMo}/${tDay}` : `최근 ${+chipDate.slice(5, 7)}/${+chipDate.slice(8)}`;
+const discTag = hasToday ? '오늘 논의' : '최근 논의';
 const todayCnt = {};
-for (const m of M) if (m.date === TODAY)
+for (const m of M) if (m.date === chipDate)
   for (const t of (m.topics.length ? m.topics : ['운영'])) todayCnt[t] = (todayCnt[t] || 0) + 1;
 const todayTotal = Object.values(todayCnt).reduce((a, b) => a + b, 0);
 document.getElementById('todaybar').innerHTML =
-  `<span class="tt">오늘 ${tMo}/${tDay} 논의 중</span>` +
+  `<span class="tt">${discLbl} 논의 중</span>` +
   (todayTotal
     ? Object.entries(todayCnt).sort((a, b) => b[1] - a[1])
         .map(([t, n]) => `<span class="tc">${t}<b>${n}</b></span>`).join('') +
-      `<span class="dim">— 메일 ${todayTotal}건 · 타임라인의 주황 라인이 오늘 위치, 테두리 강조된 막대가 오늘 논의된 업무입니다</span>`
-    : `<span class="dim">오늘 수신·발신된 메일이 없습니다</span>`);
+      `<span class="dim">— 메일 ${todayTotal}건 · 주황 라인이 오늘(${tMo}/${tDay}) 위치, 테두리 강조된 막대가 논의 중인 업무입니다</span>`
+    : `<span class="dim">해당일 수신·발신된 메일이 없습니다</span>`);
 
 /* ================= KPI ================= */
 const leaves = TREE.flatMap(c => c.groups.flatMap(g => g.tasks));
@@ -411,7 +418,7 @@ function render() {
     h += `<div class="grow lv0" data-toggle="${cat.name}">
       <div class="lcell h-row">
         <span class="caret ${nOpen ? '' : 'closed'}">▼</span>
-        <div class="ltxt"><div class="name">${cat.name}${catHot ? `<span class="badge hot">오늘 논의 ${todayCnt[cat.topic]}</span>` : ''}</div>
+        <div class="ltxt"><div class="name">${cat.name}${catHot ? `<span class="badge hot">${discTag} ${todayCnt[cat.topic]}</span>` : ''}</div>
           <div class="sub">${cat.sub} · <span class="cnt">일정 ${catTasks.length}</span></div></div>
         <span class="per">${perTxt(si, ei)}</span></div>
       <div class="tcell" style="width:${TOTALW}px">${gridBG()}${barHTML(si, ei, 'group')}</div></div>`;
@@ -441,14 +448,14 @@ function render() {
           `<span class="bl">주관</span> ${t.lead} (${t.part})`,
           ...(t.desc ? [t.desc] : []),
           ...(t.ms || []).map(m => `<b>◆ ${m.d}</b> ${m.label}`),
-          ...(hot ? [`<b>오늘 ${tMo}/${tDay}</b> ${cat.topic} 관련 메일 ${todayCnt[cat.topic]}건 논의 중`] : []),
+          ...(hot ? [`<b>${discLbl}</b> ${cat.topic} 관련 메일 ${todayCnt[cat.topic]}건 논의 중`] : []),
         ]);
         h += `<div class="grow leaf">
           <div class="lcell h-row"><span class="bullet"></span>
             <div class="ltxt"><div class="name">${t.name}
                 <span class="badge ${stCls}">${stTxt}</span>
                 ${(t.ms || []).length ? `<span class="badge hot">◆ ${t.ms.length}</span>` : ''}
-                ${hot ? `<span class="badge hot">오늘 논의</span>` : ''}</div>
+                ${hot ? `<span class="badge hot">${discTag}</span>` : ''}</div>
               <div class="sub">${t.lead} · ${t.part}</div></div>
             <span class="per">${perTxt(tsi, tei)}</span></div>
           <div class="tcell" style="width:${TOTALW}px">${gridBG()}

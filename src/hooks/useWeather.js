@@ -57,32 +57,43 @@ export function useWeather() {
       })
     }
 
-    try {
-      const c = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null')
-      if (c && Date.now() - c.at < CACHE_MS) {
-        apply(c.data)
-        return
-      }
-    } catch {
-      /* ignore */
-    }
-
-    fetchWeather()
-      .then((data) => {
-        if (dead) return
+    const load = (force) => {
+      if (!force) {
         try {
-          localStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), data }))
+          const c = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null')
+          if (c && Date.now() - c.at < CACHE_MS) {
+            apply(c.data)
+            return
+          }
         } catch {
           /* ignore */
         }
-        apply(data)
-      })
-      .catch(() => {
-        /* 네트워크 실패 — 더미 폴백 */
-      })
+      }
+      fetchWeather()
+        .then((data) => {
+          if (dead) return
+          try {
+            localStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), data }))
+          } catch {
+            /* ignore */
+          }
+          apply(data)
+        })
+        .catch(() => {
+          /* 네트워크 실패 — 더미 폴백 */
+        })
+    }
+
+    load()
+    // 탭을 계속 열어둬도 30분마다, 그리고 탭이 다시 보일 때 갱신한다
+    const id = setInterval(() => load(true), CACHE_MS)
+    const onVis = () => document.visibilityState === 'visible' && load()
+    document.addEventListener('visibilitychange', onVis)
 
     return () => {
       dead = true
+      clearInterval(id)
+      document.removeEventListener('visibilitychange', onVis)
     }
   }, [])
 
