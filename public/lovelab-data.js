@@ -4,7 +4,7 @@
  * snapshots = 날짜별 팔로워 수 (매일 갱신, 2026-08-01부터)
  */
 window.LOVELAB_DATA = {
-  updated: "2026-08-08",
+  updated: "2026-08-10",
   shows: {
     lovelab: { label: "연애실험실", short: "연실" },
     noona:   { label: "누난 내게 여자야 2", short: "누난2" },
@@ -84,6 +84,13 @@ window.LOVELAB_DATA = {
       "kj_woo0": 436, "hatmda_": 21988, "_see_hyunny": 21949, "lahhyunjin": 21730, "junnnssi": 10198,
       "zzixyng": 8490, "_bellagenie": 13330, "joohee.yy": 17231, "_xx__hye": 45508, "dearmay___": 22089,
       "dr_jin0": 14597, "pairanisblue": 18057, "jung__won.k": 84624, "yoonso_.lee": 16685,
+    },
+    "2026-08-10": {
+      "1997.0127": 0, "__3.e7": 61520, "0616gy": 22097, "xogunnnn": 6668, "a_ct_p": 8117,
+      "yrimirey": 12305, "ellleybear": 10774, "ccmparc": 42785, "__kimmyungju": 36688, "kj_woo0": 447,
+      "hatmda_": 22043, "_see_hyunny": 22126, "lahhyunjin": 21941, "junnnssi": 10282, "zzixyng": 8565,
+      "_bellagenie": 13358, "joohee.yy": 17642, "_xx__hye": 45878, "dearmay___": 22029, "dr_jin0": 15060,
+      "pairanisblue": 18658, "jung__won.k": 84813, "yoonso_.lee": 16477,
     },
   },
 };

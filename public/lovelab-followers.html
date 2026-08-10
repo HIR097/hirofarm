@@ -108,26 +108,7 @@ tr:last-child td{border-bottom:0}
 tr.me td{background:rgba(18,184,134,.08);font-weight:600}
 .tblwrap{overflow-x:auto;margin-top:12px}
 
-/* 업데이트 패널 */
-.btn{font:600 12px 'Space Grotesk',-apple-system,'Apple SD Gothic Neo',sans-serif;background:var(--accent);
-  color:var(--accent-text);border:0;padding:8px 14px;border-radius:10px;cursor:pointer;box-shadow:var(--shadow)}
-.btn:hover{opacity:.86}
-.btn.ghost{background:var(--surface);color:var(--text);border:1px solid var(--line)}
-.hero .btn{margin-left:auto}
-@media(max-width:600px){.hero .btn{margin-left:0}}
-.step{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}
-.step:last-of-type{border-bottom:0}
-.step .n{font:700 10px 'JetBrains Mono',monospace;background:var(--surface2);border:1px solid var(--line);
-  border-radius:6px;width:21px;height:21px;display:grid;place-items:center;flex:none;margin-top:1px}
-.step .t{font-size:12.5px}
-.step .t small{display:block;color:var(--text-3);font-size:11px;margin-top:3px;line-height:1.5}
-.step .t a{color:var(--text);text-decoration:none;border-bottom:1px dashed var(--text-3)}
-.bm{display:inline-block;font:600 12px 'JetBrains Mono',monospace;background:var(--surface2);
-  border:1px dashed var(--text-3);border-radius:9px;padding:7px 13px;text-decoration:none;color:var(--text);cursor:grab}
-.bm:hover{border-color:var(--text-2)}
-.codebox{width:100%;height:132px;font:500 11px 'JetBrains Mono',monospace;background:var(--surface2);
-  color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px;resize:vertical;white-space:pre}
-.warn{font-size:11px;color:var(--bad);align-self:center}
+/* 북마클릿 임시 반영 표시 */
 .chip.tmp{border-color:var(--bad)}
 .chip.tmp b{color:var(--bad)}
 
@@ -141,37 +122,8 @@ footer{margin-top:38px;font-size:11px;color:var(--text-3);line-height:1.7}
 <div class="wrap">
   <div class="hero">
     <h1>팔로워 트래커<small>연애실험실 × 누난 내게 여자야 2</small></h1>
-    <button class="btn" id="updBtn">팔로워 업데이트</button>
   </div>
   <div class="chips" id="chips"></div>
-
-  <div class="card" id="updPanel" hidden style="margin-bottom:6px">
-    <h3>팔로워 업데이트</h3>
-    <div class="sub">인스타그램 API는 다른 사이트에서 직접 호출할 수 없다(CORS). 로그인된 instagram.com 탭에서 북마클릿으로 수집해 이 페이지로 돌려보낸다.</div>
-    <div class="step"><div class="n">1</div><div class="t">
-      아래 버튼을 <b>북마크바로 드래그</b>해 한 번만 등록한다
-      <small>이미 등록해 뒀다면 건너뛴다 · 출연자 목록이 바뀌면 다시 드래그해야 새 계정이 포함된다</small>
-      <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <a class="bm" id="bmLink" title="북마크바로 드래그하세요">📥 연실 팔로워 수집</a>
-        <button class="btn ghost" id="copyBm">주소 복사</button>
-      </div></div></div>
-    <div class="step"><div class="n">2</div><div class="t">
-      <a href="https://www.instagram.com/" target="_blank" rel="noreferrer"><b>instagram.com ↗</b></a> 을 열고, 로그인된 상태에서 그 북마클릿을 클릭한다
-      <small>계정당 1.2초 간격이라 24명이면 30초쯤 걸린다 · 화면 왼쪽 아래에 진행 상황이 표시된다</small></div></div>
-    <div class="step"><div class="n">3</div><div class="t">
-      수집이 끝나면 이 페이지로 자동으로 돌아오고 값이 바로 반영된다
-      <small>단, 이건 이 브라우저에만 저장되는 <b>임시 반영</b>이다. 사이트에 확정하려면 아래 코드를 <span class="mono">public/lovelab-data.js</span> 에 붙여넣고 커밋해야 한다.</small></div></div>
-    <div id="pendBox"></div>
-    <details style="margin-top:12px">
-      <summary style="cursor:pointer;font-size:11.5px;color:var(--text-2)">자동으로 안 돌아올 때 — 결과 JSON 직접 붙여넣기</summary>
-      <textarea class="codebox" id="pasteBox" style="height:76px;margin-top:8px"
-        placeholder='{"date":"2026-08-08","counts":{"ccmparc":42430,"da_l_in":9767}}'></textarea>
-      <div style="display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap">
-        <button class="btn" id="applyPaste">반영</button>
-        <span class="warn" id="pasteMsg"></span>
-      </div>
-    </details>
-  </div>
 
   <div class="lbl">프로그램별 출연자 — 방송 최초 대비 증감</div>
   <div class="duo" id="groups"></div>
@@ -188,8 +140,7 @@ footer{margin-top:38px;font-size:11px;color:var(--text-3);line-height:1.7}
 
   <footer>
     최초 팔로워: 방송 시작 시점 인스타그램 캡처 (통합 문서1.xlsx) · 일별 수집: 2026-08-01부터<br>
-    페이지는 lovelab-data.js 를 읽어 자동 반영 · 새 스냅샷은 위 <b>팔로워 업데이트</b> 버튼(북마클릿)으로 수집<br>
-    <span style="color:var(--text-3)">curl 로 직접 부르던 tools/lovelab_update.py 는 인스타 API 가 429 로 막아 더 이상 동작하지 않는다</span>
+    페이지는 lovelab-data.js 를 읽어 자동 반영 · 새 스냅샷은 수집 스크립트(tools/lovelab_update.py)로 추가
   </footer>
 </div>
 <div id="tip"></div>
@@ -433,105 +384,6 @@ const def = rows.find(r=>r.me && r.today!=null)
   || [...rows].sort((a,b)=>(b.delta??-Infinity)-(a.delta??-Infinity))[0];
 if(def) select(def.handle);
 
-/* ================= 팔로워 업데이트 패널 ================= */
-
-/* instagram.com 에서 실행될 수집 코드. 출연자 목록은 지금 화면의 cast 를 그대로 굽는다.
-   web_profile_info 가 400을 주는 계정(da_l_in 등)은 프로필 HTML 의 "팔로워 9,767명" 표기로 보완하되,
-   1만이 넘어 "1.6만"으로 축약되면 매칭이 안 되므로 그 계정은 그냥 빠진다. */
-function bookmarkletURL(){
-  const handles = JSON.stringify(D.cast.map(c => c.handle));
-  const back = location.origin + location.pathname;
-  const code =
-    "(async()=>{" +
-    "var b=document.createElement('div');" +
-    "b.style.cssText='position:fixed;z-index:2147483647;left:16px;bottom:16px;background:#111;color:#fff;" +
-      "font:13px/1.5 system-ui,-apple-system,sans-serif;padding:12px 16px;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.45)';" +
-    "document.body.appendChild(b);" +
-    "if(!location.hostname.match(/(^|\\.)instagram\\.com$/)){b.textContent='instagram.com 탭에서 실행해주세요';" +
-      "setTimeout(function(){b.remove()},4000);return}" +
-    "var H=" + handles + ",R={},i,h,x,m,q,p;" +
-    "var g=async function(u){var c=new AbortController(),t=setTimeout(function(){c.abort()},9000);" +
-      "try{var r=await fetch(u,{headers:{'x-ig-app-id':'936619743392459'},signal:c.signal});clearTimeout(t);return await r.text()}" +
-      "catch(e){clearTimeout(t);return ''}};" +
-    "for(i=0;i<H.length;i++){h=H[i];b.textContent='팔로워 수집 '+(i+1)+'/'+H.length+' — @'+h;" +
-      "x=await g('https://www.instagram.com/api/v1/users/web_profile_info/?username='+encodeURIComponent(h));" +
-      "m=x.match(/\"edge_followed_by\":\\{\"count\":(\\d+)/);" +
-      "if(m){R[h]=+m[1]}else{p=await g('https://www.instagram.com/'+h+'/');" +
-        "q=p.match(/\\uD314\\uB85C\\uC6CC\\s*([\\d,]+)\\uBA85/);if(q){R[h]=+q[1].replace(/,/g,'')}}" +
-      "await new Promise(function(s){setTimeout(s,1200)})}" +
-    "var d=new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);" +
-    "b.textContent='수집 완료 '+Object.keys(R).length+'/'+H.length+'명 — 트래커로 이동합니다';" +
-    "location.href='" + back + "#snap='+encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify({date:d,counts:R})))));" +
-    "})()";
-  return 'javascript:' + encodeURIComponent(code);
-}
-
-/* pending 스냅샷을 lovelab-data.js 형식(5개씩 한 줄)으로 */
-function pendCode(){
-  return PEND_DATES.map(d => {
-    const body = Object.entries(pending[d]).map(([h,v]) => `"${h}": ${v}`);
-    const lines = [];
-    for(let i=0;i<body.length;i+=5) lines.push('      ' + body.slice(i,i+5).join(', ') + ',');
-    return `    "${d}": {\n${lines.join('\n')}\n    },`;
-  }).join('\n');
-}
-
-async function copyText(txt, btn){
-  const done = ok => { const t = btn.textContent; btn.textContent = ok ? '복사됨' : '복사 실패'; setTimeout(()=>{btn.textContent = t}, 1400); };
-  try{ await navigator.clipboard.writeText(txt); done(true); }
-  catch(e){
-    const ta = document.createElement('textarea');
-    ta.value = txt; ta.style.position='fixed'; ta.style.opacity='0';
-    document.body.appendChild(ta); ta.select();
-    let ok = false; try{ ok = document.execCommand('copy'); }catch(e2){}
-    ta.remove(); done(ok);
-  }
-}
-
-function renderPend(){
-  const box = document.getElementById('pendBox');
-  if(!PEND_DATES.length){
-    box.innerHTML = `<div class="empty" style="margin-top:12px">아직 임시 수집분이 없습니다 — 위 순서대로 진행하면 여기에 붙여넣을 코드가 나옵니다</div>`;
-    return;
-  }
-  box.innerHTML = `
-    <div class="lbl" style="margin:18px 0 8px">확정하기 — public/lovelab-data.js 의 snapshots 마지막에 붙여넣기</div>
-    <textarea class="codebox" id="pendCode" readonly spellcheck="false"></textarea>
-    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
-      <button class="btn" id="copyCode">코드 복사</button>
-      <button class="btn ghost" id="clearPend">임시 데이터 지우기</button>
-      <span class="warn">updated 필드도 "${PEND_DATES[PEND_DATES.length-1]}" 로 함께 바꿀 것</span>
-    </div>`;
-  document.getElementById('pendCode').value = pendCode();
-  document.getElementById('copyCode').onclick = e => copyText(pendCode(), e.currentTarget);
-  document.getElementById('clearPend').onclick = () => {
-    PEND_DATES.forEach(d => delete pending[d]);
-    writePend(pending);
-    location.reload();
-  };
-}
-
-const updPanel = document.getElementById('updPanel');
-document.getElementById('updBtn').onclick = () => {
-  updPanel.hidden = !updPanel.hidden;
-  if(!updPanel.hidden) updPanel.scrollIntoView({behavior:'smooth', block:'nearest'});
-};
-document.getElementById('bmLink').href = bookmarkletURL();
-document.getElementById('copyBm').onclick = e => copyText(bookmarkletURL(), e.currentTarget);
-document.getElementById('applyPaste').onclick = () => {
-  const el = document.getElementById('pasteBox');
-  const msg = document.getElementById('pasteMsg');
-  const fail = t => { msg.textContent = t; };
-  let o;
-  try{ o = JSON.parse(el.value.trim()); }catch(e){ return fail('JSON 형식이 아닙니다'); }
-  if(!o || !o.date || !o.counts || !Object.keys(o.counts).length) return fail('date 와 counts 가 모두 있어야 합니다');
-  const p = readPend();
-  p[o.date] = {...(p[o.date] || {}), ...o.counts};
-  writePend(p);
-  location.reload();
-};
-renderPend();
-if(PEND_DATES.length) updPanel.hidden = false;   // 방금 수집분이 있으면 패널을 펼친 채로 보여준다
 </script>
 </body>
 </html>
