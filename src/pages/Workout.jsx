@@ -141,7 +141,7 @@ export default function Workout() {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      font: "600 13px 'Space Grotesk'",
+                      font: "600 13px 'Pretendard Variable'",
                       ...(w.done
                         ? { background: 'var(--accent)', color: 'var(--accent-text)' }
                         : { background: 'var(--surface2)', color: 'var(--text-3)', border: '1px dashed var(--line)' }),

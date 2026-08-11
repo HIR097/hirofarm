@@ -21,7 +21,7 @@ export default function Scratchpad() {
                 if (confirm('낙서장 내용을 모두 지울까요?')) setText('')
               }}
               style={{
-                font: "500 12px 'Space Grotesk'",
+                font: "500 12px 'Pretendard Variable'",
                 color: 'var(--text-2)',
                 background: 'var(--surface2)',
                 border: '1px solid var(--line)',
@@ -51,7 +51,7 @@ export default function Scratchpad() {
             background: 'transparent',
             color: 'var(--text)',
             padding: '22px 24px',
-            fontFamily: "'Space Grotesk', -apple-system, sans-serif",
+            fontFamily: "'Pretendard Variable', -apple-system, sans-serif",
             fontSize: 15,
             lineHeight: 1.7,
             boxSizing: 'border-box',

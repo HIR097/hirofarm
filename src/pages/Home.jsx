@@ -38,7 +38,7 @@ function pillStyle(active) {
     padding: '7px 15px',
     borderRadius: 999,
     cursor: 'pointer',
-    font: "500 13px 'Space Grotesk'",
+    font: "500 13px 'Pretendard Variable'",
     border: `1px solid ${active ? 'transparent' : 'var(--line)'}`,
     background: active ? 'var(--accent)' : 'transparent',
     color: active ? 'var(--accent-text)' : 'var(--text-2)',

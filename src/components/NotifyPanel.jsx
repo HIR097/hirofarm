@@ -243,7 +243,7 @@ const miniInput = {
   border: '1px solid var(--line)',
   background: 'var(--bg2)',
   color: 'var(--text)',
-  font: "500 12px 'Space Grotesk'",
+  font: "500 12px 'Pretendard Variable'",
   outline: 'none',
 }
 

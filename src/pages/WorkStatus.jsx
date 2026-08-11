@@ -26,7 +26,7 @@ function FilterButton({ active, onClick, label, total, urgent }) {
         padding: '8px 14px',
         borderRadius: 999,
         cursor: 'pointer',
-        font: "500 13px 'Space Grotesk'",
+        font: "500 13px 'Pretendard Variable'",
         border: `1px solid ${active ? 'transparent' : 'var(--line)'}`,
         background: active ? 'var(--accent)' : 'transparent',
         color: active ? 'var(--accent-text)' : 'var(--text-2)',
@@ -312,7 +312,7 @@ const addInColumn = {
   border: '1px dashed var(--line)',
   background: 'transparent',
   color: 'var(--text-3)',
-  font: "600 12px 'Space Grotesk'",
+  font: "600 12px 'Pretendard Variable'",
   cursor: 'pointer',
 }
 

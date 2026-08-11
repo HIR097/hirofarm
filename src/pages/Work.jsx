@@ -127,7 +127,7 @@ export default function Work() {
                     display: 'flex',
                     alignItems: 'center',
                     padding: '0 10px',
-                    font: "500 11px 'Space Grotesk'",
+                    font: "500 11px 'Pretendard Variable'",
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     ...toneStyle(g.tone),

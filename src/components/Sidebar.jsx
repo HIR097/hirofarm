@@ -60,7 +60,7 @@ export const MENU_ITEMS = [
   { key: 'scratch', label: '낙서장', Icon: IconNote, type: 'page' },
   { key: 'mangrove', label: '맹그로브 신촌', Icon: IconStack, type: 'project', href: '/mangrove-building.html', tag: 'CONFIDENTIAL · 내부용' },
   { key: 'lovelab', label: '팔로워 트래커', Icon: IconPulse, type: 'project', href: '/lovelab-followers.html', tag: '연애실험실 · 인스타' },
-  { key: 'seoknam-ms', label: '인천석남쿠팡물류TF Milestone', Icon: IconGantt, type: 'project', href: '/seoknam-milestone.html', tag: '화재대응 TF · 내부용' },
+  { key: 'seoknam-ms', label: '인천석남쿠팡물류 마일스톤', Icon: IconGantt, type: 'project', href: '/seoknam-milestone.html', tag: '화재대응 TF · 내부용' },
   { key: 'seoknam-comms', label: '인천석남쿠팡물류 의사소통 현황', Icon: IconNetwork, type: 'project', href: '/seoknam-comms.html', tag: '화재대응 TF · 메일맵' },
 ]
 

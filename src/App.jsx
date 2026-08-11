@@ -57,7 +57,7 @@ export default function App() {
         height: '100%',
         width: '100%',
         background: 'var(--bg)',
-        fontFamily: "'Space Grotesk', -apple-system, Helvetica, Arial, sans-serif",
+        fontFamily: "'Pretendard Variable', -apple-system, Helvetica, Arial, sans-serif",
         color: 'var(--text)',
         overflow: 'hidden',
       }}

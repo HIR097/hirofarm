@@ -105,7 +105,7 @@ export default function SettingsModal({ accent, onPickAccent, onToggleTheme, hid
               cursor: 'pointer',
               border: '1px solid var(--line)',
               background: 'var(--surface2)',
-              font: "500 13px 'Space Grotesk'",
+              font: "500 13px 'Pretendard Variable'",
               color: 'var(--text)',
             }}
           >
@@ -170,7 +170,7 @@ export default function SettingsModal({ accent, onPickAccent, onToggleTheme, hid
                   cursor: 'pointer',
                   background: active ? 'var(--surface2)' : 'transparent',
                   border: `1px solid ${active ? 'var(--text)' : 'var(--line)'}`,
-                  font: "500 11px 'Space Grotesk'",
+                  font: "500 11px 'Pretendard Variable'",
                   color: active ? 'var(--text)' : 'var(--text-2)',
                   transition: 'all .15s',
                 }}

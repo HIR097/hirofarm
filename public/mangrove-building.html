@@ -7,7 +7,9 @@
 <title>맹그로브 신촌 시뮬레이션 (내부용)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#e7e7ea; --bg2:#f1f1f3; --surface:#ffffff; --surface2:#f3f3f5;
@@ -26,7 +28,7 @@
   --good:#38d9a9; --bad:#ff8787;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Space Grotesk',-apple-system,'Apple SD Gothic Neo','Pretendard','Malgun Gothic',Helvetica,Arial,sans-serif;
+body{font-family:'Pretendard Variable','Pretendard',-apple-system,'Apple SD Gothic Neo','Malgun Gothic',Helvetica,Arial,sans-serif;
   background:var(--bg);color:var(--text);font-size:13.5px;line-height:1.55;transition:background .2s}
 .wrap{max-width:1280px;margin:0 auto;padding:28px 26px 70px}
 .mono{font-family:'JetBrains Mono',ui-monospace,monospace}
@@ -56,11 +58,11 @@ body{font-family:'Space Grotesk',-apple-system,'Apple SD Gothic Neo','Pretendard
 /* ---------- params ---------- */
 .pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:13px 22px}
 .ctl label{display:flex;justify-content:space-between;font-size:11.5px;color:var(--text-2);margin-bottom:4px}
-.ctl label output{color:var(--text);font:600 12px 'Space Grotesk',sans-serif;font-variant-numeric:tabular-nums}
+.ctl label output{color:var(--text);font:600 12px 'Pretendard Variable',sans-serif;font-variant-numeric:tabular-nums}
 input[type=range]{width:100%;accent-color:var(--accent);height:20px}
 .numin{display:flex;align-items:center;gap:6px}
 .numin input{width:100%;background:var(--surface2);border:1px solid var(--line);color:var(--text);
-  font:600 13px 'Space Grotesk',sans-serif;font-variant-numeric:tabular-nums;padding:5px 8px;border-radius:8px;outline:none}
+  font:600 13px 'Pretendard Variable',sans-serif;font-variant-numeric:tabular-nums;padding:5px 8px;border-radius:8px;outline:none}
 .numin input:focus{border-color:var(--text-3)}
 .numin .un{font-size:11px;color:var(--text-3);white-space:nowrap}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--surface2)}
@@ -77,7 +79,7 @@ input[type=range]{width:100%;accent-color:var(--accent);height:20px}
 .ctl .hint{display:none;font-style:normal;font-size:10px;color:var(--bad);margin-left:4px;margin-right:auto}
 .ctl.inactive .hint{display:inline}
 .derive{font-size:10.5px;color:var(--text-3);margin-top:4px}
-.derive b{color:var(--text-2);font:600 11px 'Space Grotesk',sans-serif;font-variant-numeric:tabular-nums}
+.derive b{color:var(--text-2);font:600 11px 'Pretendard Variable',sans-serif;font-variant-numeric:tabular-nums}
 details.adv{grid-column:1/-1;border-top:1px dashed var(--line);padding-top:10px}
 details.adv summary{cursor:pointer;font-size:11.5px;color:var(--text-2);list-style:none;user-select:none}
 details.adv summary::before{content:'▸ ';color:var(--text-3)}
@@ -105,7 +107,7 @@ th{font:600 10px 'JetBrains Mono',monospace;letter-spacing:.05em;color:var(--tex
   padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap;text-transform:uppercase}
 th:first-child,td:first-child{text-align:left}
 td{padding:6.5px 8px;border-bottom:1px solid var(--line);text-align:right;color:var(--text);
-  font:500 12.3px 'Space Grotesk',-apple-system,'Apple SD Gothic Neo',sans-serif;font-variant-numeric:tabular-nums}
+  font:500 12.3px 'Pretendard Variable',-apple-system,'Apple SD Gothic Neo',sans-serif;font-variant-numeric:tabular-nums}
 td:first-child{font-size:12px}
 tr:last-child td{border-bottom:0}
 tr.tot td{border-top:1.5px solid var(--text-3);font-weight:600;background:var(--surface2)}
@@ -113,7 +115,7 @@ tr.me td{background:rgba(18,184,134,.08);font-weight:600}
 tr.me td:first-child::after{content:'본건';font-size:9.5px;color:#0ca678;border:1px solid rgba(18,184,134,.5);
   border-radius:5px;padding:1px 5px;margin-left:7px;vertical-align:1px}
 .tblwrap{overflow-x:auto;margin-top:12px}
-.badge{display:inline-block;font-size:10.5px;padding:1.5px 7px;border-radius:6px;font-family:'Space Grotesk',-apple-system,'Apple SD Gothic Neo',sans-serif}
+.badge{display:inline-block;font-size:10.5px;padding:1.5px 7px;border-radius:6px;font-family:'Pretendard Variable',-apple-system,'Apple SD Gothic Neo',sans-serif}
 .b-res{background:rgba(18,184,134,.14);color:#0ca678}
 .b-off{background:rgba(76,110,245,.13);color:#4c6ef5}
 .b-ret{background:rgba(245,159,0,.15);color:#e8890c}
@@ -155,7 +157,7 @@ tr.me td:first-child::after{content:'본건';font-size:9.5px;color:#0ca678;borde
 .dhead .kind{font-size:11.5px;color:var(--text-2)}
 .dchips{display:flex;flex-wrap:wrap;gap:6px;margin:9px 0 13px}
 .dchip{font-size:11.5px;border:1px solid var(--line);background:var(--surface2);border-radius:7px;padding:3px 9px;color:var(--text-2)}
-.dchip b{color:var(--text);font:600 12px 'Space Grotesk',sans-serif;font-variant-numeric:tabular-nums}
+.dchip b{color:var(--text);font:600 12px 'Pretendard Variable',sans-serif;font-variant-numeric:tabular-nums}
 .dchip.warn{color:var(--bad);border-color:var(--bad)}
 .dchip.warn b{color:var(--bad)}
 .planbox{background:#fcfbf8;border:1px solid var(--line);border-radius:10px;padding:8px;cursor:zoom-in;position:relative;margin-top:14px}
