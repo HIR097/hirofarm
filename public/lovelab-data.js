@@ -4,7 +4,7 @@
  * snapshots = 날짜별 팔로워 수 (매일 갱신, 2026-08-01부터)
  */
 window.LOVELAB_DATA = {
-  updated: "2026-08-10",
+  updated: "2026-08-11",
   shows: {
     lovelab: { label: "연애실험실", short: "연실" },
     noona:   { label: "누난 내게 여자야 2", short: "누난2" },
@@ -13,7 +13,7 @@ window.LOVELAB_DATA = {
     { handle: "1997.0127",   name: "정하윤", show: "lovelab", me: true,  initial: 0,     approx: false, note: "하트 왕게임 · 2026-08-02 등록 시점 비공개/팔로워 0에서 시작" },
     { handle: "__3.e7",      name: "강경호", show: "lovelab", initial: 56000, approx: true  },
     { handle: "0616gy",      name: "박가연", show: "lovelab", initial: 20000, approx: true  },
-    { handle: "da_l_in",     name: "문채린", show: "lovelab", initial: 8731,  approx: false, note: "web_profile_info API가 400을 반환해 프로필 페이지 표기값으로 수동 수집 — 자동 수집분에는 빠질 수 있음" },
+    { handle: "da_l_in",     name: "문채린", show: "lovelab", initial: 8731,  approx: false, note: "web_profile_info API가 400을 반환해 프로필 페이지 표기값으로 수동 수집 — 자동 수집분에는 빠질 수 있음. 2026-08-11 9,976명으로 1만이 임박했고, 1만을 넘으면 표기가 \"1만\"으로 축약돼 이 방법으로는 정확값을 못 얻는다(le.siwon 과 같은 상태가 됨)" },
     { handle: "xogunnnn",    name: "박도건", show: "lovelab", initial: 3994,  approx: false },
     { handle: "a_ct_p",      name: "박정민", show: "lovelab", initial: 7571,  approx: false },
     { handle: "yrimirey",    name: "이예림", show: "lovelab", initial: 7002,  approx: false },
@@ -91,6 +91,14 @@ window.LOVELAB_DATA = {
       "hatmda_": 22043, "_see_hyunny": 22126, "lahhyunjin": 21941, "junnnssi": 10282, "zzixyng": 8565,
       "_bellagenie": 13358, "joohee.yy": 17642, "_xx__hye": 45878, "dearmay___": 22029, "dr_jin0": 15060,
       "pairanisblue": 18658, "jung__won.k": 84813, "yoonso_.lee": 16477,
+    },
+    // 2026-08-09 결측 (수집 못 한 날)
+    "2026-08-11": {
+      "1997.0127": 0, "__3.e7": 61557, "0616gy": 22153, "da_l_in": 9976, "xogunnnn": 6733,
+      "a_ct_p": 8127, "yrimirey": 12434, "ellleybear": 10956, "ccmparc": 42907, "__kimmyungju": 36927,
+      "kj_woo0": 448, "hatmda_": 22076, "_see_hyunny": 22215, "lahhyunjin": 22032, "junnnssi": 10326,
+      "zzixyng": 8579, "_bellagenie": 13528, "joohee.yy": 17800, "_xx__hye": 46010, "dearmay___": 21939,
+      "dr_jin0": 15224, "pairanisblue": 18837, "jung__won.k": 84880, "yoonso_.lee": 16513,
     },
   },
 };
