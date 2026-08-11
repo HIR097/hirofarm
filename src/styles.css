@@ -6,6 +6,13 @@ body {
   margin: 0;
   padding: 0;
 }
+/* 앱 루트(App.jsx)에도 지정하지만, 루트 밖으로 렌더되는 요소까지 덮도록 body 에 한 번 더 건다 */
+body {
+  font-family: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont,
+    'Apple SD Gothic Neo', 'Malgun Gothic', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 #root {
   height: 100vh;
   /* 모바일 브라우저 주소창 때문에 100vh가 잘려서 dvh 우선 */
