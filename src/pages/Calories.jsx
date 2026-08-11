@@ -14,7 +14,18 @@ const SYNC_KEY = 'calories'
 
 const pad = (n) => String(n).padStart(2, '0')
 const dayKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-const num = (v) => (v || 0).toLocaleString('ko-KR')
+// 수량이 소수(1.2인분 등)가 되면 kcal·단백질에 소수점이 붙으므로 표시 단계에서 정수로 맞춘다.
+const num = (v) => Math.round(v || 0).toLocaleString('ko-KR')
+
+// ── 수량(인분) ── 0.1 단위까지 허용한다. 0.1+0.2 같은 부동소수 오차를 막으려고 소수 둘째 자리에서 끊는다.
+const QTY_MIN = 0.1
+const QTY_MAX = 99
+const roundQty = (v) => Math.min(QTY_MAX, Math.max(QTY_MIN, Math.round(v * 100) / 100))
+const fmtQty = (v) => String(Math.round(v * 100) / 100) // 1 → "1", 1.2 → "1.2"
+const parseQty = (s) => {
+  const n = Number(String(s).trim())
+  return Number.isFinite(n) && n > 0 ? roundQty(n) : null
+}
 const newer = (a, b) => !b || Date.parse(a) > Date.parse(b)
 const clock = (iso) => {
   try {
@@ -67,6 +78,55 @@ const field = {
 
 const EMPTY_LOG = {}
 const EMPTY_FOODS = []
+
+/** 수량 입력칸. 평소엔 글자처럼 보이다가 누르면 입력칸이 되고, 1.2 같은 소수를 직접 칠 수 있다. */
+function QtyBox({ value, onCommit }) {
+  const [draft, setDraft] = useState(null) // null이면 표시 모드(부모 값 사용)
+  const [focus, setFocus] = useState(false)
+  const commit = () => {
+    const next = parseQty(draft)
+    setDraft(null)
+    setFocus(false)
+    if (next != null && next !== value) onCommit(next)
+  }
+  return (
+    <input
+      value={draft ?? fmtQty(value)}
+      inputMode="decimal"
+      aria-label="수량"
+      title="직접 입력할 수 있습니다 (예: 1.2)"
+      onFocus={(e) => {
+        setDraft(fmtQty(value))
+        setFocus(true)
+        e.target.select()
+      }}
+      onChange={(e) => setDraft(e.target.value.replace(/[^\d.]/g, '').slice(0, 5))}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault()
+          e.currentTarget.blur()
+        } else if (e.key === 'Escape') {
+          setDraft(null)
+          setFocus(false)
+          e.currentTarget.blur()
+        }
+      }}
+      style={{
+        font: mono,
+        width: 44,
+        textAlign: 'center',
+        color: 'var(--text-2)',
+        background: focus ? 'var(--surface2)' : 'transparent',
+        border: `1px solid ${focus ? 'var(--line)' : 'transparent'}`,
+        borderRadius: 7,
+        padding: '5px 2px',
+        outline: 'none',
+        cursor: 'text',
+      }}
+    />
+  )
+}
 
 export default function Calories() {
   const today = dayKey(new Date())
@@ -179,7 +239,7 @@ export default function Calories() {
     const at = prev.findIndex((it) => it.name === food.n && it.kcal === food.k)
     const next =
       at >= 0
-        ? prev.map((it, i) => (i === at ? { ...it, qty: it.qty + 1 } : it))
+        ? prev.map((it, i) => (i === at ? { ...it, qty: roundQty(it.qty + 1) } : it))
         : [
             ...prev,
             {
@@ -221,7 +281,8 @@ export default function Calories() {
     saveLog(copy)
   }
   const setQty = (id, delta) =>
-    updateToday(items.map((it) => (it.id === id ? { ...it, qty: Math.max(1, it.qty + delta) } : it)))
+    updateToday(items.map((it) => (it.id === id ? { ...it, qty: roundQty(it.qty + delta) } : it)))
+  const setQtyTo = (id, qty) => updateToday(items.map((it) => (it.id === id ? { ...it, qty } : it)))
   const removeItem = (id) => updateToday(items.filter((it) => it.id !== id))
 
   const onKeyDown = (e) => {
@@ -426,12 +487,18 @@ export default function Calories() {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 3, flex: 'none' }}>
-                  <button onClick={() => setQty(it.id, -1)} disabled={it.qty <= 1} style={{ ...btn, padding: '6px 9px', opacity: it.qty <= 1 ? 0.4 : 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 1, flex: 'none' }}>
+                  <button
+                    onClick={() => setQty(it.id, -0.5)}
+                    disabled={it.qty <= QTY_MIN}
+                    title="0.5 줄이기"
+                    style={{ ...btn, padding: '6px 9px', opacity: it.qty <= QTY_MIN ? 0.4 : 1 }}
+                  >
                     −
                   </button>
-                  <span style={{ font: mono, width: 26, textAlign: 'center', color: 'var(--text-2)' }}>×{it.qty}</span>
-                  <button onClick={() => setQty(it.id, 1)} style={{ ...btn, padding: '6px 9px' }}>
+                  <span style={{ font: mono, color: 'var(--text-3)', paddingLeft: 3 }}>×</span>
+                  <QtyBox value={it.qty} onCommit={(q) => setQtyTo(it.id, q)} />
+                  <button onClick={() => setQty(it.id, 0.5)} title="0.5 늘리기" style={{ ...btn, padding: '6px 9px' }}>
                     +
                   </button>
                 </div>
