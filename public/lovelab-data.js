@@ -4,7 +4,7 @@
  * snapshots = 날짜별 팔로워 수 (매일 갱신, 2026-08-01부터)
  */
 window.LOVELAB_DATA = {
-  updated: "2026-08-11",
+  updated: "2026-08-13",
   shows: {
     lovelab: { label: "연애실험실", short: "연실" },
     noona:   { label: "누난 내게 여자야 2", short: "누난2" },
@@ -13,7 +13,7 @@ window.LOVELAB_DATA = {
     { handle: "1997.0127",   name: "정하윤", show: "lovelab", me: true,  initial: 0,     approx: false, note: "하트 왕게임 · 2026-08-02 등록 시점 비공개/팔로워 0에서 시작" },
     { handle: "__3.e7",      name: "강경호", show: "lovelab", initial: 56000, approx: true  },
     { handle: "0616gy",      name: "박가연", show: "lovelab", initial: 20000, approx: true  },
-    { handle: "da_l_in",     name: "문채린", show: "lovelab", initial: 8731,  approx: false, note: "web_profile_info API가 400을 반환해 프로필 페이지 표기값으로 수동 수집 — 자동 수집분에는 빠질 수 있음. 2026-08-11 9,976명으로 1만이 임박했고, 1만을 넘으면 표기가 \"1만\"으로 축약돼 이 방법으로는 정확값을 못 얻는다(le.siwon 과 같은 상태가 됨)" },
+    { handle: "da_l_in",     name: "문채린", show: "lovelab", initial: 8731,  approx: false, note: "API가 400을 반환해 프로필 표기값으로 수동 수집해 왔으나, 2026-08-13 1만을 넘어 표기가 \"1만\"으로 축약되면서 정확값 수집이 불가능해졌다. 마지막 정확값 2026-08-11 9,976명 (le.siwon 과 같은 상태). 목록에는 남겨 두어 과거 추이는 계속 보이고, 수집 방법이 생기면 이어붙일 수 있다" },
     { handle: "xogunnnn",    name: "박도건", show: "lovelab", initial: 3994,  approx: false },
     { handle: "a_ct_p",      name: "박정민", show: "lovelab", initial: 7571,  approx: false },
     { handle: "yrimirey",    name: "이예림", show: "lovelab", initial: 7002,  approx: false },
@@ -30,7 +30,7 @@ window.LOVELAB_DATA = {
     { handle: "zzixyng",     name: "변지영", show: "lovelab", initial: 8107,  approx: false, note: "고립 연애 · 기준선 2026-08-01" },
     { handle: "_bellagenie", name: "최유진", show: "noona",   initial: 2996,  approx: false },
     { handle: "joohee.yy",   name: "유주희", show: "noona",   initial: 4766,  approx: false },
-    { handle: "_xx__hye",    name: "지혜",   show: "noona",   initial: 32000, approx: true  },
+    { handle: "_xx__hye",    name: "지혜",   show: "noona",   initial: 32000, approx: true, note: "2026-08-13부터 web_profile_info API가 400을 반환하고 프로필 표기도 \"4.6만\"으로 축약돼 정확값을 못 얻는다. 마지막 정확값 2026-08-11 46,010명. 일시적일 수 있어 목록에 남겨 두고 매번 재시도한다" },
     { handle: "dearmay___",  name: "레이첼 구", show: "noona", initial: 9134, approx: false },
     { handle: "dr_jin0",     name: "이진영", show: "noona",   initial: 1936,  approx: false },
     { handle: "pairanisblue",name: "유진우", show: "noona",   initial: 4362,  approx: false },
@@ -99,6 +99,15 @@ window.LOVELAB_DATA = {
       "kj_woo0": 448, "hatmda_": 22076, "_see_hyunny": 22215, "lahhyunjin": 22032, "junnnssi": 10326,
       "zzixyng": 8579, "_bellagenie": 13528, "joohee.yy": 17800, "_xx__hye": 46010, "dearmay___": 21939,
       "dr_jin0": 15224, "pairanisblue": 18837, "jung__won.k": 84880, "yoonso_.lee": 16513,
+    },
+    // 2026-08-12 결측.
+    // 이날부터 da_l_in(1만 돌파)·_xx__hye(API 400 시작) 두 계정은 정확값을 얻을 수 없어 빠졌다.
+    "2026-08-13": {
+      "1997.0127": 1, "__3.e7": 61913, "0616gy": 22920, "xogunnnn": 7313, "a_ct_p": 8218,
+      "yrimirey": 14786, "ellleybear": 10955, "ccmparc": 43509, "__kimmyungju": 37811, "kj_woo0": 457,
+      "hatmda_": 22450, "_see_hyunny": 22401, "lahhyunjin": 22287, "junnnssi": 10495, "zzixyng": 8972,
+      "_bellagenie": 13860, "joohee.yy": 18128, "dearmay___": 21812, "dr_jin0": 15558,
+      "pairanisblue": 19196, "jung__won.k": 85002, "yoonso_.lee": 17736,
     },
   },
 };
