@@ -4,7 +4,7 @@
  * snapshots = 날짜별 팔로워 수 (매일 갱신, 2026-08-01부터)
  */
 window.LOVELAB_DATA = {
-  updated: "2026-08-14",
+  updated: "2026-08-16",
   shows: {
     lovelab: { label: "연애실험실", short: "연실" },
     noona:   { label: "누난 내게 여자야 2", short: "누난2" },
@@ -38,7 +38,7 @@ window.LOVELAB_DATA = {
     { handle: "yoonso_.lee", name: "이윤소", show: "noona",   initial: 2238,  approx: false, note: "이후 별도 캡처 시점 약 1.3만" },
     // 자동 수집 불가로 제외 (2026-08-02 ~):
     //   le.siwon 이시원 (누난2) — initial 3123, 마지막 정확 수집 2026-08-02 15198
-    //   2026-08-06 프로필 표기는 "1.6만"으로 축약되어 정확값을 얻지 못해 계속 제외한다.
+    //   프로필 표기가 축약값뿐이라 계속 제외한다 (2026-08-06 "1.6만" → 2026-08-16 "19K").
     // 인스타 web_profile_info API가 da_l_in / le.siwon 두 계정에만 400을 반환한다
     // (Asset asset://laser.provider/ig_business_category_subvertical — 계정 설정 이슈, 로그인 세션에서도 동일).
     // da_l_in 은 팔로워가 1만 미만이라 프로필 og:description 에 정확값이 그대로 노출돼 2026-08-06 복구했다.
@@ -115,6 +115,14 @@ window.LOVELAB_DATA = {
       "hatmda_": 22721, "_see_hyunny": 22490, "lahhyunjin": 22377, "junnnssi": 10555, "zzixyng": 8982,
       "_bellagenie": 13906, "joohee.yy": 18192, "dearmay___": 21774, "dr_jin0": 15622, "pairanisblue": 19272,
       "jung__won.k": 85066, "yoonso_.lee": 17694,
+    },
+    // 2026-08-15 결측.
+    "2026-08-16": {
+      "1997.0127": 4, "__3.e7": 62432, "0616gy": 23151, "xogunnnn": 7740, "a_ct_p": 8316,
+      "yrimirey": 16453, "ellleybear": 11392, "ccmparc": 44259, "__kimmyungju": 38871, "kj_woo0": 472,
+      "hatmda_": 22948, "_see_hyunny": 22809, "lahhyunjin": 22713, "junnnssi": 10722, "zzixyng": 9046,
+      "_bellagenie": 13976, "joohee.yy": 18370, "dearmay___": 21711, "dr_jin0": 15832, "pairanisblue": 19491,
+      "jung__won.k": 85193, "yoonso_.lee": 17699,
     },
   },
 };
