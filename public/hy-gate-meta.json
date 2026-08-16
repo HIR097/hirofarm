@@ -2,7 +2,7 @@
   "v": 1,
   "kdf": "PBKDF2-SHA256",
   "iters": 4000000,
-  "salt": "oBQDKoIw5lF2g2mAxLTb/w==",
-  "wrapped": "FSSknF7oZE6gji24MrGB/7YM3YgIe08ELorU0UUV9fDhSqGsm8tGYRvABu0x1nh2D7g/HCBpeJEGvLF0",
+  "salt": "AggnHpMwQ+rmbeUy2JUT0Q==",
+  "wrapped": "LExFSKldm2OkzVMfsCRQOoBnYyYDX/yk8kamj87Yey81Zb6v5ETKgoJM62XFZlRZEVHR8cYE2zu0BeT9",
   "pinLength": 6
 }
