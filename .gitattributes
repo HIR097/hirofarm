@@ -1,0 +1,6 @@
+# 암호문은 이진 데이터다. 줄바꿈 변환(CRLF↔LF)이 한 번이라도 걸리면
+# 복호화가 통째로 깨지므로 반드시 binary 로 못박는다.
+*.enc binary
+
+# 공개 파라미터는 텍스트지만 base64 라 diff 가 의미 없다
+public/hy-gate-meta.json -diff

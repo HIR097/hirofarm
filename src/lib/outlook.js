@@ -29,15 +29,13 @@ function getToken() {
   }
 }
 
-// 펀드 추정용 키워드. 메일 제목/본문에서 매칭되는 첫 펀드로 분류한다.
-const FUND_HINTS = [
-  { key: 'vplex', words: ['v-plex', 'vplex', '브이플렉스', '125호'] },
-  { key: 'garo', words: ['가로골목', '149호', '플래그쉽'] },
-  { key: 'gasan', words: ['가산', 'idc', '지엘가산', '156호'] },
-  { key: 'cj', words: ['cj', '제일제당', '372호', '대한통운'] },
-  { key: 'ai', words: ['코어1호', '인컴앤그로스', 'mmda', '투자자협의회'] },
-  { key: '416', words: ['마이아트', '416호'] },
-]
+// 펀드 추정용 키워드와 데모 메일은 자산·거래처·담당자 실명이 드러나므로
+// 코드에 두지 않고 secure/outlook.js 에서 암호화해 들여온다 (worklog 와 같은 방식).
+const OUTLOOK_DATA =
+  (typeof window !== 'undefined' && window.__HY_DATA__?.outlook) || { hints: [], demo: [] }
+
+// 매칭되는 첫 펀드로 분류한다.
+const FUND_HINTS = OUTLOOK_DATA.hints
 
 export function guessFund(text = '') {
   const low = text.toLowerCase()
@@ -58,49 +56,8 @@ function guessUrgent(text = '') {
   return URGENT_WORDS.some((w) => low.includes(w))
 }
 
-// 데모 메일 — 실제 펀드와 연관된 그럴듯한 항목.
-const DEMO = [
-  {
-    id: 'demo-1',
-    from: '키움증권 신윤미 과장',
-    subject: '[키움] CJ제일제당센터 담보대출 대주 SPC 유동화비용 청구 공문',
-    preview: '공문 모아 회신드립니다. 해당 금액으로 유동화비용 지급 부탁드립니다.',
-    received: '2026-06-23T09:12:00',
-    suggestDue: '6/26',
-  },
-  {
-    id: 'demo-2',
-    from: 'Deloitte 회계',
-    subject: 'RE: 브이플렉스 매각자문 용역계약서_260522 검토 요청',
-    preview: '용범과장님 검토 의견 반영본 첨부드립니다. 날인 진행 부탁드립니다.',
-    received: '2026-06-23T08:40:00',
-    suggestDue: '',
-  },
-  {
-    id: 'demo-3',
-    from: '하나자산신탁',
-    subject: '[이지스156호] 34기 예상정산금액 안내 - 분배금 지급 협조',
-    preview: '25일 펀드 결산 후 분배금 확정 예정. 26일 당일 오전 자금처리 협조 요청드립니다.',
-    received: '2026-06-23T08:05:00',
-    suggestDue: '분배금 6/26 · 자금집행 24일',
-  },
-  {
-    id: 'demo-4',
-    from: '신탁회계팀',
-    subject: 'RE: [신탁회계] 국내주식/대여/채권 공정가치평가 (가로골목 청산)',
-    preview: '평가 내역 리뷰 부탁드립니다. 이대로 진행 가능한지 확인 회신 주세요.',
-    received: '2026-06-22T17:30:00',
-    suggestDue: '',
-  },
-  {
-    id: 'demo-5',
-    from: '운용지원',
-    subject: '[코어1호·인컴앤그로스2호] 투자자협의회 개최 일정 안내',
-    preview: '운용전담인력 교체 및 신탁계약 변경 건. 수익자 회신 대기중입니다.',
-    received: '2026-06-22T15:10:00',
-    suggestDue: '',
-  },
-]
+// 데모 메일 — 연동 전 미리보기용. 실제 거래처·담당자가 들어 있어 암호화해 둔다.
+const DEMO = OUTLOOK_DATA.demo
 
 // 메일 1건 → 업무 제안 객체로 가공.
 function enrich(mail) {

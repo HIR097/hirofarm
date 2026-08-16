@@ -20,7 +20,9 @@ export default function FundSchedule() {
     <div style={{ ...fade }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, margin: '4px 0 16px' }}>
         <div style={{ font: "600 11px 'JetBrains Mono'", letterSpacing: '.1em', color: 'var(--text-3)' }}>
-          이지스자산운용 · Monthly Routine Schedule
+          {/* 운용사명도 암호화 대상이라 secure/labels.js 에서 가져온다 */}
+          {(typeof window !== 'undefined' && window.__HY_DATA__?.labels?.fundOwner) || ''} · Monthly
+          Routine Schedule
         </div>
         {/* 범례 */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>

@@ -46,6 +46,67 @@ src/
   컴포넌트는 `var(--token)`만 참조하므로 테마/컬러 변경이 즉시 반영됩니다.
 - 폰트: 본문 **Space Grotesk**, 숫자·라벨 **JetBrains Mono** (index.html에서 로드).
 
+## 🔒 잠금 (PIN + 콘텐츠 암호화)
+
+사이트는 6자리 PIN 으로 잠겨 있습니다. **PIN 화면은 입구일 뿐이고, 실제 보호는 콘텐츠 암호화가
+담당합니다** — 잠금 화면을 우회해도 키가 없으면 데이터는 암호문 그대로입니다.
+
+```
+PIN ──PBKDF2(400만회)──> KEK ──복호──> CEK ──AES-256-GCM 복호──> 실제 데이터
+```
+
+CEK(콘텐츠 암호화 키)를 따로 두기 때문에 **PIN 을 바꿔도 콘텐츠를 다시 암호화할 필요가 없습니다.**
+
+### 파일 배치
+
+| 위치 | 내용 | 저장소 |
+|---|---|---|
+| `secure/` | 평문 원본 | ❌ gitignore |
+| `public/enc/*.enc` | 암호문 | ✅ 커밋 |
+| `public/hy-gate-meta.json` | salt·반복횟수·감싼 CEK (비밀 아님) | ✅ 커밋 |
+| `.hy-key.json` | CEK 로컬 캐시 | ❌ gitignore |
+
+보호 대상: `worklog.js`(업무현황) · `fundSchedule.js`(펀드 연간일정) ·
+`seoknam-tf-data.js`(TF 메일 319건) · `lovelab-data.js`(팔로워) · `mangrove-plans/*.png`(도면)
+
+### 일상 작업
+
+데이터를 고칠 때는 **`secure/` 안의 평문을 고치고 잠그면** 됩니다.
+
+```bash
+py -3 tools/hylock.py lock      # secure/ → public/enc/  (맥은 python3)
+py -3 tools/hylock.py status    # 평문/암호문 동기화 상태 점검
+git add -A && git commit && git push
+```
+
+`lock` 을 빼먹으면 배포본에 반영되지 않습니다. `status` 로 확인하세요.
+
+### 새 PC 에서 처음 받을 때
+
+`secure/` 는 저장소에 없으므로 한 번 풀어줘야 합니다.
+
+```bash
+py -3 -m pip install cryptography
+py -3 tools/hylock.py unlock --pin <PIN>   # public/enc/ → secure/ 복원
+```
+
+### PIN 바꾸기
+
+```bash
+py -3 tools/hylock.py setpin --new <새 PIN>
+git add public/hy-gate-meta.json && git commit && git push
+```
+
+콘텐츠 재암호화 없이 즉시 적용됩니다. salt 도 같이 새로 뽑습니다.
+
+### 한계 (알고 쓰세요)
+
+- **6자리는 경우의 수가 10⁶ 뿐입니다.** 암호문을 통째로 내려받아 오프라인에서 전부 대입해보는
+  공격은 원리상 막을 수 없고, PBKDF2 400만 회로 늦추기만 합니다. 자릿수를 늘리는 편이
+  반복 횟수를 올리는 것보다 훨씬 효과가 큽니다 (`tools/hylock.py` 의 `PIN_LENGTH`).
+- **"30일 기억" 은 CEK 를 localStorage 에 둡니다.** 기기를 이미 손에 넣은 상대는 막지 못합니다.
+- 화면의 실패 5회 잠금은 손으로 찍어보는 것만 늦춥니다.
+
 ## 데이터 / 추후 작업
 
 - `src/data.js`의 모든 값은 디자인 핸드오프의 **하드코딩 샘플**입니다.

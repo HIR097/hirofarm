@@ -1,6 +1,7 @@
 import { ACCENTS } from '../theme.js'
 import { IconSun } from './icons.jsx'
 import { MENU_ITEMS } from './Sidebar.jsx'
+import { lockNow } from '../lib/gate.js'
 
 // on/off 토글 스위치
 function Toggle({ on, onClick }) {
@@ -70,7 +71,7 @@ export default function SettingsModal({ accent, onPickAccent, onToggleTheme, hid
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
           <div>
             <div style={{ fontSize: 19, fontWeight: 700, letterSpacing: '-.01em' }}>설정</div>
-            <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 2 }}>테마 · 메뉴 표시 · 포인트 컬러</div>
+            <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 2 }}>테마 · 메뉴 표시 · 포인트 컬러 · 잠금</div>
           </div>
           <button
             onClick={onClose}
@@ -188,6 +189,52 @@ export default function SettingsModal({ accent, onPickAccent, onToggleTheme, hid
               </button>
             )
           })}
+        </div>
+
+        <div
+          style={{
+            font: "600 11px 'JetBrains Mono'",
+            letterSpacing: '.08em',
+            color: 'var(--text-3)',
+            margin: '24px 0 11px',
+          }}
+        >
+          잠금
+        </div>
+        <button
+          onClick={lockNow}
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            padding: 13,
+            borderRadius: 14,
+            cursor: 'pointer',
+            border: '1px solid var(--line)',
+            background: 'var(--surface2)',
+            font: "500 13px 'Pretendard Variable'",
+            color: 'var(--text)',
+          }}
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <rect x="4" y="10.5" width="16" height="10.5" rx="2.5" />
+            <path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" />
+          </svg>
+          지금 잠그기
+        </button>
+        <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 8, lineHeight: 1.6 }}>
+          저장된 키를 지우고 PIN 화면으로 돌아갑니다. 평소에는 한 번 입력하면 30일간 유지됩니다.
         </div>
       </div>
     </div>

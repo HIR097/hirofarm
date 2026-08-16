@@ -9,3 +9,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .vite
+
+# ── 잠금 ──────────────────────────────────────────────────────
+# 보호 콘텐츠의 평문. 저장소에는 public/enc/*.enc (암호문) 만 올라간다.
+# 다른 PC 에서는 `npm run unlock` 으로 복원한다.
+secure/
+# CEK 로컬 캐시. 있으면 lock/unlock 에 PIN 을 매번 넣지 않아도 된다.
+.hy-key.json

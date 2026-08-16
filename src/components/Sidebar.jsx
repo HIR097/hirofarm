@@ -50,6 +50,11 @@ function IconNetwork() {
   )
 }
 
+// 프로젝트 이름은 어떤 건을 다루는지 그대로 드러내므로(어느 물류센터 화재 대응인지 등)
+// 라벨·태그를 코드에 두지 않고 secure/labels.js 에서 암호화해 들여온다.
+const PROJ = (typeof window !== 'undefined' && window.__HY_DATA__?.labels?.menu) || {}
+const proj = (key) => ({ label: PROJ[key]?.label || '프로젝트', tag: PROJ[key]?.tag || '' })
+
 // type: 'page' → 탭 전환, 'project' → 오버레이(iframe)로 바로 열린다
 export const MENU_ITEMS = [
   { key: 'home', label: '메인', Icon: IconHome, type: 'page' },
@@ -58,10 +63,10 @@ export const MENU_ITEMS = [
   { key: 'calendar', label: '달력', Icon: IconCalendar, type: 'page' },
   { key: 'calorie', label: '칼로리', Icon: IconFlame, type: 'page' },
   { key: 'scratch', label: '낙서장', Icon: IconNote, type: 'page' },
-  { key: 'mangrove', label: '맹그로브 신촌', Icon: IconStack, type: 'project', href: '/mangrove-building.html', tag: 'CONFIDENTIAL · 내부용' },
-  { key: 'lovelab', label: '팔로워 트래커', Icon: IconPulse, type: 'project', href: '/lovelab-followers.html', tag: '연애실험실 · 인스타' },
-  { key: 'seoknam-ms', label: '인천석남쿠팡물류 마일스톤', Icon: IconGantt, type: 'project', href: '/seoknam-milestone.html', tag: '화재대응 TF · 내부용' },
-  { key: 'seoknam-comms', label: '인천석남쿠팡물류 의사소통 현황', Icon: IconNetwork, type: 'project', href: '/seoknam-comms.html', tag: '화재대응 TF · 메일맵' },
+  { key: 'mangrove', ...proj('mangrove'), Icon: IconStack, type: 'project', href: '/mangrove-building.html' },
+  { key: 'lovelab', ...proj('lovelab'), Icon: IconPulse, type: 'project', href: '/lovelab-followers.html' },
+  { key: 'seoknam-ms', ...proj('seoknam-ms'), Icon: IconGantt, type: 'project', href: '/seoknam-milestone.html' },
+  { key: 'seoknam-comms', ...proj('seoknam-comms'), Icon: IconNetwork, type: 'project', href: '/seoknam-comms.html' },
 ]
 
 const RAIL = 64

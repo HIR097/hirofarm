@@ -12,6 +12,21 @@
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
+    <!-- 잠금 화면이 그려지기 전 흰 화면이 번쩍이지 않도록 배경을 미리 깔아둔다 -->
+    <style>
+      html,
+      body {
+        background: #f4f4f6;
+      }
+      @media (prefers-color-scheme: dark) {
+        html,
+        body {
+          background: #131315;
+        }
+      }
+    </style>
+    <!-- 잠금 해제·복호화 유틸. 앱 번들보다 먼저 올라와야 한다 -->
+    <script src="/hy-crypto.js?v=2"></script>
   </head>
   <body>
     <div id="root"></div>
