@@ -201,10 +201,26 @@ def cmd_lock():
 
     print("\n잠그는 중…")
     total = 0
+    same = 0
     for rel in files:
         with open(os.path.join(SECURE, rel), "rb") as f:
             plain = f.read()
-        write_file(os.path.join(ENC, rel + ".enc"), encrypt(cek, plain))
+
+        # GCM 은 매번 새 IV 를 쓰므로 같은 내용이라도 암호문이 달라진다.
+        # 그대로 두면 한 줄만 고쳐도 33개 파일이 전부 "변경" 으로 잡혀
+        # 커밋마다 1.6MB 씩 쌓인다. 그래서 기존 암호문을 풀어 보고
+        # 내용이 같으면 건너뛴다. (복호화는 파일당 수 ms 라 비용은 무시할 만하다)
+        target = os.path.join(ENC, rel + ".enc")
+        if os.path.exists(target):
+            try:
+                with open(target, "rb") as f:
+                    if decrypt(cek, f.read()) == plain:
+                        same += 1
+                        continue
+            except Exception:
+                pass  # 손상됐거나 옛 키로 만든 것 → 새로 쓴다
+
+        write_file(target, encrypt(cek, plain))
         total += len(plain)
         ok(f"{rel}  →  enc/{rel}.enc  ({len(plain)/1024:.1f}KB)")
 
@@ -217,7 +233,13 @@ def cmd_lock():
             ok("삭제(원본 없음): enc/" + rel)
             stale += 1
 
-    print(f"\n✓ {len(files)}개 파일 암호화 ({total/1024:.0f}KB)" + (f" · 정리 {stale}개" if stale else "") + "\n")
+    changed = len(files) - same
+    print(
+        f"\n✓ {changed}개 새로 암호화 ({total/1024:.0f}KB)"
+        + (f" · {same}개는 내용 그대로라 건너뜀" if same else "")
+        + (f" · 정리 {stale}개" if stale else "")
+        + "\n"
+    )
 
 
 def cmd_unlock():
