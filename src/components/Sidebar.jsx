@@ -65,6 +65,7 @@ export const MENU_ITEMS = [
   { key: 'seoknam-ms', ...proj('seoknam-ms'), Icon: IconGantt, type: 'project', href: '/seoknam-milestone.html' },
   { key: 'seoknam-comms', ...proj('seoknam-comms'), Icon: IconNetwork, type: 'project', href: '/seoknam-comms.html' },
   { key: 'cbt', ...proj('cbt'), Icon: IconNote, type: 'project', href: '/cbt.html' },
+  { key: 'plan', ...proj('plan'), Icon: IconSchedule, type: 'project', href: '/plan.html' },
 ]
 
 const RAIL = 64
