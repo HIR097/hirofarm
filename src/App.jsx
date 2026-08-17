@@ -2,19 +2,16 @@ import { useState } from 'react'
 import { buildCssVars } from './theme.js'
 import { useLocalStorage } from './hooks/useLocalStorage.js'
 import { useIsMobile } from './hooks/useIsMobile.js'
-import { useWorkStore } from './hooks/useWorkStore.js'
-import { useMailSuggestions } from './hooks/useMailSuggestions.js'
-import { PAGE_TITLES, INITIAL_TODOS } from './data.js'
+import { PAGE_TITLES } from './data.js'
 import Sidebar from './components/Sidebar.jsx'
 import Header from './components/Header.jsx'
 import SettingsModal from './components/SettingsModal.jsx'
-import NotifyPanel from './components/NotifyPanel.jsx'
-import Home from './pages/Home.jsx'
-import WorkStatus from './pages/WorkStatus.jsx'
-import FundSchedule from './pages/FundSchedule.jsx'
 import Calendar from './pages/Calendar.jsx'
 import Calories from './pages/Calories.jsx'
 import Scratchpad from './pages/Scratchpad.jsx'
+
+// 첫 화면. 예전엔 'home'(대시보드)이었으나 그 탭을 없애서 칼로리를 기본으로 둔다.
+const DEFAULT_TAB = 'calorie'
 
 export default function App() {
   // ── persisted UI state (mirrors hy_theme / hy_accent) ──
@@ -29,25 +26,17 @@ export default function App() {
     )
 
   // ── session state ──
-  const [tab, setTab] = useState('home')
-  const [homeVar, setHomeVar] = useState('A')
+  const [tab, setTab] = useState(DEFAULT_TAB)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false) // 모바일 사이드바
-  const [notifyOpen, setNotifyOpen] = useState(false)
-  const [todos, setTodos] = useState(INITIAL_TODOS)
 
   const isMobile = useIsMobile()
 
-  // 업무현황 저장소 + Outlook 메일 제안 (WorkStatus·NotifyPanel 공유)
-  const work = useWorkStore()
-  const mail = useMailSuggestions()
-
   const isDark = theme === 'dark'
   const toggleTheme = () => setTheme(isDark ? 'light' : 'dark')
-  const toggleTodo = (i) =>
-    setTodos((prev) => prev.map((t, j) => (j === i ? { ...t, done: !t.done } : t)))
 
-  const [title, sub] = PAGE_TITLES[tab]
+  // 삭제된 탭이 localStorage 등에 남아 있어도 빈 화면이 되지 않도록 보정
+  const [title, sub] = PAGE_TITLES[tab] || PAGE_TITLES[DEFAULT_TAB]
 
   return (
     <div
@@ -88,8 +77,6 @@ export default function App() {
           onToggleTheme={toggleTheme}
           mobile={isMobile}
           onOpenMenu={() => setDrawerOpen(true)}
-          notifyCount={mail.suggestions.length}
-          onToggleNotify={() => setNotifyOpen((o) => !o)}
         />
 
         <div
@@ -100,11 +87,6 @@ export default function App() {
             padding: isMobile ? '4px 14px 32px' : '6px 28px 36px',
           }}
         >
-          {tab === 'home' && (
-            <Home homeVar={homeVar} setHomeVar={setHomeVar} todos={todos} onToggle={toggleTodo} />
-          )}
-          {tab === 'status' && <WorkStatus work={work} />}
-          {tab === 'fund' && <FundSchedule />}
           {tab === 'calendar' && <Calendar />}
           {tab === 'calorie' && <Calories />}
           {tab === 'scratch' && <Scratchpad />}
@@ -121,14 +103,6 @@ export default function App() {
           onClose={() => setSettingsOpen(false)}
         />
       )}
-
-      <NotifyPanel
-        open={notifyOpen}
-        onClose={() => setNotifyOpen(false)}
-        assets={work.assets}
-        mail={mail}
-        onAdd={work.addTask}
-      />
     </div>
   )
 }

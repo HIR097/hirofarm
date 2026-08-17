@@ -6,22 +6,14 @@
 // source so swapping in a fetch layer touches nothing in the views.
 // ─────────────────────────────────────────────────────────────
 
+// 2026-08-17: 메인·업무현황·펀드 연간일정 탭 삭제.
+// 업무현황은 Outlook 메일 연동이 전제였는데 회사 보안 정책상 API 를 열 수 없어
+// 데모 데이터만 보여주는 화면이 되어 있었다. 메인도 그 위에 얹힌 대시보드였다.
 export const PAGE_TITLES = {
-  home: ['대시보드', '정하윤님의 하루를 한눈에'],
-  status: ['업무현황', '자산별 업무 · 일정 · 긴급 관리'],
-  fund: ['펀드 연간일정', '월별 반복 루틴 스케줄'],
-  calendar: ['달력', 'Outlook 연동 예정 · 일정 보기'],
+  calendar: ['달력', '월별 일정 보기'],
   calorie: ['칼로리', '당일 섭취량 기록 · 목표 대비 관리'],
   scratch: ['낙서장', '자유 메모'],
 }
-
-export const INITIAL_TODOS = [
-  { title: '분기 보고서 초안 작성', time: '10:00', tag: '업무', done: true },
-  { title: '디자인 리뷰 미팅', time: '13:30', tag: '업무', done: false },
-  { title: '하체 + 코어 루틴', time: '19:00', tag: '운동', done: false },
-  { title: '이메일 정리 / 회신', time: '16:00', tag: '업무', done: false },
-  { title: '저녁 스트레칭 15분', time: '22:00', tag: '운동', done: false },
-]
 
 export const HABITS = [
   { name: '운동', done: 5, goal: 7 },

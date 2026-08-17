@@ -29,12 +29,6 @@ jobs:
         run: npm install
       - name: Build
         run: npm run build
-        env:
-          # Outlook 실연동용 Azure 앱 클라이언트 ID/테넌트.
-          # GitHub → Settings → Secrets and variables → Actions → Variables 에 등록.
-          # (SPA 클라이언트 ID 는 공개값이라 secret 이 아닌 variable 로 충분)
-          VITE_MSAL_CLIENT_ID: ${{ vars.VITE_MSAL_CLIENT_ID }}
-          VITE_MSAL_TENANT: ${{ vars.VITE_MSAL_TENANT }}
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact

@@ -14,12 +14,9 @@ const REMEMBER_DAYS = 30
 
 // 잠금이 풀린 뒤 앱이 바로 쓸 수 있어야 하는 데이터들.
 // 여기 실린 파일은 window.__HY_DATA__ 에 값을 채우는 스크립트다.
-const BOOT_DATA = [
-  '/enc/labels.js.enc',
-  '/enc/worklog.js.enc',
-  '/enc/fundSchedule.js.enc',
-  '/enc/outlook.js.enc',
-]
+// worklog·outlook 은 업무현황 탭과 함께 2026-08-17 삭제됐다.
+// fundSchedule 은 탭은 없어졌지만 달력이 계속 쓰므로 남긴다.
+const BOOT_DATA = ['/enc/labels.js.enc', '/enc/fundSchedule.js.enc']
 
 const CSS = `
 .hygate{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;

@@ -57,9 +57,6 @@ const proj = (key) => ({ label: PROJ[key]?.label || '프로젝트', tag: PROJ[ke
 
 // type: 'page' → 탭 전환, 'project' → 오버레이(iframe)로 바로 열린다
 export const MENU_ITEMS = [
-  { key: 'home', label: '메인', Icon: IconHome, type: 'page' },
-  { key: 'status', label: '업무현황', Icon: IconStatus, type: 'page' },
-  { key: 'fund', label: '펀드 연간일정', Icon: IconSchedule, type: 'page' },
   { key: 'calendar', label: '달력', Icon: IconCalendar, type: 'page' },
   { key: 'calorie', label: '칼로리', Icon: IconFlame, type: 'page' },
   { key: 'scratch', label: '낙서장', Icon: IconNote, type: 'page' },
