@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """연애실험실 팔로워 트래커 — 오늘자 스냅샷 수집·기록.
 
-public/lovelab-data.js 의 cast 핸들을 읽어 인스타 공개 API로 팔로워 수를 가져오고,
+secure/lovelab-data.js 의 cast 핸들을 읽어 인스타 공개 API로 팔로워 수를 가져오고,
 snapshots 에 오늘 날짜 항목을 추가(이미 있으면 갱신)한다.
 
 사용:  python3 tools/lovelab_update.py          # 수집 + 파일 갱신
@@ -11,7 +11,7 @@ import json, re, subprocess, sys, time
 from datetime import date
 from pathlib import Path
 
-DATA = Path(__file__).resolve().parent.parent / "public" / "lovelab-data.js"
+DATA = Path(__file__).resolve().parent.parent / "secure" / "lovelab-data.js"
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
 
