@@ -199,6 +199,38 @@ def cmd_lock():
     if not files:
         die("secure/ 가 비어 있습니다.")
 
+    # ── 덮어쓰기 사고 방지 ───────────────────────────────────
+    # secure/ 는 gitignore 라 다른 PC 의 평문이 이쪽으로 넘어오지 않는다.
+    # git pull 로 최신 .enc 만 받아온 상태에서 오래된 평문을 그대로 lock 하면
+    # 남이 올린 내용을 조용히 날린다. (2026-08-21 에 실제로 날릴 뻔했다)
+    # pull 직후 .enc 의 mtime 이 평문보다 새로우므로 그걸로 잡아낸다.
+    stale = []
+    for rel in files:
+        target = os.path.join(ENC, rel + ".enc")
+        src = os.path.join(SECURE, rel)
+        if not os.path.exists(target):
+            continue
+        if os.path.getmtime(target) <= os.path.getmtime(src):
+            continue
+        try:
+            with open(target, "rb") as f:
+                enc_plain = decrypt(cek, f.read())
+            with open(src, "rb") as f:
+                if enc_plain != f.read():
+                    stale.append(rel)
+        except Exception:
+            pass
+    if stale and not has("force"):
+        print("\n⚠ 암호문이 내 평문보다 최신입니다 — 다른 PC 에서 올린 내용일 가능성이 높습니다.\n")
+        for r in stale:
+            ok("· " + r)
+        print(
+            "\n  그대로 잠그면 그쪽 작업이 사라집니다."
+            "\n  먼저  unlock --force  로 최신 평문을 받아온 뒤 다시 편집하세요."
+            "\n  (정말 내 평문이 맞다면 lock --force)\n"
+        )
+        sys.exit(1)
+
     print("\n잠그는 중…")
     total = 0
     same = 0
