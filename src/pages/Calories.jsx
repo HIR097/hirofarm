@@ -135,7 +135,7 @@ function MealGuide({ isMobile }) {
   if (!meals.length) return null
   return (
     <Card style={{ marginBottom: 14, padding: isMobile ? 16 : 22 }}>
-      <CardHead title="루틴 음식 10" caption={isMobile ? '누르면 요리법' : 'Low-FODMAP 클린벌크 · 누르면 요리법 · 검색창에서 이름으로 기록'} />
+      <CardHead title="루틴 음식" caption={isMobile ? '누르면 요리법' : '전부 조리 10분 이하 · 누르면 요리법 · 검색창에서 이름으로 기록'} />
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0 22px' }}>
         {meals.map((m, i) => {
           const open = openIdx === i
