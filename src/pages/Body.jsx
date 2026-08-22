@@ -326,13 +326,13 @@ export default function Body() {
   const split = entry.split || ''
   const lifts = entry.lifts || []
   const run = entry.run || EMPTY
+  const short = (it) => it.short || it.label.split(' ')[0]
   const gridItems = [
-    ...data.checklist.morning.filter((it) => !it.type).map((it) => ({ k: it.k, name: it.label.split(' ')[0], kind: 'check' })),
-    { k: 'posture', name: '자세', kind: 'check' },
+    ...data.checklist.morning.filter((it) => !it.type).map((it) => ({ k: it.k, name: short(it), kind: 'check' })),
+    ...data.checklist.posture.map((it) => ({ k: it.k, name: short(it), kind: 'check' })),
     { k: 'fodmap', name: 'FODMAP', kind: 'check' },
     { k: '_workout', name: '운동', kind: 'workout' },
-    { k: 'caffeine', name: '카페인', kind: 'check' },
-    { k: 'pill_pm', name: data.checklist.night[1].label.split(' ')[0], kind: 'check' },
+    ...data.checklist.night.filter((it) => !it.type).map((it) => ({ k: it.k, name: short(it), kind: 'check' })),
   ]
 
   return (
@@ -595,6 +595,13 @@ export default function Body() {
             {data.program.run.detail} — <span style={{ color: 'var(--text-3)' }}>{data.program.run.note}</span>
           </span>
         </div>
+        {data.program.avoid && (
+          <div style={{ marginTop: 12, background: RED_BG, borderRadius: 12, padding: '11px 14px' }}>
+            <div style={{ font: "600 11px 'JetBrains Mono'", color: RED, marginBottom: 5 }}>{data.program.avoid.title}</div>
+            <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 5 }}>{data.program.avoid.items.join(' · ')}</div>
+            <div style={{ fontSize: 11.5, color: 'var(--text-2)', lineHeight: 1.55 }}>{data.program.avoid.note}</div>
+          </div>
+        )}
       </Card>
 
       <div style={two}>
