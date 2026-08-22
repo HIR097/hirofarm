@@ -14,6 +14,8 @@ const KIND = {
   bonus: { label: '보너스', color: 'oklch(0.62 0.16 252)' },
   goal: { label: '목표', color: 'oklch(0.60 0.16 300)' },
   life: { label: '인생', color: 'oklch(0.70 0.16 56)' },
+  holiday: { label: '연휴', color: 'oklch(0.66 0.17 6)' },
+  trip: { label: '여행', color: 'oklch(0.70 0.13 195)' },
   check: { label: '점검', color: 'var(--text-3)' },
   work: { label: '업무', color: 'var(--text-3)' },
 }
@@ -43,6 +45,32 @@ function financeEvents(year, month) {
   return map
 }
 
+// 기간 일정(여행·연휴)을 이 달에 걸치는 날짜별로 펼친다.
+// 여러 날에 같은 항목이 반복되므로 첫날·마지막날을 표시해 띠처럼 보이게 한다.
+function rangeEvents(year, month) {
+  if (!FIN?.ranges) return {}
+  const map = {}
+  const first = `${year}-${String(month).padStart(2, '0')}-01`
+  const lastDay = new Date(year, month, 0).getDate()
+  const last = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+  for (const r of FIN.ranges) {
+    if (r.to < first || r.from > last) continue
+    const s = r.from < first ? 1 : Number(r.from.slice(8))
+    const e = r.to > last ? lastDay : Number(r.to.slice(8))
+    const total = (new Date(r.to) - new Date(r.from)) / 86400000 + 1
+    for (let d = s; d <= e; d++) {
+      const nth = (new Date(`${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`) - new Date(r.from)) / 86400000 + 1
+      ;(map[d] ||= []).push({
+        ...r, source: 'range', band: true,
+        head: d === s && r.from >= first,
+        tail: d === e && r.to <= last,
+        nth, total,
+      })
+    }
+  }
+  return map
+}
+
 export default function Calendar() {
   const today = useMemo(() => new Date(), [])
   const [cur, setCur] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1))
@@ -68,6 +96,7 @@ export default function Calendar() {
   }
 
   const finMap = useMemo(() => financeEvents(year, month), [year, month])
+  const rangeMap = useMemo(() => rangeEvents(year, month), [year, month])
   const workMap = useMemo(() => {
     if (!showWork) return {}
     const m = {}
@@ -77,7 +106,8 @@ export default function Calendar() {
     return m
   }, [month, showWork])
 
-  const dayEvents = (d) => [...(finMap[d] || []), ...(workMap[d] || [])]
+  // 기간 일정을 맨 위에 깔고 그 아래 점 일정을 얹는다
+  const dayEvents = (d) => [...(rangeMap[d] || []), ...(finMap[d] || []), ...(workMap[d] || [])]
 
   const firstWeekday = new Date(year, month - 1, 1).getDay()
   const daysInMonth = new Date(year, month, 0).getDate()
@@ -143,7 +173,7 @@ export default function Calendar() {
 
       {/* ── 범례 ── */}
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
-        {['pay', 'repay', 'bonus', 'goal', 'life'].map((k) => (
+        {['pay', 'repay', 'bonus', 'goal', 'holiday', 'trip', 'life'].map((k) => (
           <span key={k} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--text-2)' }}>
             <i style={{ width: 9, height: 9, borderRadius: 3, background: KIND[k].color, display: 'inline-block' }} />
             {KIND[k].label}
@@ -192,6 +222,26 @@ export default function Calendar() {
                       const color = ev.source === 'work'
                         ? SCHEDULE_CATEGORIES[ev.category]?.color || 'var(--text-3)'
                         : KIND[ev.kind]?.color || 'var(--text-3)'
+                      // 기간 일정은 좌우 모서리를 붙여 여러 날이 하나의 띠로 읽히게 한다
+                      if (ev.band) {
+                        return (
+                          <div
+                            key={j}
+                            title={`${ev.title} (${ev.nth}/${ev.total}일)`}
+                            style={{
+                              fontSize: 10, lineHeight: 1.3, fontWeight: 600,
+                              background: `color-mix(in srgb, ${color} 22%, var(--surface))`,
+                              color, padding: '2.5px 5px',
+                              marginLeft: ev.head ? 0 : -9, marginRight: ev.tail ? 0 : -9,
+                              borderRadius: `${ev.head ? 4 : 0}px ${ev.tail ? 4 : 0}px ${ev.tail ? 4 : 0}px ${ev.head ? 4 : 0}px`,
+                              overflow: 'hidden', textOverflow: 'clip', whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {/* 주가 바뀌어 띠가 잘리면 그 줄 첫 칸에 제목을 다시 적는다 */}
+                            {ev.head || i % 7 === 0 ? ev.title : ' '}
+                          </div>
+                        )
+                      }
                       return (
                         <div
                           key={j}
@@ -251,6 +301,11 @@ export default function Calendar() {
                     {ev.source === 'work' ? `업무 · ${ev.asset}` : KIND[ev.kind]?.label}
                   </span>
                   {ev.approx && <span style={{ fontSize: 10.5, color: 'var(--text-3)' }}>날짜 대략치</span>}
+                  {ev.band && (
+                    <span style={{ fontSize: 10.5, color: 'var(--text-3)' }}>
+                      {ev.from.slice(5).replace('-', '.')} ~ {ev.to.slice(5).replace('-', '.')} · {ev.total}일 중 {ev.nth}일째
+                    </span>
+                  )}
                   {ev.amt ? (
                     <span style={{ marginLeft: 'auto', fontSize: 13, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
                       {won(ev.amt)}원
