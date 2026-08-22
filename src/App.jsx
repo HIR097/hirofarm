@@ -8,6 +8,7 @@ import Header from './components/Header.jsx'
 import SettingsModal from './components/SettingsModal.jsx'
 import Calendar from './pages/Calendar.jsx'
 import Calories from './pages/Calories.jsx'
+import Body from './pages/Body.jsx'
 import Scratchpad from './pages/Scratchpad.jsx'
 
 // 첫 화면. 예전엔 'home'(대시보드)이었으나 그 탭을 없애서 칼로리를 기본으로 둔다.
@@ -89,6 +90,7 @@ export default function App() {
         >
           {tab === 'calendar' && <Calendar />}
           {tab === 'calorie' && <Calories />}
+          {tab === 'body' && <Body />}
           {tab === 'scratch' && <Scratchpad />}
         </div>
       </main>

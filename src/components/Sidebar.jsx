@@ -24,6 +24,18 @@ function IconChevron({ dir }) {
   )
 }
 
+function IconBody() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6.5 6.5v11" />
+      <path d="M17.5 6.5v11" />
+      <path d="M3 9v6" />
+      <path d="M21 9v6" />
+      <path d="M6.5 12h11" />
+    </svg>
+  )
+}
+
 function IconPulse() {
   return (
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -41,6 +53,7 @@ const proj = (key) => ({ label: PROJ[key]?.label || '프로젝트', tag: PROJ[ke
 export const MENU_ITEMS = [
   { key: 'calendar', label: '달력', Icon: IconCalendar, type: 'page' },
   { key: 'calorie', label: '칼로리', Icon: IconFlame, type: 'page' },
+  { key: 'body', label: '몸', Icon: IconBody, type: 'page' },
   { key: 'scratch', label: '낙서장', Icon: IconNote, type: 'page' },
   { key: 'mangrove', ...proj('mangrove'), Icon: IconStack, type: 'project', href: '/mangrove-building.html' },
   { key: 'lovelab', ...proj('lovelab'), Icon: IconPulse, type: 'project', href: '/lovelab-followers.html' },

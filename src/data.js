@@ -12,6 +12,7 @@
 export const PAGE_TITLES = {
   calendar: ['달력', '월별 일정 보기'],
   calorie: ['칼로리', '당일 섭취량 기록 · 목표 대비 관리'],
+  body: ['몸', '운동 · 식단 · 수면 통합 일지'],
   scratch: ['낙서장', '자유 메모'],
 }
 
