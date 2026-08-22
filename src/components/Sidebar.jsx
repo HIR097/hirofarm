@@ -32,24 +32,6 @@ function IconPulse() {
   )
 }
 
-function IconGantt() {
-  return (
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 5h8" /><path d="M7 12h10" /><path d="M11 19h8" />
-      <path d="M3 3v18" />
-    </svg>
-  )
-}
-
-function IconNetwork() {
-  return (
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="5" r="2.2" /><circle cx="5" cy="19" r="2.2" /><circle cx="19" cy="19" r="2.2" />
-      <path d="M10.8 6.9 6.2 17.1" /><path d="M13.2 6.9l4.6 10.2" /><path d="M7.2 19h9.6" />
-    </svg>
-  )
-}
-
 // 프로젝트 이름은 어떤 건을 다루는지 그대로 드러내므로(어느 물류센터 화재 대응인지 등)
 // 라벨·태그를 코드에 두지 않고 secure/labels.js 에서 암호화해 들여온다.
 const PROJ = (typeof window !== 'undefined' && window.__HY_DATA__?.labels?.menu) || {}
@@ -62,8 +44,6 @@ export const MENU_ITEMS = [
   { key: 'scratch', label: '낙서장', Icon: IconNote, type: 'page' },
   { key: 'mangrove', ...proj('mangrove'), Icon: IconStack, type: 'project', href: '/mangrove-building.html' },
   { key: 'lovelab', ...proj('lovelab'), Icon: IconPulse, type: 'project', href: '/lovelab-followers.html' },
-  { key: 'seoknam-ms', ...proj('seoknam-ms'), Icon: IconGantt, type: 'project', href: '/seoknam-milestone.html' },
-  { key: 'seoknam-comms', ...proj('seoknam-comms'), Icon: IconNetwork, type: 'project', href: '/seoknam-comms.html' },
   { key: 'cbt', ...proj('cbt'), Icon: IconNote, type: 'project', href: '/cbt.html' },
   { key: 'plan', ...proj('plan'), Icon: IconSchedule, type: 'project', href: '/plan.html' },
 ]

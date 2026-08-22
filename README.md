@@ -67,7 +67,7 @@ CEK(콘텐츠 암호화 키)를 따로 두기 때문에 **PIN 을 바꿔도 콘�
 | `.hy-key.json` | CEK 로컬 캐시 | ❌ gitignore |
 
 보호 대상: `worklog.js`(업무현황) · `fundSchedule.js`(펀드 연간일정) ·
-`seoknam-tf-data.js`(TF 메일 319건) · `lovelab-data.js`(팔로워) · `mangrove-plans/*.png`(도면)
+`lovelab-data.js`(팔로워) · `mangrove-plans/*.png`(도면)
 
 ### 일상 작업
 
