@@ -128,6 +128,43 @@ function QtyBox({ value, onCommit }) {
   )
 }
 
+/** 루틴을 지키는 대표 음식 10 — 내용은 secure/body.js(mealGuide)에서, 누르면 요리법이 펼쳐진다. */
+function MealGuide({ isMobile }) {
+  const [openIdx, setOpenIdx] = useState(null)
+  const meals = (typeof window !== 'undefined' && window.__HY_DATA__?.body?.mealGuide) || []
+  if (!meals.length) return null
+  return (
+    <Card style={{ marginBottom: 14, padding: isMobile ? 16 : 22 }}>
+      <CardHead title="루틴 음식 10" caption={isMobile ? '누르면 요리법' : 'Low-FODMAP 클린벌크 · 누르면 요리법 · 검색창에서 이름으로 기록'} />
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0 22px' }}>
+        {meals.map((m, i) => {
+          const open = openIdx === i
+          return (
+            <div key={m.n} style={{ borderBottom: '1px solid var(--line)' }}>
+              <div
+                onClick={() => setOpenIdx(open ? null : i)}
+                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 2px', cursor: 'pointer' }}
+              >
+                <span style={{ flex: 1, fontSize: 13.5, fontWeight: 600 }}>{m.n}</span>
+                <span style={{ font: "500 11px 'JetBrains Mono'", color: 'var(--text-3)', flex: 'none' }}>
+                  {m.k}kcal · P{m.p}
+                </span>
+                <span style={{ color: 'var(--text-3)', fontSize: 11, flex: 'none', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }}>▼</span>
+              </div>
+              {open && (
+                <div style={{ padding: '0 2px 12px', fontSize: 12.5, lineHeight: 1.6, color: 'var(--text-2)' }}>
+                  <span style={{ font: "600 11px 'JetBrains Mono'", color: 'var(--text-3)' }}>{m.u}</span>
+                  <div style={{ marginTop: 4 }}>{m.recipe}</div>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </Card>
+  )
+}
+
 export default function Calories() {
   const today = dayKey(new Date())
   const isMobile = useIsMobile()
@@ -381,6 +418,9 @@ export default function Calories() {
           ))}
         </div>
       </Card>
+
+      {/* ── 루틴 음식 10 (secure/body.js 의 mealGuide — 누르면 요리법) ── */}
+      <MealGuide isMobile={isMobile} />
 
       {/* ── 오늘 요약 ── */}
       <Card style={{ marginBottom: 14, padding: isMobile ? 16 : 22 }}>
