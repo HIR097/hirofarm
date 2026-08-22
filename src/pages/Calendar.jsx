@@ -8,6 +8,8 @@ const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
 // 재무 이벤트는 급여·상환액이 그대로 드러나므로 secure/finance.js 에서 암호화해 들여온다.
 const FIN = (typeof window !== 'undefined' && window.__HY_DATA__?.finance) || null
+// 인스타 게시 일정 — secure/insta.js
+const INS = (typeof window !== 'undefined' && window.__HY_DATA__?.insta) || null
 
 const KIND = {
   pay: { label: '급여', color: 'var(--good)' },
@@ -16,6 +18,7 @@ const KIND = {
   goal: { label: '목표', color: 'oklch(0.60 0.16 300)' },
   holiday: { label: '연휴', color: 'oklch(0.66 0.17 6)' },
   trip: { label: '여행', color: 'oklch(0.70 0.13 195)' },
+  post: { label: '게시', color: 'oklch(0.64 0.19 330)' },
   my: { label: '내 일정', color: 'oklch(0.62 0.13 150)' },
   check: { label: '점검', color: 'var(--text-3)' },
   work: { label: '업무', color: 'var(--text-3)' },
@@ -77,6 +80,26 @@ function spreadRanges(list, year, month, extra = {}) {
   return map
 }
 
+// 요일 반복(인스타 게시 — 수/토)을 이 달의 해당 요일마다 깐다.
+function weeklyEvents(year, month) {
+  if (!INS?.weekly) return {}
+  const map = {}
+  const lastDay = new Date(year, month, 0).getDate()
+  for (let d = 1; d <= lastDay; d++) {
+    const dow = new Date(year, month - 1, d).getDay()
+    for (const w of INS.weekly) {
+      if (w.dow === dow) (map[d] ||= []).push({ ...w, source: 'insta' })
+    }
+  }
+  // 특정 날짜 메모는 그날 게시 항목을 대체한다 (중복으로 두 줄 뜨지 않게)
+  for (const m of INS.marks || []) {
+    const [y, mo, dd] = m.date.split('-').map(Number)
+    if (y !== year || mo !== month) continue
+    map[dd] = [{ ...m, source: 'insta' }, ...(map[dd] || []).filter((e) => e.kind !== 'post')]
+  }
+  return map
+}
+
 const mergeMaps = (...maps) => {
   const out = {}
   for (const m of maps) for (const k of Object.keys(m)) (out[k] ||= []).push(...m[k])
@@ -87,6 +110,7 @@ export default function Calendar() {
   const today = useMemo(() => new Date(), [])
   const [cur, setCur] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1))
   const [showWork, setShowWork] = useState(false)
+  const [showPost, setShowPost] = useState(true) // 인스타 게시 일정
   const [sel, setSel] = useState(null) // { day, events }
 
   // 직접 추가한 일정 — 이 브라우저에만 저장된다
@@ -121,6 +145,7 @@ export default function Calendar() {
   }
 
   const finMap = useMemo(() => financeEvents(year, month), [year, month])
+  const instaMap = useMemo(() => (showPost ? weeklyEvents(year, month) : {}), [year, month, showPost])
   const rangeMap = useMemo(() => spreadRanges(FIN?.ranges, year, month), [year, month])
   const myMap = useMemo(() => spreadRanges(mine, year, month, { mine: true }), [mine, year, month])
   const workMap = useMemo(() => {
@@ -133,8 +158,8 @@ export default function Calendar() {
   }, [month, showWork])
 
   const merged = useMemo(
-    () => mergeMaps(rangeMap, myMap, finMap, workMap),
-    [rangeMap, myMap, finMap, workMap],
+    () => mergeMaps(rangeMap, myMap, instaMap, finMap, workMap),
+    [rangeMap, myMap, instaMap, finMap, workMap],
   )
   const dayEvents = (d) => merged[d] || []
 
@@ -231,6 +256,16 @@ export default function Calendar() {
             <input type="checkbox" checked={showWork} onChange={(e) => setShowWork(e.target.checked)} />
             업무 일정
           </label>
+          <label
+            style={{
+              display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer', fontSize: 12.5,
+              color: 'var(--text-2)', border: '1px solid var(--line)', background: 'var(--surface)',
+              borderRadius: 999, padding: '6px 13px',
+            }}
+          >
+            <input type="checkbox" checked={showPost} onChange={(e) => setShowPost(e.target.checked)} />
+            게시 일정
+          </label>
           <button
             onClick={() => (form ? setForm(null) : openForm(sel?.day))}
             style={{
@@ -318,7 +353,7 @@ export default function Calendar() {
 
       {/* ── 범례 ── */}
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
-        {['pay', 'repay', 'bonus', 'goal', 'holiday', 'trip', 'my'].map((k) => (
+        {['pay', 'repay', 'bonus', 'goal', 'holiday', 'trip', 'post', 'my'].map((k) => (
           <span key={k} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--text-2)' }}>
             <i style={{ width: 9, height: 9, borderRadius: 3, background: KIND[k].color, display: 'inline-block' }} />
             {KIND[k].label}
