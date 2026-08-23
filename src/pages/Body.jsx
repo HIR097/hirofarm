@@ -141,10 +141,13 @@ export default function Body() {
   const [issues, saveIssues] = useJsonStorage('hy_body_issues', EMPTY)
   const [stamp, setStamp] = useLocalStorage('hy_body_stamp', '')
 
-  // ── 3일 창 이동 (0 = 오늘이 가운데) ──
+  // ── 3일 창 이동 (0 = 오늘이 가운데). 모바일은 폭이 없어 선택한 하루만 보여준다 ──
   const [offset, setOffset] = useState(0)
   const todayKey = dayKey(new Date())
-  const winDays = useMemo(() => [-1, 0, 1].map((i) => addDays(new Date(), offset + i)), [offset])
+  const winDays = useMemo(
+    () => (isMobile ? [0] : [-1, 0, 1]).map((i) => addDays(new Date(), offset + i)),
+    [offset, isMobile],
+  )
 
   // 날짜별 체크/시간 토글 — 미래 날짜는 손대지 않는다
   const toggleAt = (dkey, k) => {
@@ -231,8 +234,8 @@ export default function Body() {
     if (diff === 1) return '내일'
     return `${d.getMonth() + 1}/${d.getDate()}`
   }
-  // 오늘 컬럼을 가장 넓고 진하게
-  const colW = (d) => (dayKey(d) === todayKey ? 96 : 64)
+  // 오늘 컬럼을 가장 넓고 진하게 (모바일은 컬럼이 하나뿐이라 항상 넓게)
+  const colW = (d) => (isMobile || dayKey(d) === todayKey ? 96 : 64)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18, ...fade }}>
@@ -245,7 +248,7 @@ export default function Body() {
 
       {/* ── 1. 하루 타임라인 (어제 · 오늘 · 내일) ── */}
       <Card>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6, marginBottom: 4 }}>
           <div style={{ fontSize: 16, fontWeight: 700 }}>하루 타임라인</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {syncMsg && <span style={{ font: "500 11px 'JetBrains Mono'", color: 'var(--text-3)' }}>{syncMsg}</span>}
@@ -258,13 +261,13 @@ export default function Body() {
         </div>
         <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 12 }}>위에서 아래 = 하루 순서. 한 열만 내려가며 체크하면 끝</div>
 
-        <div style={{ overflowX: 'auto' }}>
-          <div style={{ minWidth: 560 }}>
+        <div style={{ overflowX: isMobile ? 'visible' : 'auto' }}>
+          <div style={{ minWidth: isMobile ? 0 : 560 }}>
             {/* 헤더 */}
             <div style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: 8 }}>
               <span style={{ flex: 1 }} />
               {winDays.map((d, i) => {
-                const isT = dayKey(d) === todayKey
+                const isT = isMobile || dayKey(d) === todayKey
                 return (
                   <span key={i} style={{ width: colW(d), flex: 'none', textAlign: 'center' }}>
                     <span style={{ font: `${isT ? 700 : 600} ${isT ? 13 : 11}px 'JetBrains Mono'`, color: isT ? 'var(--text)' : 'var(--text-3)' }}>
@@ -288,7 +291,7 @@ export default function Body() {
                 </span>
                 {winDays.map((d, i) => {
                   const dkey = dayKey(d)
-                  const isT = dkey === todayKey
+                  const isT = isMobile || dkey === todayKey
                   const future = dkey > todayKey
                   const e = log[dkey] || EMPTY
                   const on = !!(e.checks || EMPTY)[it.k]
@@ -410,30 +413,48 @@ export default function Body() {
       <Card>
         <CardHead title="참고 체형과의 갭" caption={data.gap.me} />
         <div style={{ fontSize: 12.5, color: 'var(--text-3)', marginBottom: 12 }}>기준: {data.gap.ref}</div>
-        <div style={{ overflowX: 'auto' }}>
-          <div style={{ minWidth: 560 }}>
-            <div style={{ display: 'flex', font: "600 10px 'JetBrains Mono'", letterSpacing: '.06em', color: 'var(--text-3)', padding: '0 6px 8px', borderBottom: '1px solid var(--line)' }}>
-              <span style={{ flex: 1 }}>항목</span>
-              <span style={{ width: 90 }}>현재</span>
-              <span style={{ width: 110 }}>목표</span>
-              <span style={{ flex: 2.2 }}>메모</span>
-              <span style={{ width: 72, textAlign: 'right' }}>시점</span>
-            </div>
-            {data.gap.lines.map((l, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '9px 6px', borderBottom: '1px solid var(--line)', fontSize: 13 }}>
-                <span style={{ flex: 1, fontWeight: 600 }}>{l.k}</span>
-                <span style={{ width: 90, font: "500 12px 'JetBrains Mono'", color: 'var(--text-2)' }}>{l.now}</span>
-                <span style={{ width: 110, font: "600 12px 'JetBrains Mono'" }}>{l.goal}</span>
-                <span style={{ flex: 2.2, fontSize: 12, color: 'var(--text-2)' }}>{l.note}</span>
-                <span style={{ width: 72, textAlign: 'right' }}>
-                  <span style={{ font: "600 10px 'JetBrains Mono'", padding: '2px 7px', borderRadius: 7, background: l.horizon === '장기' ? 'var(--surface2)' : RED_BG, color: l.horizon === '장기' ? 'var(--text-3)' : RED }}>
-                    {l.horizon}
-                  </span>
+        {isMobile ? (
+          // 모바일: 가로 스크롤 없이 항목별 스택 카드
+          data.gap.lines.map((l, i) => (
+            <div key={i} style={{ padding: '10px 0', borderBottom: '1px solid var(--line)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontWeight: 700, fontSize: 13.5, flex: 1 }}>{l.k}</span>
+                <span style={{ font: "600 12px 'JetBrains Mono'", color: 'var(--text-2)' }}>
+                  {l.now} → {l.goal}
+                </span>
+                <span style={{ font: "600 10px 'JetBrains Mono'", padding: '2px 7px', borderRadius: 7, background: l.horizon === '장기' ? 'var(--surface2)' : RED_BG, color: l.horizon === '장기' ? 'var(--text-3)' : RED }}>
+                  {l.horizon}
                 </span>
               </div>
-            ))}
+              <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 4, lineHeight: 1.5 }}>{l.note}</div>
+            </div>
+          ))
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <div style={{ minWidth: 560 }}>
+              <div style={{ display: 'flex', font: "600 10px 'JetBrains Mono'", letterSpacing: '.06em', color: 'var(--text-3)', padding: '0 6px 8px', borderBottom: '1px solid var(--line)' }}>
+                <span style={{ flex: 1 }}>항목</span>
+                <span style={{ width: 90 }}>현재</span>
+                <span style={{ width: 110 }}>목표</span>
+                <span style={{ flex: 2.2 }}>메모</span>
+                <span style={{ width: 72, textAlign: 'right' }}>시점</span>
+              </div>
+              {data.gap.lines.map((l, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '9px 6px', borderBottom: '1px solid var(--line)', fontSize: 13 }}>
+                  <span style={{ flex: 1, fontWeight: 600 }}>{l.k}</span>
+                  <span style={{ width: 90, font: "500 12px 'JetBrains Mono'", color: 'var(--text-2)' }}>{l.now}</span>
+                  <span style={{ width: 110, font: "600 12px 'JetBrains Mono'" }}>{l.goal}</span>
+                  <span style={{ flex: 2.2, fontSize: 12, color: 'var(--text-2)' }}>{l.note}</span>
+                  <span style={{ width: 72, textAlign: 'right' }}>
+                    <span style={{ font: "600 10px 'JetBrains Mono'", padding: '2px 7px', borderRadius: 7, background: l.horizon === '장기' ? 'var(--surface2)' : RED_BG, color: l.horizon === '장기' ? 'var(--text-3)' : RED }}>
+                      {l.horizon}
+                    </span>
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </Card>
 
       {/* ── 4. 인바디 추이 — 입력 없음, 인바디 사진 주면 갱신 ── */}
