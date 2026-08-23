@@ -165,6 +165,74 @@ function MealGuide({ isMobile }) {
   )
 }
 
+/** 평일 현실 식단 — 회사 일과 기준 5끼 시간표. 내용은 secure/body.js(mealPlan)에서.
+ *  행을 누르면 그 슬롯의 다음 대안으로 넘어가고, 🎲 는 슬롯마다 하나씩 랜덤으로 뽑는다. */
+function MealPlan({ isMobile }) {
+  const plan = (typeof window !== 'undefined' && window.__HY_DATA__?.body?.mealPlan) || null
+  const [picks, setPicks] = useState(() => (plan ? plan.slots.map(() => 0) : []))
+  if (!plan) return null
+  const shuffle = () => setPicks(plan.slots.map((s) => Math.floor(Math.random() * s.options.length)))
+  const next = (i) => setPicks(picks.map((v, j) => (j === i ? (v + 1) % plan.slots[i].options.length : v)))
+  const total = plan.slots.reduce(
+    (a, s, i) => {
+      const o = s.options[picks[i] % s.options.length]
+      return { k: a.k + o.k, p: a.p + o.p }
+    },
+    { k: 0, p: 0 },
+  )
+  return (
+    <Card style={{ marginBottom: 14, padding: isMobile ? 16 : 22 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+        <div style={{ fontSize: 16, fontWeight: 700 }}>평일 현실 식단</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {!isMobile && <span style={{ font: mono, color: 'var(--text-3)' }}>행을 누르면 다른 대안</span>}
+          <button onClick={shuffle} style={{ ...btn, padding: '7px 13px', fontSize: 13 }} title="슬롯마다 하나씩 랜덤으로 뽑기">
+            🎲 랜덤
+          </button>
+        </div>
+      </div>
+      {plan.slots.map((s, i) => {
+        const o = s.options[picks[i] % s.options.length]
+        return (
+          <div
+            key={i}
+            onClick={() => next(i)}
+            title="누르면 다음 대안"
+            style={{ display: 'flex', alignItems: 'baseline', gap: 10, padding: '10px 2px', borderTop: '1px solid var(--line)', cursor: 'pointer' }}
+          >
+            <span style={{ font: "600 12px 'JetBrains Mono'", width: isMobile ? 78 : 96, flex: 'none' }}>
+              {s.t}
+              <br />
+              <span style={{ fontWeight: 500, fontSize: 10, color: 'var(--text-3)' }}>{s.place}</span>
+            </span>
+            <span style={{ flex: 1, fontSize: isMobile ? 13 : 13.5, fontWeight: 600, lineHeight: 1.45 }}>
+              {o.n}
+              {s.options.length > 1 && (
+                <span style={{ font: "500 10px 'JetBrains Mono'", color: 'var(--text-3)', marginLeft: 6 }}>
+                  {(picks[i] % s.options.length) + 1}/{s.options.length}
+                </span>
+              )}
+            </span>
+            <span style={{ font: "500 12px 'JetBrains Mono'", color: 'var(--text-3)', flex: 'none' }}>
+              {o.k} · P{o.p}
+            </span>
+          </div>
+        )
+      })}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, padding: '12px 2px 0', borderTop: '1px solid var(--line)', alignItems: 'baseline' }}>
+        <span style={{ font: mono, color: 'var(--text-3)' }}>합계</span>
+        <span style={{ fontSize: 18, fontWeight: 700 }}>
+          {total.k.toLocaleString()} <span style={{ fontSize: 12, color: 'var(--text-3)' }}>kcal</span>
+        </span>
+        <span style={{ fontSize: 15, fontWeight: 700, color: total.p >= 170 ? OVER : 'var(--text)' }}>
+          P{total.p}
+        </span>
+      </div>
+      <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 8, lineHeight: 1.55 }}>{plan.note}</div>
+    </Card>
+  )
+}
+
 export default function Calories() {
   const today = dayKey(new Date())
   const isMobile = useIsMobile()
@@ -419,9 +487,6 @@ export default function Calories() {
         </div>
       </Card>
 
-      {/* ── 루틴 음식 10 (secure/body.js 의 mealGuide — 누르면 요리법) ── */}
-      <MealGuide isMobile={isMobile} />
-
       {/* ── 오늘 요약 ── */}
       <Card style={{ marginBottom: 14, padding: isMobile ? 16 : 22 }}>
         <CardHead title="오늘 섭취량" caption={isMobile ? `${items.length}개 항목` : `${today} · ${items.length}개 항목`} />
@@ -655,6 +720,12 @@ export default function Calories() {
           )}
         </div>
       </Card>
+
+      {/* ── 평일 현실 식단 (슬롯별 대안 + 랜덤) ── */}
+      <MealPlan isMobile={isMobile} />
+
+      {/* ── 루틴 음식 (secure/body.js 의 mealGuide — 누르면 요리법) ── */}
+      <MealGuide isMobile={isMobile} />
 
       {/* ── 달력 ── */}
       <Card style={{ padding: isMobile ? 14 : 22 }}>
