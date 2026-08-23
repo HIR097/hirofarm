@@ -548,6 +548,19 @@ export default function Calories() {
                   <span style={{ font: mono, color: 'var(--text-2)' }}>
                     {num(f.k)} kcal · 단백질 {f.p ?? 0}g
                   </span>
+                  {/* AI로 저장된 음식은 여기서 바로 지울 수 있다 — 검색 목록에서 사라진다 (기존 기록은 유지) */}
+                  {f.ai && (
+                    <button
+                      title="검색 목록에서 삭제"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        saveCustomFoods(customFoods.filter((cf) => !(cf.n === f.n && cf.k === f.k)))
+                      }}
+                      style={{ ...btn, padding: '4px 9px', fontSize: 13, color: 'var(--text-3)', flex: 'none' }}
+                    >
+                      ×
+                    </button>
+                  )}
                 </div>
               ))}
 
