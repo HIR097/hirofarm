@@ -672,7 +672,7 @@ export default function Calories() {
           </span>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: isMobile ? 4 : 8, marginBottom: 8 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,minmax(0,1fr))', gap: isMobile ? 4 : 8, marginBottom: 8 }}>
           {WEEKDAYS.map((w, i) => (
             <div key={w} style={{ textAlign: 'center', font: "600 11px 'JetBrains Mono'", color: i === 0 ? '#e5484d' : i === 6 ? 'var(--text-2)' : 'var(--text-3)' }}>
               {w}
@@ -680,7 +680,7 @@ export default function Calories() {
           ))}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: isMobile ? 4 : 8 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,minmax(0,1fr))', gap: isMobile ? 4 : 8 }}>
           {cells.map((d, i) => {
             if (!d) return <div key={i} style={{ minHeight: isMobile ? 54 : 80 }} />
             const key = `${year}-${pad(month + 1)}-${pad(d)}`
