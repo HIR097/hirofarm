@@ -386,7 +386,7 @@ export default function Calendar() {
                   display: 'flex', flexDirection: 'column', gap: 4,
                   cursor: d ? 'pointer' : 'default',
                   ...(isToday ? { borderColor: 'var(--accent)', boxShadow: '0 0 0 1px var(--accent)' } : null),
-                  ...(picked ? { background: 'var(--surface2)', borderColor: 'var(--text-3)' } : null),
+                  ...(picked ? { background: 'var(--surface2)' } : null),
                 }}
               >
                 {d && (
