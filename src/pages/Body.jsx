@@ -18,6 +18,8 @@ import * as sync from '../lib/sync.js'
 const fade = { animation: 'hyFade .4s ease', marginTop: 8 }
 const SYNC_KEY = 'body'
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
+// 항목 · 현재 · → · 목표 · 메모 · 시점 — 내용 길이만큼만 잡아 줄바꿈을 막는다
+const GAP_COLS = 'minmax(96px,max-content) minmax(80px,max-content) 12px minmax(96px,max-content) minmax(200px,1fr) 76px'
 const RED = '#ef4444'
 const RED_BG = 'rgba(239,68,68,.12)'
 const AMBER = '#f59e0b'
@@ -128,6 +130,78 @@ function TrendChart({ label, unit, points, target, color }) {
         <span>{last.d.slice(2)}</span>
       </div>
     </div>
+  )
+}
+
+// ── 갭 표 ──
+// now/goal 이 둘 다 숫자면 "목표까지 얼마" 를 뽑아준다. (8~9% 같은 범위는 중간값)
+const gapNum = (t) => {
+  const nums = String(t).match(/\d+(\.\d+)?/g)
+  if (!nums) return null
+  const v = nums.map(Number)
+  return v.reduce((a, b) => a + b, 0) / v.length
+}
+const gapUnit = (t) => String(t).replace(/[\d.~\s]/g, '') || ''
+const gapLeft = (now, goal) => {
+  const unit = gapUnit(now)
+  // 단위가 같은 수치끼리만 뺀다 — '0' vs 'Zone2 주 2회' 같은 건 비교 대상이 아니다
+  if (!unit || !String(goal).includes(unit)) return null
+  const a = gapNum(now)
+  const b = gapNum(goal)
+  if (a == null || b == null) return null
+  const d = Math.abs(b - a)
+  if (!d) return '도달'
+  return `${d.toFixed(d < 10 ? 1 : 0)}${unit} 남음`
+}
+const HorizonTag = ({ h }) => (
+  <span
+    style={{
+      font: "600 10px 'JetBrains Mono'",
+      padding: '2px 7px',
+      borderRadius: 7,
+      whiteSpace: 'nowrap',
+      background: h === '장기' ? 'var(--surface2)' : RED_BG,
+      color: h === '장기' ? 'var(--text-3)' : RED,
+    }}
+  >
+    {h}
+  </span>
+)
+const GapArrow = () => (
+  <span style={{ font: "500 11px 'JetBrains Mono'", color: 'var(--text-3)' }}>→</span>
+)
+
+// ── 시간 입력 (HH:MM 24시간) ──
+// 네이티브 input[type=time]은 로케일에 따라 "오전 08:00 🕐"처럼 늘어나 좁은 칸에서 분이 잘린다.
+// 숫자만 받아 HH:MM으로 직접 다듬는다.
+function TimeField({ value, onCommit, style }) {
+  const [draft, setDraft] = useState(value || '')
+  useEffect(() => setDraft(value || ''), [value])
+
+  const commit = () => {
+    const d = draft.replace(/\D/g, '')
+    if (!d) return onCommit('')
+    const h = Math.min(23, parseInt(d.slice(0, 2) || '0', 10))
+    const m = Math.min(59, parseInt(d.slice(2, 4) || '0', 10))
+    const v = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+    setDraft(v)
+    onCommit(v)
+  }
+
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      placeholder="--:--"
+      value={draft}
+      onChange={(ev) => {
+        const d = ev.target.value.replace(/\D/g, '').slice(0, 4)
+        setDraft(d.length > 2 ? `${d.slice(0, 2)}:${d.slice(2)}` : d)
+      }}
+      onBlur={commit}
+      onKeyDown={(ev) => ev.key === 'Enter' && ev.currentTarget.blur()}
+      style={style}
+    />
   )
 }
 
@@ -337,11 +411,10 @@ export default function Body() {
                         (future ? (
                           <span style={{ font: "500 10px 'JetBrains Mono'", color: 'var(--text-3)' }}>—</span>
                         ) : isT ? (
-                          <input
-                            type="time"
+                          <TimeField
                             value={time}
-                            onChange={(ev) => setTimeAt(dkey, it.k, ev.target.value)}
-                            style={{ ...field, padding: '2px 4px', width: 84, font: "500 11px 'JetBrains Mono'", textAlign: 'center' }}
+                            onCommit={(v) => setTimeAt(dkey, it.k, v)}
+                            style={{ ...field, padding: '3px 4px', width: 62, font: "500 11px 'JetBrains Mono'", textAlign: 'center' }}
                           />
                         ) : (
                           <span style={{ font: "500 10px 'JetBrains Mono'", color: time ? 'var(--text-2)' : 'var(--text-3)' }}>{time || '·'}</span>
@@ -416,42 +489,54 @@ export default function Body() {
         {isMobile ? (
           // 모바일: 가로 스크롤 없이 항목별 스택 카드
           data.gap.lines.map((l, i) => (
-            <div key={i} style={{ padding: '10px 0', borderBottom: '1px solid var(--line)' }}>
+            <div key={i} style={{ padding: '11px 0', borderBottom: '1px solid var(--line)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontWeight: 700, fontSize: 13.5, flex: 1 }}>{l.k}</span>
-                <span style={{ font: "600 12px 'JetBrains Mono'", color: 'var(--text-2)' }}>
-                  {l.now} → {l.goal}
-                </span>
-                <span style={{ font: "600 10px 'JetBrains Mono'", padding: '2px 7px', borderRadius: 7, background: l.horizon === '장기' ? 'var(--surface2)' : RED_BG, color: l.horizon === '장기' ? 'var(--text-3)' : RED }}>
-                  {l.horizon}
-                </span>
+                <HorizonTag h={l.horizon} />
               </div>
-              <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 4, lineHeight: 1.5 }}>{l.note}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap', marginTop: 5 }}>
+                <span style={{ font: "500 12px 'JetBrains Mono'", color: 'var(--text-3)' }}>{l.now}</span>
+                <GapArrow />
+                <span style={{ font: "700 12px 'JetBrains Mono'", color: 'var(--text)' }}>{l.goal}</span>
+                {gapLeft(l.now, l.goal) && (
+                  <span style={{ font: "600 10px 'JetBrains Mono'", color: AMBER, background: AMBER_BG, padding: '2px 6px', borderRadius: 6 }}>
+                    {gapLeft(l.now, l.goal)}
+                  </span>
+                )}
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 5, lineHeight: 1.5 }}>{l.note}</div>
             </div>
           ))
         ) : (
           <div style={{ overflowX: 'auto' }}>
-            <div style={{ minWidth: 560 }}>
-              <div style={{ display: 'flex', font: "600 10px 'JetBrains Mono'", letterSpacing: '.06em', color: 'var(--text-3)', padding: '0 6px 8px', borderBottom: '1px solid var(--line)' }}>
-                <span style={{ flex: 1 }}>항목</span>
-                <span style={{ width: 90 }}>현재</span>
-                <span style={{ width: 110 }}>목표</span>
-                <span style={{ flex: 2.2 }}>메모</span>
-                <span style={{ width: 72, textAlign: 'right' }}>시점</span>
+            <div style={{ minWidth: 620 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: GAP_COLS, alignItems: 'center', columnGap: 12, font: "600 10px 'JetBrains Mono'", letterSpacing: '.06em', color: 'var(--text-3)', padding: '0 6px 8px', borderBottom: '1px solid var(--line)' }}>
+                <span>항목</span>
+                <span style={{ gridColumn: 'span 2' }}>현재</span>
+                <span>목표</span>
+                <span>메모</span>
+                <span style={{ textAlign: 'right' }}>시점</span>
               </div>
-              {data.gap.lines.map((l, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '9px 6px', borderBottom: '1px solid var(--line)', fontSize: 13 }}>
-                  <span style={{ flex: 1, fontWeight: 600 }}>{l.k}</span>
-                  <span style={{ width: 90, font: "500 12px 'JetBrains Mono'", color: 'var(--text-2)' }}>{l.now}</span>
-                  <span style={{ width: 110, font: "600 12px 'JetBrains Mono'" }}>{l.goal}</span>
-                  <span style={{ flex: 2.2, fontSize: 12, color: 'var(--text-2)' }}>{l.note}</span>
-                  <span style={{ width: 72, textAlign: 'right' }}>
-                    <span style={{ font: "600 10px 'JetBrains Mono'", padding: '2px 7px', borderRadius: 7, background: l.horizon === '장기' ? 'var(--surface2)' : RED_BG, color: l.horizon === '장기' ? 'var(--text-3)' : RED }}>
-                      {l.horizon}
+              {data.gap.lines.map((l, i) => {
+                const left = gapLeft(l.now, l.goal)
+                return (
+                  <div key={i} style={{ display: 'grid', gridTemplateColumns: GAP_COLS, alignItems: 'center', columnGap: 12, padding: '10px 6px', borderBottom: '1px solid var(--line)', fontSize: 13 }}>
+                    <span style={{ fontWeight: 600 }}>{l.k}</span>
+                    <span style={{ font: "500 12px 'JetBrains Mono'", color: 'var(--text-3)', whiteSpace: 'nowrap' }}>{l.now}</span>
+                    <GapArrow />
+                    <span style={{ display: 'flex', alignItems: 'baseline', gap: 7, whiteSpace: 'nowrap' }}>
+                      <span style={{ font: "700 12px 'JetBrains Mono'" }}>{l.goal}</span>
+                      {left && (
+                        <span style={{ font: "600 10px 'JetBrains Mono'", color: AMBER, background: AMBER_BG, padding: '2px 6px', borderRadius: 6 }}>{left}</span>
+                      )}
                     </span>
-                  </span>
-                </div>
-              ))}
+                    <span style={{ fontSize: 12, color: 'var(--text-2)', lineHeight: 1.5 }}>{l.note}</span>
+                    <span style={{ textAlign: 'right' }}>
+                      <HorizonTag h={l.horizon} />
+                    </span>
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}
