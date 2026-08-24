@@ -84,51 +84,185 @@ const btn = {
   lineHeight: 1,
 }
 
-// ── 미니 라인차트 (인바디) ──
-function TrendChart({ label, unit, points, target, color }) {
-  const W = 300
-  const H = 110
-  const vals = points.map((p) => p.v)
-  if (!vals.length)
-    return (
-      <div style={{ flex: 1, minWidth: 220, color: 'var(--text-3)', fontSize: 12 }}>{label} — 기록 없음</div>
-    )
-  const all = target != null ? [...vals, target] : vals
-  const min = Math.min(...all)
-  const max = Math.max(...all)
-  const span = Math.max(0.001, max - min)
-  const padY = 14
-  const y = (v) => H - padY - ((v - min) / span) * (H - padY * 2)
-  const x = (i) => (points.length < 2 ? W / 2 : 8 + (i / (points.length - 1)) * (W - 16))
-  const line = points.map((p, i) => `${x(i)},${y(p.v)}`).join(' ')
-  const last = points[points.length - 1]
+// ── 계획 vs 실측 차트 (인바디) ──
+// 참고: 분기별 점유율 추이 차트 — 점선 = 계획, 실선 = 실측, 커서 올리면 그 달 수치.
+// 배경 밴드로 벌크/컷 구간을 깔아 "지금 뭘 하는 달인지" 가 한눈에 보이게 한다.
+const BULK_BG = 'rgba(59,158,255,.07)'
+const CUT_BG = 'rgba(245,158,11,.07)'
+const H = 168
+const PAD = { t: 14, r: 12, b: 22, l: 38 }
+
+const monthIdx = (d) => {
+  const [y, m] = String(d).slice(0, 7).split('-').map(Number)
+  return y * 12 + (m - 1)
+}
+// 'YYYY-MM-DD' 는 일 단위까지 반영해 실측점을 정확한 위치에 찍는다
+const monthPos = (d) => {
+  const day = Number(String(d).slice(8, 10)) || 1
+  return monthIdx(d) + (day - 1) / 30
+}
+
+function useWidth() {
+  const ref = useRef(null)
+  const [w, setW] = useState(0)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const ro = new ResizeObserver(([e]) => setW(e.contentRect.width))
+    ro.observe(el)
+    setW(el.clientWidth)
+    return () => ro.disconnect()
+  }, [])
+  return [ref, w]
+}
+
+function PlanChart({ label, unit, color, field, plan, phases, actual, target, digits = 1 }) {
+  const [wrap, W] = useWidth()
+  const [hover, setHover] = useState(null)
+
+  // 계획은 26-08 부터지만 실측 이력은 그 이전에도 있다 — x축은 둘을 다 담는다
+  const a0 = Math.min(monthIdx(plan[0].d), ...actual.map((r) => monthIdx(r.d)))
+  const a1 = monthIdx(plan[plan.length - 1].d)
+  const vals = [...plan.map((p) => p[field]), ...actual.map((r) => r.v)]
+  if (target != null) vals.push(target)
+  const lo = Math.min(...vals)
+  const hi = Math.max(...vals)
+  const span = Math.max(0.001, hi - lo)
+  const iw = Math.max(0, W - PAD.l - PAD.r)
+  const x = (d) => PAD.l + ((monthPos(d) - a0) / (a1 - a0)) * iw
+  const y = (v) => PAD.t + (1 - (v - lo) / span) * (H - PAD.t - PAD.b)
+
+  const planLine = plan.map((p) => `${x(p.d)},${y(p[field])}`).join(' ')
+  const actLine = actual.map((r) => `${x(r.d)},${y(r.v)}`).join(' ')
+
+  // 오늘 위치 + 호버 중인 달
+  const today = new Date()
+  const todayM = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+  const hi3 = hover != null ? plan[hover] : null
+  const hitAct = hi3 ? actual.find((r) => String(r.d).slice(0, 7) === hi3.d) : null
+  const phaseOf = (d) => phases.find((ph) => monthIdx(d) >= monthIdx(ph.from) && monthIdx(d) < monthIdx(ph.to)) || phases[phases.length - 1]
+  const fmt = (v) => v.toFixed(digits)
+
+  const pick = (ev) => {
+    const r = ev.currentTarget.getBoundingClientRect()
+    const f = (ev.clientX - r.left - PAD.l) / iw
+    const i = Math.round(a0 + f * (a1 - a0) - monthIdx(plan[0].d))
+    setHover(Math.max(0, Math.min(plan.length - 1, i)))
+  }
+
   return (
-    <div style={{ flex: 1, minWidth: 220 }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
+    <div ref={wrap} style={{ position: 'relative', width: '100%' }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 9, marginBottom: 2 }}>
         <span style={{ font: mono, color: 'var(--text-3)' }}>{label}</span>
-        <span style={{ fontSize: 20, fontWeight: 700 }}>
-          {last.v}
-          <span style={{ fontSize: 12, color: 'var(--text-3)' }}>{unit}</span>
+        {actual.length > 0 && (
+          <span style={{ fontSize: 19, fontWeight: 700 }}>
+            {fmt(actual[actual.length - 1].v)}
+            <span style={{ fontSize: 12, color: 'var(--text-3)' }}>{unit}</span>
+          </span>
+        )}
+        <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12, font: "500 10px 'JetBrains Mono'", color: 'var(--text-3)' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <svg width="16" height="6"><line x1="0" y1="3" x2="16" y2="3" stroke="var(--text-3)" strokeWidth="1.5" strokeDasharray="3 3" /></svg>
+            계획
+          </span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <svg width="16" height="6"><line x1="0" y1="3" x2="16" y2="3" stroke={color} strokeWidth="2.5" /></svg>
+            실측
+          </span>
         </span>
-        {target != null && (
-          <span style={{ font: "600 11px 'JetBrains Mono'", color: 'var(--text-3)', marginLeft: 'auto' }}>목표 {target}{unit}</span>
-        )}
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="none">
-        {target != null && (
-          <line x1="0" x2={W} y1={y(target)} y2={y(target)} stroke="var(--text-3)" strokeWidth="1" strokeDasharray="4 5" opacity=".6" />
-        )}
-        {points.length > 1 && (
-          <polyline points={line} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-        )}
-        {points.map((p, i) => (
-          <circle key={i} cx={x(i)} cy={y(p.v)} r="3.2" fill={color} />
-        ))}
-      </svg>
-      <div style={{ display: 'flex', justifyContent: 'space-between', font: "500 10px 'JetBrains Mono'", color: 'var(--text-3)' }}>
-        <span>{points[0].d.slice(2)}</span>
-        <span>{last.d.slice(2)}</span>
-      </div>
+
+      {W > 0 && (
+        <svg width={W} height={H} onMouseMove={pick} onMouseLeave={() => setHover(null)} style={{ display: 'block', cursor: 'crosshair' }}>
+          {/* 벌크/컷 구간 밴드 */}
+          {phases.map((ph) => (
+            <g key={ph.name}>
+              <rect x={x(ph.from)} y={PAD.t} width={Math.max(0, x(ph.to) - x(ph.from))} height={H - PAD.t - PAD.b} fill={ph.t === 'bulk' ? BULK_BG : CUT_BG} />
+              <text x={(x(ph.from) + x(ph.to)) / 2} y={PAD.t - 4} textAnchor="middle" style={{ font: "600 9px 'JetBrains Mono'", fill: 'var(--text-3)' }}>
+                {ph.name}
+              </text>
+            </g>
+          ))}
+          {/* y축 눈금 3줄 */}
+          {[lo, lo + span / 2, hi].map((v, i) => (
+            <g key={i}>
+              <line x1={PAD.l} x2={W - PAD.r} y1={y(v)} y2={y(v)} stroke="var(--line)" strokeWidth="1" opacity=".5" />
+              <text x={PAD.l - 6} y={y(v) + 3} textAnchor="end" style={{ font: "500 9px 'JetBrains Mono'", fill: 'var(--text-3)' }}>
+                {fmt(v)}
+              </text>
+            </g>
+          ))}
+          {/* 목표선 */}
+          {target != null && (
+            <line x1={PAD.l} x2={W - PAD.r} y1={y(target)} y2={y(target)} stroke={color} strokeWidth="1" strokeDasharray="2 4" opacity=".55" />
+          )}
+          {/* 오늘 */}
+          <line x1={x(todayM)} x2={x(todayM)} y1={PAD.t} y2={H - PAD.b} stroke="var(--text-3)" strokeWidth="1" strokeDasharray="3 3" opacity=".7" />
+          {/* 계획선 */}
+          <polyline points={planLine} fill="none" stroke="var(--text-3)" strokeWidth="1.6" strokeDasharray="4 4" strokeLinejoin="round" />
+          {/* 실측선 */}
+          {actual.length > 1 && (
+            <polyline points={actLine} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          )}
+          {actual.map((r, i) => (
+            <circle key={i} cx={x(r.d)} cy={y(r.v)} r="3.4" fill={color} />
+          ))}
+          {/* 호버 */}
+          {hi3 && (
+            <g>
+              <line x1={x(hi3.d)} x2={x(hi3.d)} y1={PAD.t} y2={H - PAD.b} stroke="var(--text-2)" strokeWidth="1" />
+              <circle cx={x(hi3.d)} cy={y(hi3[field])} r="3.2" fill="var(--text-2)" />
+              {hitAct && <circle cx={x(hitAct.d)} cy={y(hitAct.v)} r="4.5" fill="none" stroke={color} strokeWidth="2" />}
+            </g>
+          )}
+          {/* x축 — 6개월마다 */}
+          {Array.from({ length: Math.floor((a1 - a0) / 6) + 1 }, (_, i) => a0 + i * 6).map((m) => {
+            const d = `${Math.floor(m / 12)}-${String((m % 12) + 1).padStart(2, '0')}`
+            return (
+              <text key={d} x={x(d)} y={H - 6} textAnchor="middle" style={{ font: "500 9px 'JetBrains Mono'", fill: 'var(--text-3)' }}>
+                {`'${d.slice(2, 4)}.${d.slice(5)}`}
+              </text>
+            )
+          })}
+        </svg>
+      )}
+
+      {hi3 && (
+        <div
+          style={{
+            position: 'absolute',
+            left: Math.max(0, Math.min(W - 132, x(hi3.d) - 66)),
+            top: 24,
+            width: 132,
+            pointerEvents: 'none',
+            background: 'var(--surface2)',
+            border: '1px solid var(--line)',
+            borderRadius: 9,
+            padding: '7px 9px',
+            font: "500 10.5px 'JetBrains Mono'",
+            boxShadow: '0 4px 14px rgba(0,0,0,.28)',
+          }}
+        >
+          <div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: 3 }}>
+            {`'${hi3.d.slice(2, 4)}.${hi3.d.slice(5)}`}
+            <span style={{ fontWeight: 500, color: 'var(--text-3)', marginLeft: 5 }}>{phaseOf(hi3.d)?.name || ''}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-3)' }}>
+            <span>계획</span>
+            <span>{fmt(hi3[field])}{unit}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', color: hitAct ? color : 'var(--text-3)' }}>
+            <span>실측</span>
+            <span>{hitAct ? `${fmt(hitAct.v)}${unit}` : '—'}</span>
+          </div>
+          {hitAct && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 3, paddingTop: 3, borderTop: '1px solid var(--line)', color: 'var(--text-2)' }}>
+              <span>차이</span>
+              <span>{`${hitAct.v - hi3[field] >= 0 ? '+' : ''}${fmt(hitAct.v - hi3[field])}${unit}`}</span>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -542,16 +676,30 @@ export default function Body() {
         )}
       </Card>
 
-      {/* ── 4. 인바디 추이 — 입력 없음, 인바디 사진 주면 갱신 ── */}
+      {/* ── 4. 인바디 추이 — 계획 대비 실측. 입력 없음, 인바디 사진 주면 갱신 ── */}
       <Card>
-        <CardHead title="인바디 추이" caption={`목표 ${data.targets.w}kg · 골격근 ${data.targets.smm}kg · 체지방 ${data.targets.pbf}%`} />
-        <div style={{ display: 'flex', gap: 22, flexWrap: 'wrap' }}>
-          <TrendChart label="체중" unit="kg" color="var(--accent)" target={data.targets.w} points={inbodyRows.filter((r) => r.w).map((r) => ({ d: r.d, v: r.w }))} />
-          <TrendChart label="골격근량" unit="kg" color="#3b9eff" target={data.targets.smm} points={inbodyRows.filter((r) => r.smm).map((r) => ({ d: r.d, v: r.smm }))} />
-          <TrendChart label="체지방률" unit="%" color={AMBER} target={data.targets.pbf} points={inbodyRows.filter((r) => r.pbf).map((r) => ({ d: r.d, v: r.pbf }))} />
+        <CardHead title="인바디 추이" caption={`목표 ${data.targets.w}kg · 골격근 ${data.targets.smm}kg · 체지방 ${data.targets.pbf}% · ${data.plan.note}`} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <PlanChart
+            label="체중" unit="kg" color="var(--accent)" field="w" digits={1}
+            plan={data.plan.points} phases={data.plan.phases} target={data.targets.w}
+            actual={inbodyRows.filter((r) => r.w).map((r) => ({ d: r.d, v: r.w }))}
+          />
+          <PlanChart
+            label="골격근량" unit="kg" color="#3b9eff" field="smm" digits={1}
+            plan={data.plan.points} phases={data.plan.phases} target={data.targets.smm}
+            actual={inbodyRows.filter((r) => r.smm).map((r) => ({ d: r.d, v: r.smm }))}
+          />
+          <PlanChart
+            label="체지방률" unit="%" color={AMBER} field="pbf" digits={1}
+            plan={data.plan.points} phases={data.plan.phases} target={data.targets.pbf}
+            actual={inbodyRows.filter((r) => r.pbf).map((r) => ({ d: r.d, v: r.pbf }))}
+          />
         </div>
-        <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 12 }}>
-          직접 입력하지 않는다 — InBody 앱 캡처를 주면 데이터에 추가된다. 눈바디·수행능력이 우선, 숫자는 참고
+        <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 14, lineHeight: 1.6 }}>
+          직접 입력하지 않는다 — InBody 앱 캡처를 주면 데이터에 추가되고, 점선(계획) 위/아래 어디에 찍히는지로 판단한다.
+          <br />
+          골격근 42.0 은 벌크 정점(28-11)에서 찍히고 8% 컷을 끝내면 41.8 로 내려온다 — 컷 구간에서 계획선이 꺾이는 건 정상이다.
         </div>
       </Card>
 
