@@ -185,11 +185,12 @@ function Report({ r, progress, setProgress, onBack, mobile }) {
           {hidden ? '뜻 보이기' : '뜻 가리기'}
         </button>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {/* 데스크톱은 3열 — 한 줄에 카드 하나면 너무 길어서 훑기 어렵다 */}
+      <div style={{ display: 'grid', gridTemplateColumns: mobile ? '1fr' : 'repeat(3, minmax(0, 1fr))', gap: 10, alignItems: 'start' }}>
         {chunks.map((c) => (
-          <Card key={c.expr} style={{ padding: '16px 18px' }} >
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-              <span style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 600, lineHeight: 1.3 }}>{c.expr}</span>
+          <Card key={c.expr} style={{ padding: '14px 16px' }} >
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 600, lineHeight: 1.3, wordBreak: 'break-word' }}>{c.expr}</span>
               <span style={{ font: "700 10px 'JetBrains Mono'", padding: '2px 7px', borderRadius: 6, background: c.band === 'A' ? 'var(--accent)' : 'var(--surface2)', color: c.band === 'A' ? 'var(--accent-text)' : 'var(--text-2)' }}>{c.band}</span>
               <span style={{ marginLeft: 'auto' }}><Stamp url={r.url} sec={c.sec} label={c.t} /></span>
             </div>
