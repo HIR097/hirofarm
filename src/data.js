@@ -14,6 +14,7 @@ export const PAGE_TITLES = {
   calorie: ['칼로리', '당일 섭취량 기록 · 목표 대비 관리'],
   body: ['몸', '운동 · 식단 · 수면 통합 일지'],
   scratch: ['낙서장', '자유 메모'],
+  english: ['영어', '포커 브이로그 → 표현 · 문법 · 쉐도잉 · 리텔'],
 }
 
 export const HABITS = [

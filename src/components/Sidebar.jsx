@@ -44,6 +44,16 @@ function IconPulse() {
   )
 }
 
+function IconBook() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+      <path d="M9 7h7" />
+    </svg>
+  )
+}
+
 // 프로젝트 이름은 어떤 건을 다루는지 그대로 드러내므로(어느 물류센터 화재 대응인지 등)
 // 라벨·태그를 코드에 두지 않고 secure/labels.js 에서 암호화해 들여온다.
 const PROJ = (typeof window !== 'undefined' && window.__HY_DATA__?.labels?.menu) || {}
@@ -55,6 +65,7 @@ export const MENU_ITEMS = [
   { key: 'calorie', label: '칼로리', Icon: IconFlame, type: 'page' },
   { key: 'body', label: '몸', Icon: IconBody, type: 'page' },
   { key: 'scratch', label: '낙서장', Icon: IconNote, type: 'page' },
+  { key: 'english', label: '영어', Icon: IconBook, type: 'page' },
   { key: 'mangrove', ...proj('mangrove'), Icon: IconStack, type: 'project', href: '/mangrove-building.html' },
   { key: 'lovelab', ...proj('lovelab'), Icon: IconPulse, type: 'project', href: '/lovelab-followers.html' },
   { key: 'cbt', ...proj('cbt'), Icon: IconNote, type: 'project', href: '/cbt.html' },
