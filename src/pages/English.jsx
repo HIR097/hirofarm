@@ -295,10 +295,217 @@ function Report({ r, progress, setProgress, onBack, mobile }) {
   )
 }
 
+// ── 퀴즈 ──
+// 모든 보고서의 표현을 모아 4지선다로 낸다. 유형 3가지(표현→뜻, 뜻→표현, 빈칸)를 섞고,
+// 표현별 정답/오답 기록(localStorage hy_eng_quiz)으로 틀린 것을 더 자주 뽑는다.
+const QUIZ_N = 10
+const shuffle = (a) => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]] } return b }
+const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+// 표현의 실제 단어들이 원문 어디에 있는지 찾아 그 구간을 빈칸으로 만든다. 못 찾으면 null.
+function cloze(quote, expr) {
+  const words = expr.replace(/\(.*?\)/g, ' ').replace(/…/g, ' ').replace(/\b(someone|someone's|something)\b/g, ' ').trim().split(/\s+/).filter((w) => w.length > 1)
+  if (!words.length) return null
+  const hits = words.map((w) => { const m = new RegExp('\\b' + esc(w) + "[\\w']*", 'i').exec(quote); return m ? [m.index, m.index + m[0].length] : null }).filter(Boolean)
+  if (!hits.length) return null
+  const start = Math.min(...hits.map((h) => h[0])), end = Math.max(...hits.map((h) => h[1]))
+  if (end - start > 60) return null
+  return quote.slice(0, start) + '______' + quote.slice(end)
+}
+
+function buildQuestions(pool, stats) {
+  // 가중 추첨: 틀린 적 많을수록, 안 본 것일수록 자주
+  const weight = (c) => { const s = stats[c.expr]; if (!s) return 1.5; return Math.max(0.3, 1 + 2 * s.ng - 0.5 * s.ok) }
+  const picked = []
+  let rest = [...pool]
+  while (picked.length < Math.min(QUIZ_N, pool.length) && rest.length) {
+    const total = rest.reduce((a, c) => a + weight(c), 0)
+    let r = Math.random() * total
+    const i = rest.findIndex((c) => (r -= weight(c)) <= 0)
+    picked.push(rest[i < 0 ? rest.length - 1 : i]); rest = rest.filter((c) => c !== picked[picked.length - 1])
+  }
+  return picked.map((c) => {
+    const others = shuffle(pool.filter((o) => o !== c && o.band === c.band).concat(pool.filter((o) => o !== c && o.band !== c.band))).slice(0, 3)
+    const kinds = ['meaning', 'expr']
+    const blank = cloze(c.quote, c.expr)
+    if (blank) kinds.push('cloze')
+    const kind = kinds[Math.floor(Math.random() * kinds.length)]
+    const opt = shuffle([c, ...others])
+    return { c, kind, blank, options: opt.map((o) => ({ c: o, label: kind === 'meaning' ? o.ko : o.expr })) }
+  })
+}
+
+function Quiz({ index, mobile }) {
+  const [pool, setPool] = useState(null)
+  const [band, setBand] = useLocalStorage('hy_eng_quiz_band', 'all')
+  const [statStr, setStatStr] = useLocalStorage('hy_eng_quiz', '{}')
+  const stats = (() => { try { return JSON.parse(statStr) || {} } catch { return {} } })()
+  const [qs, setQs] = useState(null)
+  const [i, setI] = useState(0)
+  const [chosen, setChosen] = useState(null)
+  const [misses, setMisses] = useState([])
+  const [score, setScore] = useState(0)
+
+  useEffect(() => {
+    Promise.all(index.videos.map((v) => fetch(`/english/reports/${v.id}.json?cb=` + Date.now()).then((r) => r.json())))
+      .then((rs) => setPool(rs.flatMap((r) => r.chunks.map((c) => ({ ...c, videoId: r.id })))))
+      .catch(() => setPool([]))
+  }, [index])
+
+  const filtered = pool ? pool.filter((c) => band === 'all' || c.band === band) : []
+  const start = () => { setQs(buildQuestions(filtered, stats)); setI(0); setChosen(null); setMisses([]); setScore(0) }
+  const seen = pool ? pool.filter((c) => stats[c.expr]).length : 0
+  const weak = pool ? pool.filter((c) => stats[c.expr] && stats[c.expr].ng > stats[c.expr].ok).length : 0
+
+  const answer = (o) => {
+    if (chosen) return
+    const q = qs[i], ok = o.c === q.c
+    setChosen(o)
+    const s = stats[q.c.expr] || { ok: 0, ng: 0 }
+    setStatStr(JSON.stringify({ ...stats, [q.c.expr]: { ok: s.ok + (ok ? 1 : 0), ng: s.ng + (ok ? 0 : 1), last: Date.now() } }))
+    if (ok) setScore(score + 1); else setMisses([...misses, q.c])
+  }
+  const next = () => { setI(i + 1); setChosen(null) }
+
+  if (!pool) return <div style={{ font: mono, color: 'var(--text-3)', padding: 20 }}>표현 모으는 중…</div>
+  if (filtered.length < 4) return <Card><div style={{ color: 'var(--text-2)', fontSize: 14 }}>퀴즈를 내려면 표현이 4개는 있어야 한다. 보고서를 더 만들자.</div></Card>
+
+  // 시작 화면
+  if (!qs)
+    return (
+      <div>
+        <Card>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
+            {[['표현', filtered.length], ['본 것', seen], ['약한 것', weak]].map(([l, n]) => (
+              <div key={l} style={{ background: 'var(--surface2)', borderRadius: 12, padding: '10px 8px', textAlign: 'center' }}>
+                <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-.02em', color: l === '약한 것' && n ? BLUE : 'var(--text)' }}>{n}</div>
+                <div style={{ font: mono, color: 'var(--text-3)' }}>{l}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 14 }}>
+            {[['all', '전체'], ['A', 'A · TOEFL'], ['B', 'B · 구어']].map(([k, l]) => (
+              <button key={k} onClick={() => setBand(k)} style={btn(band === k)}>{l}</button>
+            ))}
+          </div>
+          <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 12, lineHeight: 1.6 }}>
+            {QUIZ_N}문항. 표현→뜻 · 뜻→표현 · 빈칸 세 유형이 섞여 나온다. 틀린 표현은 다음에 더 자주 나온다.
+          </div>
+          <button onClick={start} style={{ ...btn(true), marginTop: 14, padding: '10px 22px', fontSize: 14 }}>시작</button>
+        </Card>
+        {weak > 0 && (
+          <>
+            <SectionTitle title="약한 표현" caption={`${weak}개 · 오답이 정답보다 많음`} />
+            <Card style={{ padding: '6px 18px' }}>
+              {pool.filter((c) => stats[c.expr] && stats[c.expr].ng > stats[c.expr].ok).map((c) => (
+                <div key={c.expr} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--line)', fontSize: 13 }}>
+                  <span><span style={{ fontFamily: SERIF, fontSize: 15, fontWeight: 600 }}>{c.expr}</span> <span style={{ color: 'var(--text-2)' }}>— {c.ko}</span></span>
+                  <span style={{ font: mono, color: 'var(--text-3)' }}>{stats[c.expr].ok}/{stats[c.expr].ok + stats[c.expr].ng}</span>
+                </div>
+              ))}
+            </Card>
+          </>
+        )}
+      </div>
+    )
+
+  // 결과 화면
+  if (i >= qs.length)
+    return (
+      <div>
+        <Card>
+          <div style={{ font: mono, color: 'var(--text-3)' }}>결과</div>
+          <div style={{ fontSize: 40, fontWeight: 700, letterSpacing: '-.03em', marginTop: 4 }}>
+            {score}<span style={{ fontSize: 18, color: 'var(--text-3)' }}> / {qs.length}</span>
+          </div>
+          <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+            <button onClick={start} style={btn(true)}>한 번 더</button>
+            <button onClick={() => setQs(null)} style={btn(false)}>처음으로</button>
+          </div>
+        </Card>
+        {misses.length > 0 && (
+          <>
+            <SectionTitle title="틀린 것" caption={`${misses.length}개`} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {misses.map((c) => (
+                <Card key={c.expr} style={{ padding: '14px 18px' }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+                    <span style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 600 }}>{c.expr}</span>
+                    <span style={{ marginLeft: 'auto' }}><Stamp url={index.videos.find((v) => v.id === c.videoId) ? `https://www.youtube.com/watch?v=${c.videoId}` : '#'} sec={c.sec} label={c.t} /></span>
+                  </div>
+                  {c.en && <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 14, marginTop: 6 }}>{c.en}</div>}
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>{c.ko}</div>
+                  <Quote size={14}>{c.quote}</Quote>
+                </Card>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    )
+
+  // 문제 화면
+  const q = qs[i]
+  const prompt = q.kind === 'meaning' ? '이 표현의 뜻은?' : q.kind === 'expr' ? '이 뜻에 맞는 표현은?' : '빈칸에 들어갈 표현은?'
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+        <span style={{ font: mono, color: 'var(--text-3)' }}>{i + 1} / {qs.length}</span>
+        <div style={{ flex: 1, height: 4, background: 'var(--surface2)', borderRadius: 99, overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: `${((i + (chosen ? 1 : 0)) / qs.length) * 100}%`, background: 'var(--accent)', borderRadius: 99, transition: 'width .2s' }} />
+        </div>
+        <span style={{ font: mono, color: 'var(--text-3)' }}>{score}점</span>
+        <span style={{ font: "700 10px 'JetBrains Mono'", padding: '2px 7px', borderRadius: 6, background: q.c.band === 'A' ? 'var(--accent)' : 'var(--surface2)', color: q.c.band === 'A' ? 'var(--accent-text)' : 'var(--text-2)' }}>{q.c.band}</span>
+      </div>
+      <Card>
+        <div style={{ font: mono, color: 'var(--text-3)' }}>{prompt}</div>
+        {q.kind === 'meaning' && <div style={{ fontFamily: SERIF, fontSize: mobile ? 24 : 28, fontWeight: 600, marginTop: 8, lineHeight: 1.3 }}>{q.c.expr}</div>}
+        {q.kind === 'expr' && <div style={{ fontSize: mobile ? 18 : 20, fontWeight: 600, marginTop: 8, lineHeight: 1.4 }}>{q.c.ko}{q.c.en && <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontWeight: 400, fontSize: 15, color: 'var(--text-2)', marginTop: 4 }}>{q.c.en}</div>}</div>}
+        {q.kind === 'cloze' && <div style={{ fontFamily: SERIF, fontSize: mobile ? 17 : 19, marginTop: 8, lineHeight: 1.55 }}>{q.blank}</div>}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 16 }}>
+          {q.options.map((o) => {
+            const isAns = o.c === q.c, isPick = chosen === o
+            const bg = !chosen ? 'var(--surface2)' : isAns ? 'var(--accent)' : isPick ? BLUE_BG : 'var(--surface2)'
+            const color = !chosen ? 'var(--text)' : isAns ? 'var(--accent-text)' : isPick ? BLUE : 'var(--text-3)'
+            return (
+              <button key={o.label} onClick={() => answer(o)} disabled={!!chosen}
+                style={{ textAlign: 'left', font: "500 14px 'Pretendard Variable'", fontFamily: q.kind === 'meaning' ? undefined : SERIF, fontSize: q.kind === 'meaning' ? 14 : 16, padding: '12px 14px', borderRadius: 12, border: '1px solid ' + (isPick || (chosen && isAns) ? 'transparent' : 'var(--line)'), background: bg, color, cursor: chosen ? 'default' : 'pointer', lineHeight: 1.45, transition: 'background .15s' }}>
+                {o.label}
+              </button>
+            )
+          })}
+        </div>
+        {chosen && (
+          <div style={{ marginTop: 14 }}>
+            {q.kind !== 'cloze' && <Quote size={14}>{q.c.quote}</Quote>}
+            {q.kind === 'cloze' && <div style={{ fontSize: 14, marginTop: 4 }}><span style={{ fontFamily: SERIF, fontWeight: 600 }}>{q.c.expr}</span> <span style={{ color: 'var(--text-2)' }}>— {q.c.ko}</span></div>}
+            {q.c.note && <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 8, lineHeight: 1.6 }}>{q.c.note}</div>}
+            <button onClick={next} style={{ ...btn(true), marginTop: 14, padding: '9px 20px', fontSize: 14 }}>{i + 1 < qs.length ? '다음' : '결과 보기'}</button>
+          </div>
+        )}
+      </Card>
+    </div>
+  )
+}
+
+function SubTabs({ value, onChange, items }) {
+  return (
+    <div style={{ display: 'flex', gap: 22, borderBottom: '1px solid var(--line)', margin: '0 0 16px' }}>
+      {items.map(([k, l]) => (
+        <button key={k} onClick={() => onChange(k)}
+          style={{ background: 'none', border: 'none', padding: '8px 2px 10px', font: `${value === k ? 600 : 500} 14px 'Pretendard Variable'`, color: value === k ? 'var(--text)' : 'var(--text-3)', borderBottom: '2px solid ' + (value === k ? 'var(--text)' : 'transparent'), marginBottom: -1, cursor: 'pointer' }}>
+          {l}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export default function English() {
   const mobile = useIsMobile()
   const [index, setIndex] = useState(null)
   const [err, setErr] = useState('')
+  const [sub, setSub] = useLocalStorage('hy_eng_sub', 'reports')
   const [openId, setOpenId] = useLocalStorage('hy_eng_open', '')
   const [report, setReport] = useState(null)
   const [progStr, setProgStr] = useLocalStorage('hy_eng_progress', '{}')
@@ -336,11 +543,14 @@ export default function English() {
         )}
       </div>
 
+      <SubTabs value={sub} onChange={setSub} items={[['reports', '보고서'], ['quiz', '퀴즈']]} />
+
       {err && <Card><div style={{ color: 'var(--text-2)', fontSize: 14 }}>{err}</div></Card>}
       {!index && !err && <div style={{ font: mono, color: 'var(--text-3)', padding: 20 }}>불러오는 중…</div>}
-      {index && !openId && <VideoList index={index} progress={progress} onOpen={setOpenId} />}
-      {index && openId && !report && <div style={{ font: mono, color: 'var(--text-3)', padding: 20 }}>보고서 여는 중…</div>}
-      {report && <Report r={report} progress={progress} setProgress={setProgress} onBack={() => setOpenId('')} mobile={mobile} />}
+      {index && sub === 'quiz' && <Quiz index={index} mobile={mobile} />}
+      {index && sub === 'reports' && !openId && <VideoList index={index} progress={progress} onOpen={setOpenId} />}
+      {index && sub === 'reports' && openId && !report && <div style={{ font: mono, color: 'var(--text-3)', padding: 20 }}>보고서 여는 중…</div>}
+      {sub === 'reports' && report && <Report r={report} progress={progress} setProgress={setProgress} onBack={() => setOpenId('')} mobile={mobile} />}
     </div>
   )
 }
