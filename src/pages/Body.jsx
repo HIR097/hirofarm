@@ -339,6 +339,33 @@ function TimeField({ value, onCommit, style }) {
   )
 }
 
+// ── 숫자(0~10) / 짧은 글 입력 — 타임라인 항목 type: 'num' | 'text'. 값은 times[k]에 문자열로 저장 ──
+function ValueField({ kind, value, onCommit, placeholder, style }) {
+  const [draft, setDraft] = useState(value || '')
+  useEffect(() => setDraft(value || ''), [value])
+  const commit = () => {
+    let v = draft.trim()
+    if (kind === 'num') {
+      const d = v.replace(/[^\d]/g, '')
+      v = d ? String(Math.min(10, parseInt(d, 10))) : ''
+    }
+    setDraft(v)
+    onCommit(v)
+  }
+  return (
+    <input
+      type="text"
+      inputMode={kind === 'num' ? 'numeric' : 'text'}
+      placeholder={placeholder}
+      value={draft}
+      onChange={(ev) => setDraft(kind === 'num' ? ev.target.value.replace(/[^\d]/g, '').slice(0, 2) : ev.target.value.slice(0, 40))}
+      onBlur={commit}
+      onKeyDown={(ev) => ev.key === 'Enter' && ev.currentTarget.blur()}
+      style={style}
+    />
+  )
+}
+
 export default function Body() {
   const data = (typeof window !== 'undefined' && window.__HY_DATA__?.body) || null
   const isMobile = useIsMobile()
@@ -552,6 +579,25 @@ export default function Body() {
                           />
                         ) : (
                           <span style={{ font: "500 10px 'JetBrains Mono'", color: time ? 'var(--text-2)' : 'var(--text-3)' }}>{time || '·'}</span>
+                        ))}
+                      {(it.type === 'num' || it.type === 'text') &&
+                        (future ? (
+                          <span style={{ font: "500 10px 'JetBrains Mono'", color: 'var(--text-3)' }}>—</span>
+                        ) : isT ? (
+                          <ValueField
+                            kind={it.type}
+                            value={time}
+                            placeholder={it.ph || (it.type === 'num' ? '0~10' : '')}
+                            onCommit={(v) => setTimeAt(dkey, it.k, v)}
+                            style={{ ...field, padding: '3px 4px', width: it.type === 'num' ? 46 : Math.max(72, colW(d) - 12), font: "500 11px 'JetBrains Mono'", textAlign: 'center' }}
+                          />
+                        ) : (
+                          <span
+                            title={time}
+                            style={{ font: "500 10px 'JetBrains Mono'", color: time ? 'var(--text-2)' : 'var(--text-3)', maxWidth: colW(d) - 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                          >
+                            {time || '·'}
+                          </span>
                         ))}
                     </span>
                   )
