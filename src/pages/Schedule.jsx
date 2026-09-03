@@ -102,12 +102,6 @@ export default function Schedule() {
   const todayKey = dayKey(new Date())
   const [sel, setSel] = useState(todayKey)
 
-  // ── 스케줄 저장소 ──
-  const [week, saveWeek] = useJsonStorage('hy_sched_week', EMPTY)
-  const [done, saveDone] = useJsonStorage('hy_sched_done', EMPTY)
-  const [stamp, setStamp] = useLocalStorage('hy_sched_stamp', '')
-  const [syncMsg, setSyncMsg] = useState('')
-
   // ── 몸 탭 저장소 (할 일 = 몸 탭 타임라인) ──
   const [bodyLog, saveBodyLog] = useJsonStorage('hy_body_log', EMPTY)
   const [bodyReview] = useJsonStorage('hy_body_review', EMPTY)
@@ -125,47 +119,6 @@ export default function Schedule() {
   const [query, setQuery] = useState('')
   const [aiBusy, setAiBusy] = useState(false)
   const [aiError, setAiError] = useState('')
-
-  // ── 동기화: 스케줄 ──
-  const bundle = useMemo(() => ({ week, done }), [week, done])
-  const skipPush = useRef(true)
-  useEffect(() => {
-    ;(async () => {
-      if (!sync.isConfigured() || !sync.isLoggedIn()) return
-      try {
-        const remote = await sync.pull(SYNC_KEY)
-        if (remote && newer(remote.updatedAt, stamp)) {
-          skipPush.current = true
-          if (remote.value?.week) saveWeek(remote.value.week)
-          if (remote.value?.done) saveDone(remote.value.done)
-          setStamp(remote.updatedAt)
-          setSyncMsg(`${clock(remote.updatedAt)} 불러옴`)
-        }
-      } catch (e) {
-        setSyncMsg(e.message || '불러오기 실패')
-      }
-    })()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-  useEffect(() => {
-    if (skipPush.current) {
-      skipPush.current = false
-      return
-    }
-    if (!sync.isConfigured() || !sync.isLoggedIn()) return
-    const t = setTimeout(async () => {
-      try {
-        const now = new Date().toISOString()
-        await sync.push(SYNC_KEY, bundle, now)
-        setStamp(now)
-        setSyncMsg(`${clock(now)} 저장됨`)
-      } catch (e) {
-        setSyncMsg(e.message || '저장 실패')
-      }
-    }, 1500)
-    return () => clearTimeout(t)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bundle])
 
   // ── 동기화: 몸 / 칼로리 (여기서 고친 것도 각 탭과 같은 키로 올린다) ──
   const bodyTouched = useRef(false)
@@ -268,12 +221,6 @@ export default function Schedule() {
     }
   }
 
-  // ── 주간 체크 · 로드맵 ──
-  const wk = weekKey(new Date())
-  const cur = week[wk] || EMPTY
-  const setCount = (k, v) => saveWeek({ ...week, [wk]: { ...cur, [k]: Math.max(0, v) } })
-  const doneCount = data.quarters.reduce((a, q) => a + q.items.filter((it) => done[it.k]).length, 0)
-  const totalCount = data.quarters.reduce((a, q) => a + q.items.length, 0)
   const st = dayStatus(sel)
   const selFuture = sel > todayKey
   const statusColor = st.perfect || st.kept ? GREEN : st.some ? AMBER : 'var(--text-3)'
@@ -391,58 +338,9 @@ export default function Schedule() {
         </div>
       </div>
 
-      {/* 3. 목표 (이번 주 횟수·D-day 카드는 26-09-04 사용자 요청으로 뺌. 큰 날짜는 달력에만) */}
-      <div style={{ ...card, marginTop: 14 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 8 }}>
-          <div style={h2}>2027년 말 목표</div>
-          <span style={{ fontSize: 11, color: 'var(--text-3)' }}>측정 가능한 것만 · 지금 → 목표 · 부채·INSEAD 숫자는 인생플랜이 원본</span>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, minmax(0, 1fr))', gap: 8, marginTop: 10 }}>
-          {data.goals.map((g) => (
-            <div key={g.k} style={{ display: 'flex', gap: 8, background: 'var(--surface2)', borderRadius: 12, padding: '9px 11px', minWidth: 0 }}>
-              <span style={{ width: 4, borderRadius: 2, background: COLOR[g.color] || 'var(--accent)', flex: 'none' }} />
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 700 }}>{g.title} <span style={{ fontSize: 10.5, color: 'var(--text-3)', fontWeight: 500, marginLeft: 4 }}>{g.now}</span></div>
-                <div style={{ fontSize: 12, marginTop: 2, lineHeight: 1.45 }}>{g.target}</div>
-                <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginTop: 2, lineHeight: 1.4 }}>{g.why}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* 5. 분기 로드맵 — 5열 */}
-      <div style={card}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 8 }}>
-          <div style={h2}>분기 로드맵 <span style={{ ...mono, fontSize: 12, color: 'var(--text-3)', fontWeight: 500, marginLeft: 8 }}>{doneCount}/{totalCount}</span></div>
-          <span style={{ fontSize: 11, color: 'var(--text-3)' }}>끝낸 것은 눌러서 체크 · 못 한 항목은 지우지 말고 다음 분기로</span>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(5, minmax(0, 1fr))', gap: 8, marginTop: 10 }}>
-          {data.quarters.map((q) => {
-            const n = q.items.filter((it) => done[it.k]).length
-            return (
-              <div key={q.k} style={{ background: 'var(--surface2)', borderRadius: 12, padding: '10px 11px', minWidth: 0 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 6 }}>
-                  <div style={{ fontSize: 12.5, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{q.title}</div>
-                  <span style={{ ...mono, fontSize: 11, color: n === q.items.length ? GREEN : 'var(--text-3)', flex: 'none' }}>{n}/{q.items.length}</span>
-                </div>
-                <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginBottom: 4 }}>{q.theme}</div>
-                {q.items.map((it) => {
-                  const on = !!done[it.k]
-                  return (
-                    <div key={it.k} onClick={() => saveDone({ ...done, [it.k]: !on })} style={{ display: 'flex', gap: 6, alignItems: 'flex-start', padding: '5px 0', cursor: 'pointer', borderTop: '1px solid var(--line)' }}>
-                      <span style={{ width: 14, height: 14, borderRadius: 4, flex: 'none', marginTop: 2, border: on ? 'none' : '1.5px solid var(--line)', background: on ? 'var(--accent)' : 'transparent', color: 'var(--accent-text)', fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{on ? '✓' : ''}</span>
-                      <span style={{ fontSize: 11.5, lineHeight: 1.45, color: on ? 'var(--text-3)' : 'var(--text)', textDecoration: on ? 'line-through' : 'none' }}>{it.label}</span>
-                    </div>
-                  )
-                })}
-              </div>
-            )
-          })}
-        </div>
-      </div>
+      {/* 목표·분기 로드맵·주간 배치도는 '목표' 탭으로 옮김 (26-09-04, 회사에서 홈을 열어도 안 보이게) */}
       <div style={{ fontSize: 11, color: 'var(--text-3)', lineHeight: 1.6 }}>
-        할 일은 몸 탭 타임라인과 같은 기록이고, 칼로리는 칼로리 탭과 같은 기록. 매매·위반은 Hiro's Crypto 투자 일지, 부채·INSEAD 는 인생플랜.
+        할 일은 몸 탭 타임라인과 같은 기록이고, 칼로리는 칼로리 탭과 같은 기록.
       </div>
     </div>
   )
