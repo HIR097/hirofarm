@@ -66,6 +66,7 @@ export const MENU_ITEMS = [
   { key: 'body', label: '몸', Icon: IconBody, type: 'page' },
   { key: 'scratch', label: '낙서장', Icon: IconNote, type: 'page' },
   { key: 'english', label: '영어', Icon: IconBook, type: 'page' },
+  { key: 'schedule', label: '스케줄', Icon: IconSchedule, type: 'page' },
   { key: 'mangrove', ...proj('mangrove'), Icon: IconStack, type: 'project', href: '/mangrove-building.html' },
   { key: 'lovelab', ...proj('lovelab'), Icon: IconPulse, type: 'project', href: '/lovelab-followers.html' },
   { key: 'cbt', ...proj('cbt'), Icon: IconNote, type: 'project', href: '/cbt.html' },

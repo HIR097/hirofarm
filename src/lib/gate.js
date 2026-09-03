@@ -16,7 +16,7 @@ const REMEMBER_DAYS = 30
 // 여기 실린 파일은 window.__HY_DATA__ 에 값을 채우는 스크립트다.
 // worklog·outlook 은 업무현황 탭과 함께 2026-08-17 삭제됐다.
 // fundSchedule 은 탭은 없어졌지만 달력이 계속 쓰므로 남긴다.
-const BOOT_DATA = ['/enc/labels.js.enc', '/enc/fundSchedule.js.enc', '/enc/finance.js.enc', '/enc/body.js.enc', '/enc/insta.js.enc']
+const BOOT_DATA = ['/enc/labels.js.enc', '/enc/fundSchedule.js.enc', '/enc/finance.js.enc', '/enc/body.js.enc', '/enc/insta.js.enc', '/enc/schedule.js.enc']
 
 const CSS = `
 .hygate{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;

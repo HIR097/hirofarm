@@ -11,6 +11,7 @@ import Calories from './pages/Calories.jsx'
 import Body from './pages/Body.jsx'
 import Scratchpad from './pages/Scratchpad.jsx'
 import English from './pages/English.jsx'
+import Schedule from './pages/Schedule.jsx'
 
 // 첫 화면. 예전엔 'home'(대시보드)이었으나 그 탭을 없애서 칼로리를 기본으로 둔다.
 const DEFAULT_TAB = 'calorie'
@@ -94,6 +95,7 @@ export default function App() {
           {tab === 'body' && <Body />}
           {tab === 'scratch' && <Scratchpad />}
           {tab === 'english' && <English />}
+          {tab === 'schedule' && <Schedule />}
         </div>
       </main>
 
