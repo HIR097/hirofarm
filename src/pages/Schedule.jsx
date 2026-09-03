@@ -4,35 +4,25 @@ import { useIsMobile } from '../hooks/useIsMobile.js'
 import { searchFoods } from '../data/foods.js'
 import { lookupFood, getApiKey } from '../lib/foodAI.js'
 import * as sync from '../lib/sync.js'
+import Calendar from './Calendar.jsx'
 
-// 스케줄 탭
-//   위: 이번 주 월~일 한 줄 — 그날 체크리스트를 다 지키면 초록, 일부면 노랑. 칼로리 목표 달성은 작은 점.
-//   아래 왼쪽: 고른 날의 체크리스트 (secure/schedule.js week.rows 에서 그 요일 행만)
-//   아래 오른쪽: 칼로리 — 칼로리 탭과 같은 저장소(hy_cal_log · hy_cal_goal)를 읽고 쓴다
-//   그 아래: 주간 체크 · 목표 · 분기 로드맵
-// 저장: hy_sched_day(날짜별 체크) · hy_sched_week(주별 횟수) · hy_sched_done(로드맵) → Supabase sync 'schedule'
-//       칼로리는 'calories' 키로 칼로리 탭과 같은 번들을 push 한다
+// 홈 탭 (파일명은 Schedule.jsx 그대로)
+//   1. 달력 — 달력 탭 그대로(일정 추가 포함). 이번 주 줄을 크게, 날짜 칸에 그날 체크 달성(초록/노랑, 완벽)과 칼로리를 칠한다.
+//      롤렉스 조건표 마감 같은 큰 날짜는 secure/schedule.js dday 에서 '목표' 일정으로 올린다.
+//   2. 왼쪽: 고른 날의 할 일 = 몸 탭 타임라인 (같은 저장소 hy_body_log 를 읽고 쓴다 → 몸 탭과 항상 같다)
+//      2/3 이상 체크 = 성공(초록), 전부 = 완벽(진한 초록 + 배지)
+//      오른쪽: 칼로리 — 칼로리 탭과 같은 저장소(hy_cal_log)
+//   3. 이번 주 횟수 · D-day · 2027 목표(4열) · 분기 로드맵(5열)
+// 저장: hy_sched_week · hy_sched_done → sync 'schedule'. 몸/칼로리 변경은 각각 'body'/'calories' 번들로도 push.
 
 const SYNC_KEY = 'schedule'
-const WEEKDAYS = ['월', '화', '수', '목', '금', '토', '일']
 const pad = (n) => String(n).padStart(2, '0')
 const dayKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-const addDays = (d, n) => {
-  const x = new Date(d)
-  x.setDate(x.getDate() + n)
-  return x
-}
 function weekKey(d) {
   const dt = new Date(d)
   const day = (dt.getDay() + 6) % 7
   dt.setDate(dt.getDate() + (6 - day))
   return dayKey(dt)
-}
-function mondayOf(d) {
-  const dt = new Date(d)
-  dt.setHours(0, 0, 0, 0)
-  dt.setDate(dt.getDate() - ((dt.getDay() + 6) % 7))
-  return dt
 }
 const newer = (a, b) => !b || Date.parse(a) > Date.parse(b)
 const clock = (iso) => {
@@ -60,15 +50,14 @@ const num = (n) => Math.round(n).toLocaleString()
 const roundQty = (q) => Math.round(q * 10) / 10
 const COLOR = { good: 'var(--good, #22c55e)', bad: 'var(--bad, #ef4444)', warn: 'var(--warn, #f59e0b)', info: 'var(--info, #3b82f6)', calm: 'var(--calm, #8b5cf6)' }
 const GREEN = '#22c55e'
-const GREEN_BG = 'rgba(34,197,94,.14)'
 const AMBER = '#f59e0b'
-const AMBER_BG = 'rgba(245,158,11,.14)'
+const PASS = 2 / 3 // 이만큼 체크하면 그날은 성공
 
-const card = { background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, padding: 18, marginBottom: 14 }
+const card = { background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, padding: 18, marginBottom: 14, minWidth: 0 }
 const h2 = { fontSize: 15, fontWeight: 700, letterSpacing: '-.01em', marginBottom: 2 }
 const sub = { fontSize: 12, color: 'var(--text-3)', marginBottom: 12, lineHeight: 1.6 }
 const mono = { fontFamily: "'JetBrains Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums' }
-const field = { background: 'var(--surface2)', border: '1px solid var(--line)', borderRadius: 10, padding: '8px 10px', color: 'var(--text)', fontSize: 13, outline: 'none', width: '100%' }
+const field = { background: 'var(--surface2)', border: '1px solid var(--line)', borderRadius: 10, padding: '8px 10px', color: 'var(--text)', fontSize: 13, outline: 'none', width: '100%', boxSizing: 'border-box' }
 const btn = { background: 'var(--surface2)', border: '1px solid var(--line)', borderRadius: 8, padding: '5px 8px', color: 'var(--text)', fontSize: 12, cursor: 'pointer' }
 
 function daysLeft(iso) {
@@ -77,18 +66,53 @@ function daysLeft(iso) {
   return Math.round((t - n) / 86400000)
 }
 
+// 작은 값 입력 (시간/숫자/글) — 몸 탭과 같은 저장 방식 (times[k] 문자열)
+function SmallField({ kind, value, placeholder, onCommit }) {
+  const [draft, setDraft] = useState(value || '')
+  useEffect(() => setDraft(value || ''), [value])
+  const commit = () => {
+    let v = draft.trim()
+    if (kind === 'time') {
+      const d = v.replace(/\D/g, '')
+      v = d ? `${pad(Math.min(23, parseInt(d.slice(0, 2) || '0', 10)))}:${pad(Math.min(59, parseInt(d.slice(2, 4) || '0', 10)))}` : ''
+    } else if (kind === 'num') {
+      const d = v.replace(/[^\d]/g, '')
+      v = d ? String(Math.min(99, parseInt(d, 10))) : ''
+    }
+    setDraft(v)
+    onCommit(v)
+  }
+  return (
+    <input
+      value={draft}
+      placeholder={placeholder}
+      inputMode={kind === 'text' ? 'text' : 'numeric'}
+      onChange={(e) => setDraft(kind === 'text' ? e.target.value.slice(0, 40) : e.target.value.replace(/[^\d:]/g, '').slice(0, 5))}
+      onBlur={commit}
+      onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+      style={{ ...field, width: kind === 'text' ? 120 : 62, padding: '4px 6px', font: "500 11px 'JetBrains Mono'", textAlign: 'center' }}
+    />
+  )
+}
+
 export default function Schedule() {
   const data = (typeof window !== 'undefined' && window.__HY_DATA__?.schedule) || null
+  const body = (typeof window !== 'undefined' && window.__HY_DATA__?.body) || null
   const isMobile = useIsMobile()
   const todayKey = dayKey(new Date())
   const [sel, setSel] = useState(todayKey)
 
   // ── 스케줄 저장소 ──
-  const [dayLog, saveDayLog] = useJsonStorage('hy_sched_day', EMPTY)
   const [week, saveWeek] = useJsonStorage('hy_sched_week', EMPTY)
   const [done, saveDone] = useJsonStorage('hy_sched_done', EMPTY)
   const [stamp, setStamp] = useLocalStorage('hy_sched_stamp', '')
   const [syncMsg, setSyncMsg] = useState('')
+
+  // ── 몸 탭 저장소 (할 일 = 몸 탭 타임라인) ──
+  const [bodyLog, saveBodyLog] = useJsonStorage('hy_body_log', EMPTY)
+  const [bodyReview] = useJsonStorage('hy_body_review', EMPTY)
+  const [bodyIssues] = useJsonStorage('hy_body_issues', EMPTY)
+  const [, setBodyStamp] = useLocalStorage('hy_body_stamp', '')
 
   // ── 칼로리 저장소 (칼로리 탭과 동일 키) ──
   const [calLog, saveCalLog] = useJsonStorage('hy_cal_log', EMPTY)
@@ -102,8 +126,8 @@ export default function Schedule() {
   const [aiBusy, setAiBusy] = useState(false)
   const [aiError, setAiError] = useState('')
 
-  // ── 동기화 (스케줄) ──
-  const bundle = useMemo(() => ({ dayLog, week, done }), [dayLog, week, done])
+  // ── 동기화: 스케줄 ──
+  const bundle = useMemo(() => ({ week, done }), [week, done])
   const skipPush = useRef(true)
   useEffect(() => {
     ;(async () => {
@@ -112,7 +136,6 @@ export default function Schedule() {
         const remote = await sync.pull(SYNC_KEY)
         if (remote && newer(remote.updatedAt, stamp)) {
           skipPush.current = true
-          if (remote.value?.dayLog) saveDayLog(remote.value.dayLog)
           if (remote.value?.week) saveWeek(remote.value.week)
           if (remote.value?.done) saveDone(remote.value.done)
           setStamp(remote.updatedAt)
@@ -144,55 +167,75 @@ export default function Schedule() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bundle])
 
-  // ── 동기화 (칼로리 — 여기서 고친 것도 칼로리 탭과 같은 키로 올린다) ──
+  // ── 동기화: 몸 / 칼로리 (여기서 고친 것도 각 탭과 같은 키로 올린다) ──
+  const bodyTouched = useRef(false)
+  useEffect(() => {
+    if (!bodyTouched.current || !sync.isConfigured() || !sync.isLoggedIn()) return
+    const t = setTimeout(async () => {
+      try {
+        const now = new Date().toISOString()
+        await sync.push('body', { log: bodyLog, review: bodyReview, issues: bodyIssues }, now)
+        setBodyStamp(now)
+      } catch { /* 몸 탭에서 다시 올라간다 */ }
+    }, 1500)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bodyLog])
   const calTouched = useRef(false)
   useEffect(() => {
-    if (!calTouched.current) return
-    if (!sync.isConfigured() || !sync.isLoggedIn()) return
+    if (!calTouched.current || !sync.isConfigured() || !sync.isLoggedIn()) return
     const t = setTimeout(async () => {
       try {
         const now = new Date().toISOString()
         await sync.push('calories', { log: calLog, goal: goalStr, proteinGoal: proteinGoalStr, aiFoods: customFoods }, now)
         setCalStamp(now)
-      } catch {
-        /* 칼로리 탭에서 다시 올라간다 */
-      }
+      } catch { /* 칼로리 탭에서 다시 올라간다 */ }
     }, 1500)
     return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [calLog])
 
-  if (!data) {
-    return <div style={{ color: 'var(--text-3)', padding: 20 }}>스케줄 데이터가 없습니다 (secure/schedule.js 잠금 해제 필요)</div>
+  if (!data || !body) {
+    return <div style={{ color: 'var(--text-3)', padding: 20 }}>홈 데이터가 없습니다 (secure/schedule.js · body.js 잠금 해제 필요)</div>
   }
 
-  // ── 날짜 계산 ──
-  const monday = mondayOf(new Date())
-  const weekDays = [0, 1, 2, 3, 4, 5, 6].map((i) => addDays(monday, i))
-  const selDate = new Date(sel + 'T00:00:00')
-  const selIdx = (selDate.getDay() + 6) % 7
-  const rowsFor = (idx) => data.week.rows.filter((r) => r.days[idx])
-  const dayStatus = (dkey, idx) => {
-    const rows = rowsFor(idx)
-    const checks = dayLog[dkey] || EMPTY
-    const n = rows.filter((r) => checks[r.k]).length
-    return { n, total: rows.length, kept: rows.length > 0 && n === rows.length, some: n > 0 }
+  // ── 할 일 (몸 탭 타임라인) ──
+  const items = body.timeline
+  const checksOf = (dkey) => (bodyLog[dkey] || EMPTY).checks || EMPTY
+  const timesOf = (dkey) => (bodyLog[dkey] || EMPTY).times || EMPTY
+  const dayStatus = (dkey) => {
+    const c = checksOf(dkey)
+    const n = items.filter((it) => c[it.k]).length
+    const total = items.length
+    return { n, total, perfect: total > 0 && n === total, kept: total > 0 && n / total >= PASS && n < total, some: n > 0 && n / total < PASS }
   }
   const calSum = (dkey) => {
-    const items = calLog[dkey] || EMPTY_LIST
-    return {
-      kcal: items.reduce((s, it) => s + it.kcal * it.qty, 0),
-      protein: items.reduce((s, it) => s + (it.protein || 0) * it.qty, 0),
-    }
+    const list = calLog[dkey] || EMPTY_LIST
+    return { kcal: list.reduce((s, it) => s + it.kcal * it.qty, 0), protein: list.reduce((s, it) => s + (it.protein || 0) * it.qty, 0) }
   }
-  const toggleDay = (dkey, k) => {
+  const toggle = (dkey, k) => {
     if (dkey > todayKey) return
-    const e = dayLog[dkey] || EMPTY
-    saveDayLog({ ...dayLog, [dkey]: { ...e, [k]: !e[k] } })
+    bodyTouched.current = true
+    const e = bodyLog[dkey] || EMPTY
+    saveBodyLog({ ...bodyLog, [dkey]: { ...e, checks: { ...(e.checks || EMPTY), [k]: !(e.checks || EMPTY)[k] } } })
   }
+  const setTime = (dkey, k, v) => {
+    if (dkey > todayKey) return
+    bodyTouched.current = true
+    const e = bodyLog[dkey] || EMPTY
+    saveBodyLog({ ...bodyLog, [dkey]: { ...e, times: { ...(e.times || EMPTY), [k]: v } } })
+  }
+  const dayDecor = (iso) => {
+    const st = dayStatus(iso)
+    const cs = calSum(iso)
+    if (iso > todayKey) return null
+    return { ...st, kcal: cs.kcal, kcalOk: goal > 0 && cs.kcal >= goal }
+  }
+  // 달력에 올릴 큰 날짜 (secure/schedule.js dday)
+  const extra = useMemo(() => data.dday.map((d) => ({ id: `dd_${d.k}`, title: d.label, from: d.date, kind: 'goal', action: d.note ? [d.note] : [] })), [data])
 
-  // ── 칼로리 조작 (칼로리 탭 addFood 와 같은 규칙: 같은 음식은 수량 +1) ──
-  const items = calLog[sel] || EMPTY_LIST
+  // ── 칼로리 조작 ──
+  const foods = calLog[sel] || EMPTY_LIST
   const total = calSum(sel)
   const updateSel = (list) => {
     calTouched.current = true
@@ -200,16 +243,16 @@ export default function Schedule() {
   }
   const addFood = (food) => {
     if (!food) return
-    const at = items.findIndex((it) => it.name === food.n && it.kcal === food.k)
+    const at = foods.findIndex((it) => it.name === food.n && it.kcal === food.k)
     const next = at >= 0
-      ? items.map((it, i) => (i === at ? { ...it, qty: roundQty(it.qty + 1) } : it))
-      : [...items, { id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, name: food.n, unit: food.u, kcal: food.k, protein: food.p || 0, qty: 1 }]
+      ? foods.map((it, i) => (i === at ? { ...it, qty: roundQty(it.qty + 1) } : it))
+      : [...foods, { id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, name: food.n, unit: food.u, kcal: food.k, protein: food.p || 0, qty: 1 }]
     updateSel(next)
     setQuery('')
     setAiError('')
   }
-  const setQty = (id, delta) => updateSel(items.map((it) => (it.id === id ? { ...it, qty: roundQty(it.qty + delta) } : it)).filter((it) => it.qty > 0))
-  const removeItem = (id) => updateSel(items.filter((it) => it.id !== id))
+  const setQty = (id, delta) => updateSel(foods.map((it) => (it.id === id ? { ...it, qty: roundQty(it.qty + delta) } : it)).filter((it) => it.qty > 0))
+  const removeItem = (id) => updateSel(foods.filter((it) => it.id !== id))
   const matches = query.trim() ? searchFoods(query, 6, customFoods) : []
   const askAI = async () => {
     const q = query.trim()
@@ -217,8 +260,7 @@ export default function Schedule() {
     setAiBusy(true)
     setAiError('')
     try {
-      const food = await lookupFood(q)
-      addFood(food)
+      addFood(await lookupFood(q))
     } catch (e) {
       setAiError(e.message || 'AI 검색 실패')
     } finally {
@@ -226,94 +268,62 @@ export default function Schedule() {
     }
   }
 
-  // ── 주간 체크 ──
+  // ── 주간 체크 · 로드맵 ──
   const wk = weekKey(new Date())
   const cur = week[wk] || EMPTY
   const setCount = (k, v) => saveWeek({ ...week, [wk]: { ...cur, [k]: Math.max(0, v) } })
   const doneCount = data.quarters.reduce((a, q) => a + q.items.filter((it) => done[it.k]).length, 0)
   const totalCount = data.quarters.reduce((a, q) => a + q.items.length, 0)
-  const selRows = rowsFor(selIdx)
-  const selStatus = dayStatus(sel, selIdx)
+  const st = dayStatus(sel)
+  const selFuture = sel > todayKey
+  const statusColor = st.perfect || st.kept ? GREEN : st.some ? AMBER : 'var(--text-3)'
 
   return (
-    <div style={{ maxWidth: 1080 }}>
-      {/* ── 이번 주 한 줄 ── */}
-      <div style={{ ...card, padding: isMobile ? 12 : 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
-          <div style={h2}>이번 주 <span style={{ ...mono, fontSize: 12, color: 'var(--text-3)', fontWeight: 500, marginLeft: 6 }}>{dayKey(monday)} ~ {dayKey(weekDays[6])}</span></div>
-          <div style={{ fontSize: 11, color: 'var(--text-3)' }}>
-            <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: 3, background: GREEN, verticalAlign: -1, marginRight: 4 }} />다 지킴
-            <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: 3, background: AMBER, verticalAlign: -1, margin: '0 4px 0 10px' }} />일부
-            <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 4, background: GREEN, verticalAlign: 0, margin: '0 4px 0 10px' }} />칼로리 목표 달성
-            {syncMsg && <span style={{ marginLeft: 10 }}>· {syncMsg}</span>}
-          </div>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: isMobile ? 4 : 8 }}>
-          {weekDays.map((d, i) => {
-            const dkey = dayKey(d)
-            const st = dayStatus(dkey, i)
-            const cs = calSum(dkey)
-            const future = dkey > todayKey
-            const isSel = dkey === sel
-            const bg = future ? 'transparent' : st.kept ? GREEN_BG : st.some ? AMBER_BG : 'var(--surface2)'
-            const border = isSel ? 'var(--accent)' : st.kept ? GREEN : st.some ? AMBER : 'var(--line)'
-            return (
-              <div
-                key={dkey}
-                onClick={() => setSel(dkey)}
-                style={{ borderRadius: 12, padding: isMobile ? '8px 4px' : '12px 10px', background: bg, border: `1.5px solid ${border}`, cursor: 'pointer', opacity: future ? 0.55 : 1, textAlign: 'center', minHeight: isMobile ? 64 : 84 }}
-              >
-                <div style={{ fontSize: 11, color: dkey === todayKey ? 'var(--accent)' : 'var(--text-3)', fontWeight: 700 }}>{WEEKDAYS[i]}{dkey === todayKey ? ' · 오늘' : ''}</div>
-                <div style={{ ...mono, fontSize: isMobile ? 15 : 20, fontWeight: 700, marginTop: 2 }}>{d.getDate()}</div>
-                <div style={{ ...mono, fontSize: 10, color: st.kept ? GREEN : st.some ? AMBER : 'var(--text-3)', marginTop: 2 }}>{future ? `${st.total}개` : `${st.n}/${st.total}`}</div>
-                {!isMobile && (
-                  <div style={{ ...mono, fontSize: 10, color: 'var(--text-3)', marginTop: 4, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 4 }}>
-                    {cs.kcal > 0 && <span style={{ width: 6, height: 6, borderRadius: 3, background: goal > 0 && cs.kcal >= goal ? GREEN : 'var(--line)' }} />}
-                    {cs.kcal > 0 ? `${num(cs.kcal)}` : '·'}
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      </div>
+    <div style={{ width: '100%', minWidth: 0 }}>
+      {/* 1. 달력 */}
+      <Calendar embedded extra={extra} dayDecor={dayDecor} onDayPick={setSel} />
 
-      {/* ── 두 열: 체크리스트 / 칼로리 ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14 }}>
-        <div style={card}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <div style={h2}>{sel === todayKey ? '오늘 할 일' : `${sel} 할 일`} <span style={{ ...mono, fontSize: 12, fontWeight: 500, color: selStatus.kept ? GREEN : 'var(--text-3)', marginLeft: 6 }}>{selStatus.n}/{selStatus.total}</span></div>
-            <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{WEEKDAYS[selIdx]}요일 루틴</span>
+      {/* 2. 할 일 / 칼로리 */}
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14, marginTop: 14 }}>
+        <div style={{ ...card, ...(st.perfect ? { borderColor: GREEN, boxShadow: `0 0 0 1px ${GREEN}` } : null) }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+            <div style={h2}>
+              {sel === todayKey ? '오늘 할 일' : `${sel} 할 일`}
+              <span style={{ ...mono, fontSize: 12, fontWeight: 500, color: statusColor, marginLeft: 6 }}>{st.n}/{st.total}</span>
+            </div>
+            <span style={{ fontSize: 11, fontWeight: 700, color: statusColor, background: st.perfect ? 'color-mix(in srgb, #22c55e 22%, var(--surface))' : 'transparent', borderRadius: 999, padding: st.perfect ? '3px 10px' : 0 }}>
+              {st.perfect ? '✦ 완벽한 하루' : st.kept ? '성공 (2/3 이상)' : st.some ? `성공까지 ${Math.ceil(st.total * PASS) - st.n}개` : '몸 탭 루틴'}
+            </span>
           </div>
-          <div style={sub}>다 체크하면 위 달력이 초록이 된다. 몸 상태·매매 세부는 몸 탭과 투자 일지에.</div>
-          {selRows.map((r) => {
-            const on = !!(dayLog[sel] || EMPTY)[r.k]
-            const future = sel > todayKey
+          <div style={sub}>몸 탭과 같은 체크. {Math.ceil(items.length * PASS)}개 이상이면 그날은 성공, 전부면 완벽. 달력에 색으로 남는다.</div>
+          {items.map((it) => {
+            const on = !!checksOf(sel)[it.k]
+            const val = timesOf(sel)[it.k] || ''
             return (
-              <div key={r.k} onClick={() => toggleDay(sel, r.k)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 2px', borderTop: '1px solid var(--line)', cursor: future ? 'default' : 'pointer', opacity: future ? 0.5 : 1 }}>
-                <span style={{ width: 22, height: 22, borderRadius: 7, flex: 'none', border: on ? 'none' : '1.5px solid var(--line)', background: on ? 'var(--accent)' : 'transparent', color: 'var(--accent-text)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700 }}>{on ? '✓' : ''}</span>
-                <span style={{ ...mono, fontSize: 11, color: 'var(--text-3)', width: 40, flex: 'none' }}>{r.slot}</span>
-                <span style={{ fontSize: 13, flex: 1, color: on ? 'var(--text-3)' : 'var(--text)', textDecoration: on ? 'line-through' : 'none' }} title={r.label}>{r.short}</span>
-                <span style={{ fontSize: 10, color: 'var(--text-3)', flex: 'none' }}>{r.tag}</span>
+              <div key={it.k} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 2px', borderTop: '1px solid var(--line)', opacity: selFuture ? 0.5 : 1 }}>
+                <span onClick={() => toggle(sel, it.k)} style={{ width: 22, height: 22, borderRadius: 7, flex: 'none', border: on ? 'none' : '1.5px solid var(--line)', background: on ? 'var(--accent)' : 'transparent', color: 'var(--accent-text)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, cursor: selFuture ? 'default' : 'pointer' }}>{on ? '✓' : ''}</span>
+                <span onClick={() => toggle(sel, it.k)} style={{ fontSize: 13, flex: 1, minWidth: 0, color: on ? 'var(--text-3)' : 'var(--text)', textDecoration: on ? 'line-through' : 'none', cursor: selFuture ? 'default' : 'pointer' }} title={it.label}>
+                  <b>{it.short}</b>
+                  {!isMobile && <span style={{ color: 'var(--text-3)', fontSize: 11.5 }}> — {it.label.length > 46 ? it.label.slice(0, 46) + '…' : it.label}</span>}
+                </span>
+                {it.type && !selFuture && <SmallField kind={it.type} value={val} placeholder={it.ph || ''} onCommit={(v) => setTime(sel, it.k, v)} />}
+                {it.type && selFuture && <span style={{ ...mono, fontSize: 11, color: 'var(--text-3)' }}>—</span>}
               </div>
             )
           })}
         </div>
 
         <div style={card}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <div style={h2}>칼로리 <span style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 500, marginLeft: 6 }}>칼로리 탭과 같은 기록</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+            <div style={h2}>칼로리 <span style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 500, marginLeft: 6 }}>{sel === todayKey ? '오늘' : sel} · 칼로리 탭과 같은 기록</span></div>
             <span style={{ fontSize: 11, color: 'var(--text-3)' }}>목표 <b style={mono}>{num(goal)}</b> kcal · 단백질 <b style={mono}>{pGoal}</b>g</span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, margin: '10px 0' }}>
-            {[
-              ['섭취', total.kcal, goal, 'kcal'],
-              ['단백질', total.protein, pGoal, 'g'],
-            ].map(([lbl, v, g, unit]) => {
+            {[['섭취', total.kcal, goal, 'kcal'], ['단백질', total.protein, pGoal, 'g']].map(([lbl, v, g, unit]) => {
               const ok = g > 0 && v >= g
               const pct = g > 0 ? Math.min(100, Math.round((v / g) * 100)) : 0
               return (
-                <div key={lbl} style={{ background: 'var(--surface2)', borderRadius: 12, padding: '10px 12px' }}>
+                <div key={lbl} style={{ background: 'var(--surface2)', borderRadius: 12, padding: '10px 12px', minWidth: 0 }}>
                   <div style={{ fontSize: 11, color: 'var(--text-3)' }}>{lbl}</div>
                   <div style={{ ...mono, fontSize: 20, fontWeight: 700, color: ok ? GREEN : 'var(--text)' }}>{num(v)} <span style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 500 }}>{unit}</span></div>
                   <div style={{ height: 5, borderRadius: 3, background: 'var(--line)', marginTop: 6, overflow: 'hidden' }}>
@@ -340,9 +350,9 @@ export default function Schedule() {
             {matches.length > 0 && (
               <div style={{ position: 'absolute', left: 0, right: 0, top: '100%', zIndex: 5, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 10, marginTop: 4, overflow: 'hidden' }}>
                 {matches.map((f) => (
-                  <div key={f.n + f.k} onClick={() => addFood(f)} style={{ padding: '8px 10px', cursor: 'pointer', borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', fontSize: 12.5 }}>
-                    <span>{f.n} <span style={{ color: 'var(--text-3)', fontSize: 11 }}>{f.u}</span></span>
-                    <span style={{ ...mono, color: 'var(--text-3)', fontSize: 11 }}>{num(f.k)} kcal · P{f.p ?? 0}</span>
+                  <div key={f.n + f.k} onClick={() => addFood(f)} style={{ padding: '8px 10px', cursor: 'pointer', borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 12.5 }}>
+                    <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.n} <span style={{ color: 'var(--text-3)', fontSize: 11 }}>{f.u}</span></span>
+                    <span style={{ ...mono, color: 'var(--text-3)', fontSize: 11, flex: 'none' }}>{num(f.k)} kcal · P{f.p ?? 0}</span>
                   </div>
                 ))}
               </div>
@@ -355,17 +365,17 @@ export default function Schedule() {
             </div>
           )}
           <div style={{ marginTop: 10 }}>
-            {items.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-3)', padding: '8px 0' }}>아직 기록 없음</div>}
-            {items.map((it) => (
-              <div key={it.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 0', borderTop: '1px solid var(--line)' }}>
+            {foods.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-3)', padding: '8px 0' }}>아직 기록 없음</div>}
+            {foods.map((it) => (
+              <div key={it.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 0', borderTop: '1px solid var(--line)' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.name}</div>
                   <div style={{ fontSize: 10.5, color: 'var(--text-3)' }}>{it.unit || ''} · {num(it.kcal)} kcal · {it.protein ?? 0}g</div>
                 </div>
                 <button onClick={() => setQty(it.id, -0.5)} style={btn}>−</button>
-                <span style={{ ...mono, fontSize: 13, width: 30, textAlign: 'center' }}>{it.qty}</span>
+                <span style={{ ...mono, fontSize: 13, width: 28, textAlign: 'center' }}>{it.qty}</span>
                 <button onClick={() => setQty(it.id, 0.5)} style={btn}>+</button>
-                <span style={{ ...mono, fontSize: 13, fontWeight: 700, width: 48, textAlign: 'right' }}>{num(it.kcal * it.qty)}</span>
+                <span style={{ ...mono, fontSize: 13, fontWeight: 700, width: 46, textAlign: 'right' }}>{num(it.kcal * it.qty)}</span>
                 <button onClick={() => removeItem(it.id)} style={{ ...btn, color: 'var(--text-3)' }}>✕</button>
               </div>
             ))}
@@ -373,20 +383,22 @@ export default function Schedule() {
         </div>
       </div>
 
-      {/* ── 주간 체크 ── */}
+      {/* 3. 이번 주 횟수 */}
       <div style={card}>
-        <div style={h2}>이번 주 횟수 · {wk} 주</div>
-        <div style={sub}>숫자를 누르면 올라간다. 일요일 15분 리뷰 때 채운다. 아래 두 개는 낮을수록 좋다.</div>
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)', gap: 8 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 8 }}>
+          <div style={h2}>이번 주 횟수 <span style={{ ...mono, fontSize: 12, color: 'var(--text-3)', fontWeight: 500, marginLeft: 6 }}>{wk} 주</span></div>
+          <span style={{ fontSize: 11, color: 'var(--text-3)' }}>숫자를 누르면 올라간다 · 일요일 15분 리뷰 때 채운다 · 마지막 둘은 낮을수록 좋다{syncMsg && ` · ${syncMsg}`}</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, minmax(0, 1fr))', gap: 8, marginTop: 10 }}>
           {data.weekly.map((w) => {
             const v = cur[w.k] || 0
             const ok = w.lower ? v <= w.goal : v >= w.goal
             return (
-              <div key={w.k} style={{ background: 'var(--surface2)', borderRadius: 12, padding: '10px 12px', border: `1px solid ${ok ? GREEN : 'var(--line)'}` }}>
-                <div style={{ fontSize: 11, color: 'var(--text-3)' }}>{w.label} <span style={mono}>/{w.goal}</span></div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+              <div key={w.k} style={{ background: 'var(--surface2)', borderRadius: 12, padding: '8px 12px', border: `1px solid ${ok ? GREEN : 'var(--line)'}`, minWidth: 0 }}>
+                <div style={{ fontSize: 11, color: 'var(--text-3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{w.label} <span style={mono}>/{w.goal}</span></div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
                   <span onClick={() => setCount(w.k, v - 1)} style={{ cursor: 'pointer', color: 'var(--text-3)', fontSize: 16, userSelect: 'none' }}>−</span>
-                  <span onClick={() => setCount(w.k, v + 1)} style={{ ...mono, fontSize: 22, fontWeight: 700, cursor: 'pointer', color: ok ? GREEN : 'var(--text)', userSelect: 'none' }}>{v}</span>
+                  <span onClick={() => setCount(w.k, v + 1)} style={{ ...mono, fontSize: 20, fontWeight: 700, cursor: 'pointer', color: ok ? GREEN : 'var(--text)', userSelect: 'none' }}>{v}</span>
                   <span onClick={() => setCount(w.k, v + 1)} style={{ cursor: 'pointer', color: 'var(--text-3)', fontSize: 16, userSelect: 'none' }}>+</span>
                 </div>
               </div>
@@ -395,53 +407,59 @@ export default function Schedule() {
         </div>
       </div>
 
-      {/* ── D-day + 목표 ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 10, marginBottom: 14 }}>
+      {/* 4. D-day + 목표 */}
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, minmax(0, 1fr))', gap: 10, marginBottom: 14 }}>
         {data.dday.map((d) => (
-          <div key={d.k} style={{ ...card, marginBottom: 0, padding: 14 }} title={d.note}>
-            <div style={{ fontSize: 11, color: 'var(--text-3)' }}>{d.label}</div>
-            <div style={{ ...mono, fontSize: 22, fontWeight: 700, marginTop: 2 }}>D-{daysLeft(d.date)}</div>
-            <div style={{ fontSize: 11, color: 'var(--text-2)', marginTop: 2 }}>{d.date}</div>
+          <div key={d.k} style={{ ...card, marginBottom: 0, padding: '12px 14px' }} title={d.note}>
+            <div style={{ fontSize: 11, color: 'var(--text-3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.label}</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+              <span style={{ ...mono, fontSize: 20, fontWeight: 700 }}>D-{daysLeft(d.date)}</span>
+              <span style={{ ...mono, fontSize: 11, color: 'var(--text-2)' }}>{d.date}</span>
+            </div>
           </div>
         ))}
       </div>
       <div style={card}>
-        <div style={h2}>2027년 말 목표 · 측정 가능한 것만</div>
-        <div style={sub}>지금 → 목표. 부채·INSEAD 숫자는 인생플랜 페이지가 원본.</div>
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 8 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 8 }}>
+          <div style={h2}>2027년 말 목표</div>
+          <span style={{ fontSize: 11, color: 'var(--text-3)' }}>측정 가능한 것만 · 지금 → 목표 · 부채·INSEAD 숫자는 인생플랜이 원본</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, minmax(0, 1fr))', gap: 8, marginTop: 10 }}>
           {data.goals.map((g) => (
-            <div key={g.k} style={{ display: 'flex', gap: 10, background: 'var(--surface2)', borderRadius: 12, padding: '10px 12px' }}>
+            <div key={g.k} style={{ display: 'flex', gap: 8, background: 'var(--surface2)', borderRadius: 12, padding: '9px 11px', minWidth: 0 }}>
               <span style={{ width: 4, borderRadius: 2, background: COLOR[g.color] || 'var(--accent)', flex: 'none' }} />
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 700 }}>{g.title} <span style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 500, marginLeft: 6 }}>{g.now}</span></div>
-                <div style={{ fontSize: 12.5, marginTop: 2 }}>{g.target}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>{g.why}</div>
+                <div style={{ fontSize: 13, fontWeight: 700 }}>{g.title} <span style={{ fontSize: 10.5, color: 'var(--text-3)', fontWeight: 500, marginLeft: 4 }}>{g.now}</span></div>
+                <div style={{ fontSize: 12, marginTop: 2, lineHeight: 1.45 }}>{g.target}</div>
+                <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginTop: 2, lineHeight: 1.4 }}>{g.why}</div>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ── 분기 로드맵 ── */}
+      {/* 5. 분기 로드맵 — 5열 */}
       <div style={card}>
-        <div style={h2}>분기 로드맵 <span style={{ ...mono, fontSize: 12, color: 'var(--text-3)', fontWeight: 500, marginLeft: 8 }}>{doneCount}/{totalCount}</span></div>
-        <div style={sub}>끝낸 것은 눌러서 체크. 분기가 지나도 안 된 항목은 지우지 말고 다음 분기로 옮겨 적는다.</div>
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 8 }}>
+          <div style={h2}>분기 로드맵 <span style={{ ...mono, fontSize: 12, color: 'var(--text-3)', fontWeight: 500, marginLeft: 8 }}>{doneCount}/{totalCount}</span></div>
+          <span style={{ fontSize: 11, color: 'var(--text-3)' }}>끝낸 것은 눌러서 체크 · 못 한 항목은 지우지 말고 다음 분기로</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(5, minmax(0, 1fr))', gap: 8, marginTop: 10 }}>
           {data.quarters.map((q) => {
             const n = q.items.filter((it) => done[it.k]).length
             return (
-              <div key={q.k} style={{ background: 'var(--surface2)', borderRadius: 12, padding: '12px 14px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700 }}>{q.title}</div>
-                  <span style={{ ...mono, fontSize: 11, color: n === q.items.length ? GREEN : 'var(--text-3)' }}>{n}/{q.items.length}</span>
+              <div key={q.k} style={{ background: 'var(--surface2)', borderRadius: 12, padding: '10px 11px', minWidth: 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 6 }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{q.title}</div>
+                  <span style={{ ...mono, fontSize: 11, color: n === q.items.length ? GREEN : 'var(--text-3)', flex: 'none' }}>{n}/{q.items.length}</span>
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 6 }}>{q.theme}</div>
+                <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginBottom: 4 }}>{q.theme}</div>
                 {q.items.map((it) => {
                   const on = !!done[it.k]
                   return (
-                    <div key={it.k} onClick={() => saveDone({ ...done, [it.k]: !on })} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', padding: '5px 0', cursor: 'pointer', borderTop: '1px solid var(--line)' }}>
-                      <span style={{ width: 16, height: 16, borderRadius: 5, flex: 'none', marginTop: 2, border: on ? 'none' : '1.5px solid var(--line)', background: on ? 'var(--accent)' : 'transparent', color: 'var(--accent-text)', fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{on ? '✓' : ''}</span>
-                      <span style={{ fontSize: 12.5, lineHeight: 1.5, color: on ? 'var(--text-3)' : 'var(--text)', textDecoration: on ? 'line-through' : 'none' }}>{it.label}</span>
+                    <div key={it.k} onClick={() => saveDone({ ...done, [it.k]: !on })} style={{ display: 'flex', gap: 6, alignItems: 'flex-start', padding: '5px 0', cursor: 'pointer', borderTop: '1px solid var(--line)' }}>
+                      <span style={{ width: 14, height: 14, borderRadius: 4, flex: 'none', marginTop: 2, border: on ? 'none' : '1.5px solid var(--line)', background: on ? 'var(--accent)' : 'transparent', color: 'var(--accent-text)', fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{on ? '✓' : ''}</span>
+                      <span style={{ fontSize: 11.5, lineHeight: 1.45, color: on ? 'var(--text-3)' : 'var(--text)', textDecoration: on ? 'line-through' : 'none' }}>{it.label}</span>
                     </div>
                   )
                 })}
@@ -451,7 +469,7 @@ export default function Schedule() {
         </div>
       </div>
       <div style={{ fontSize: 11, color: 'var(--text-3)', lineHeight: 1.6 }}>
-        시간표 원본과 주말 규칙은 secure/schedule.js. 몸 상태는 몸 탭, 매매·위반은 Hiro's Crypto 투자 일지, 부채·INSEAD 는 인생플랜.
+        할 일은 몸 탭 타임라인과 같은 기록이고, 칼로리는 칼로리 탭과 같은 기록. 매매·위반은 Hiro's Crypto 투자 일지, 부채·INSEAD 는 인생플랜.
       </div>
     </div>
   )

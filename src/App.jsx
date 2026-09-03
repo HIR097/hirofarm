@@ -14,7 +14,7 @@ import English from './pages/English.jsx'
 import Schedule from './pages/Schedule.jsx'
 
 // 첫 화면. 예전엔 'home'(대시보드)이었으나 그 탭을 없애서 칼로리를 기본으로 둔다.
-const DEFAULT_TAB = 'calorie'
+const DEFAULT_TAB = 'home'   // 2026-09-04 홈(달력 + 오늘 할 일 + 칼로리 + 2027 플랜)
 
 export default function App() {
   // ── persisted UI state (mirrors hy_theme / hy_accent) ──
@@ -95,7 +95,7 @@ export default function App() {
           {tab === 'body' && <Body />}
           {tab === 'scratch' && <Scratchpad />}
           {tab === 'english' && <English />}
-          {tab === 'schedule' && <Schedule />}
+          {tab === 'home' && <Schedule />}
         </div>
       </main>
 

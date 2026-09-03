@@ -106,7 +106,9 @@ const mergeMaps = (...maps) => {
   return out
 }
 
-export default function Calendar() {
+// embedded: 홈 탭 안에 들어갈 때 — 이번 주 줄을 크게, 날짜 칸에 dayDecor(iso) 결과(kept/perfect/kcal)를 칠하고 onDayPick(iso) 로 알린다.
+// extra: 홈 탭이 넘기는 추가 일정(롤렉스 조건표 마감 같은 것) — {from, to?, title, kind} 목록
+export default function Calendar({ embedded = false, extra = null, dayDecor = null, onDayPick = null } = {}) {
   const today = useMemo(() => new Date(), [])
   const [cur, setCur] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1))
   const [showWork, setShowWork] = useState(false)
@@ -157,9 +159,10 @@ export default function Calendar() {
     return m
   }, [month, showWork])
 
+  const extraMap = useMemo(() => spreadRanges(extra, year, month), [extra, year, month])
   const merged = useMemo(
-    () => mergeMaps(rangeMap, myMap, instaMap, finMap, workMap),
-    [rangeMap, myMap, instaMap, finMap, workMap],
+    () => mergeMaps(rangeMap, myMap, extraMap, instaMap, finMap, workMap),
+    [rangeMap, myMap, extraMap, instaMap, finMap, workMap],
   )
   const dayEvents = (d) => merged[d] || []
 
@@ -375,24 +378,46 @@ export default function Calendar() {
             const evs = d ? dayEvents(d) : []
             const isToday = isThisMonth && d === today.getDate()
             const picked = sel?.day === d
+            // 홈 탭: 오늘이 든 줄(이번 주)을 크게, 다른 줄은 낮게
+            const todayRow = isThisMonth ? Math.floor((firstWeekday + today.getDate() - 1) / 7) : -1
+            const inThisWeek = embedded && Math.floor(i / 7) === todayRow
+            const dIso = d ? `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}` : null
+            const decor = embedded && d && dayDecor ? dayDecor(dIso) : null
+            const decorBg = decor?.perfect ? 'color-mix(in srgb, #22c55e 30%, var(--surface))'
+              : decor?.kept ? 'color-mix(in srgb, #22c55e 16%, var(--surface))'
+              : decor?.some ? 'color-mix(in srgb, #f59e0b 14%, var(--surface))' : null
             return (
               <div
                 key={i}
-                onClick={() => d && setSel({ day: d, events: evs })}
+                onClick={() => {
+                  if (!d) return
+                  setSel({ day: d, events: evs })
+                  if (onDayPick) onDayPick(dIso)
+                }}
                 style={{
-                  minHeight: 84, borderRadius: 12, border: '1px solid var(--line)',
-                  background: d ? 'var(--surface)' : 'transparent',
+                  minHeight: embedded ? (inThisWeek ? 128 : 58) : 84, borderRadius: 12, border: '1px solid var(--line)',
+                  background: d ? (decorBg || 'var(--surface)') : 'transparent',
                   padding: d ? '7px 8px' : 0,
                   display: 'flex', flexDirection: 'column', gap: 4,
                   cursor: d ? 'pointer' : 'default',
+                  ...(embedded && !inThisWeek && d ? { opacity: 0.72 } : null),
+                  ...(decor?.perfect ? { borderColor: '#22c55e', boxShadow: '0 0 0 1px #22c55e' } : null),
                   ...(isToday ? { borderColor: 'var(--accent)', boxShadow: '0 0 0 1px var(--accent)' } : null),
-                  ...(picked ? { background: 'var(--surface2)' } : null),
+                  ...(picked ? { background: decorBg || 'var(--surface2)', outline: '2px solid var(--accent)', outlineOffset: -2 } : null),
                 }}
               >
                 {d && (
                   <>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: isToday ? 'var(--accent)' : 'var(--text-2)', fontVariantNumeric: 'tabular-nums' }}>
+                    <span style={{ display: 'flex', alignItems: 'baseline', gap: 6, fontSize: 12, fontWeight: 600, color: isToday ? 'var(--accent)' : 'var(--text-2)', fontVariantNumeric: 'tabular-nums' }}>
                       {d}
+                      {decor && (decor.perfect || decor.kept || decor.some) && (
+                        <span style={{ fontSize: 9.5, fontWeight: 700, color: decor.perfect ? '#22c55e' : decor.kept ? '#22c55e' : '#f59e0b' }}>
+                          {decor.perfect ? '완벽' : `${decor.n}/${decor.total}`}
+                        </span>
+                      )}
+                      {decor?.kcal > 0 && (
+                        <span style={{ marginLeft: 'auto', fontSize: 9.5, fontWeight: 600, color: decor.kcalOk ? '#22c55e' : 'var(--text-3)' }}>{Math.round(decor.kcal).toLocaleString()}</span>
+                      )}
                     </span>
                     {evs.slice(0, 3).map((ev, j) => {
                       const color = ev.source === 'work'
@@ -600,11 +625,11 @@ export default function Calendar() {
         </Card>
       )}
 
-      <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 14, lineHeight: 1.7 }}>
+      {!embedded && <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 14, lineHeight: 1.7 }}>
         날짜를 누르면 그날 할 일이 나옵니다 · {minYM.replace('-', '.')} ~ {maxYM.replace('-', '.')} 범위<br />
         <b>급여·상환·보너스·목표</b>는 코드에 심어둔 것이라 지워지지 않습니다. 직접 추가한 일정만 삭제됩니다.<br />
         추가한 일정은 이 브라우저에만 저장됩니다 (폰에서는 따로 입력해야 합니다).
-      </div>
+      </div>}
     </div>
   )
 }
