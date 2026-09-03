@@ -4,7 +4,7 @@ import { useLocalStorage } from '../hooks/useLocalStorage.js'
 import { scheduleForMonth, SCHEDULE_CATEGORIES } from '../data/fundSchedule.js'
 
 const fade = { animation: 'hyFade .4s ease', marginTop: 8 }
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
+const WEEKDAYS = ['월', '화', '수', '목', '금', '토', '일']   // 2026-09-04 월요일 시작
 
 // 재무 이벤트는 급여·상환액이 그대로 드러나므로 secure/finance.js 에서 암호화해 들여온다.
 const FIN = (typeof window !== 'undefined' && window.__HY_DATA__?.finance) || null
@@ -166,7 +166,7 @@ export default function Calendar({ embedded = false, extra = null, dayDecor = nu
   )
   const dayEvents = (d) => merged[d] || []
 
-  const firstWeekday = new Date(year, month - 1, 1).getDay()
+  const firstWeekday = (new Date(year, month - 1, 1).getDay() + 6) % 7   // 0 = 월요일
   const daysInMonth = new Date(year, month, 0).getDate()
   const cells = []
   for (let i = 0; i < firstWeekday; i++) cells.push(null)
@@ -367,7 +367,7 @@ export default function Calendar({ embedded = false, extra = null, dayDecor = nu
       <Card>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,minmax(0,1fr))', gap: 6, marginBottom: 7 }}>
           {WEEKDAYS.map((w, i) => (
-            <div key={w} style={{ textAlign: 'center', fontSize: 11.5, fontWeight: 600, color: i === 0 ? '#e5484d' : i === 6 ? 'var(--text-2)' : 'var(--text-3)' }}>
+            <div key={w} style={{ textAlign: 'center', fontSize: 11.5, fontWeight: 600, color: i === 6 ? '#e5484d' : i === 5 ? 'var(--text-2)' : 'var(--text-3)' }}>
               {w}
             </div>
           ))}

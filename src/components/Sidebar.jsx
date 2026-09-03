@@ -253,28 +253,28 @@ export default function Sidebar({ tab, onNavigate, onOpenSettings, mobile, drawe
     >
       {/* 접기 버튼 — 펼침 상태에서만. 슬림 상태의 펼치기 버튼은 하단에 있다.
           모바일에서는 드로어 닫기 버튼으로 쓴다 */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', padding: slim ? '4px 0 10px' : '4px 8px 14px' }}>
-        {!slim && (
-          <button
-            onClick={() => (mobile ? onCloseDrawer?.() : setSideOpen('closed'))}
-            title={mobile ? '메뉴 닫기' : '사이드바 접기'}
-            style={{
-              border: '1px solid var(--line)',
-              background: 'transparent',
-              color: 'var(--text-3)',
-              borderRadius: 9,
-              width: 26,
-              height: 26,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              flex: 'none',
-            }}
-          >
-            <IconChevron dir="left" />
-          </button>
-        )}
+      {/* 왼쪽 위: 이름(HIRO) + 접기/펼치기 버튼. 슬림 상태에서도 펼치기 버튼은 여기(위)에 둔다 */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: slim ? 'center' : 'space-between', padding: slim ? '4px 0 10px' : '4px 4px 14px 8px' }}>
+        {!slim && <span style={{ fontSize: 15, fontWeight: 800, letterSpacing: '.12em' }}>HIRO</span>}
+        <button
+          onClick={() => (mobile ? onCloseDrawer?.() : setSideOpen(slim ? 'open' : 'closed'))}
+          title={mobile ? '메뉴 닫기' : slim ? '사이드바 펼치기' : '사이드바 접기'}
+          style={{
+            border: '1px solid var(--line)',
+            background: 'transparent',
+            color: 'var(--text-3)',
+            borderRadius: 9,
+            width: 26,
+            height: 26,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            flex: 'none',
+          }}
+        >
+          <IconChevron dir={slim ? 'right' : 'left'} />
+        </button>
       </div>
 
       {groupLabel('메뉴')}
@@ -305,11 +305,6 @@ export default function Sidebar({ tab, onNavigate, onOpenSettings, mobile, drawe
 
       <div style={{ flex: 1 }} />
 
-      {slim && !mobile && (
-        <div onClick={() => setSideOpen('open')} title="사이드바 펼치기" style={navItemStyle(false, true)}>
-          <IconChevron dir="right" />
-        </div>
-      )}
       <div onClick={onOpenSettings} title={slim ? '설정' : undefined} style={navItemStyle(false, slim)}>
         <IconSettings />
         {!slim && <span>설정</span>}

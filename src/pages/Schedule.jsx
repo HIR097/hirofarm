@@ -56,7 +56,7 @@ const PASS = 2 / 3 // 이만큼 체크하면 그날은 성공
 const card = { background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, padding: 18, marginBottom: 14, minWidth: 0 }
 const h2 = { fontSize: 15, fontWeight: 700, letterSpacing: '-.01em', marginBottom: 2 }
 const sub = { fontSize: 12, color: 'var(--text-3)', marginBottom: 12, lineHeight: 1.6 }
-const mono = { fontFamily: "'JetBrains Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums' }
+const mono = { fontVariantNumeric: 'tabular-nums' }   // 숫자도 본문과 같은 Pretendard 로 (JetBrains Mono 안 씀)
 const field = { background: 'var(--surface2)', border: '1px solid var(--line)', borderRadius: 10, padding: '8px 10px', color: 'var(--text)', fontSize: 13, outline: 'none', width: '100%', boxSizing: 'border-box' }
 const btn = { background: 'var(--surface2)', border: '1px solid var(--line)', borderRadius: 8, padding: '5px 8px', color: 'var(--text)', fontSize: 12, cursor: 'pointer' }
 
@@ -90,7 +90,7 @@ function SmallField({ kind, value, placeholder, onCommit }) {
       onChange={(e) => setDraft(kind === 'text' ? e.target.value.slice(0, 40) : e.target.value.replace(/[^\d:]/g, '').slice(0, 5))}
       onBlur={commit}
       onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-      style={{ ...field, width: kind === 'text' ? 120 : 62, padding: '4px 6px', font: "500 11px 'JetBrains Mono'", textAlign: 'center' }}
+      style={{ ...field, width: kind === 'text' ? 120 : 62, padding: '4px 6px', fontSize: 11, fontWeight: 500, textAlign: 'center', ...mono }}
     />
   )
 }
@@ -117,8 +117,8 @@ export default function Schedule() {
   // ── 칼로리 저장소 (칼로리 탭과 동일 키) ──
   const [calLog, saveCalLog] = useJsonStorage('hy_cal_log', EMPTY)
   const [customFoods] = useJsonStorage('hy_cal_ai_foods', EMPTY_LIST)
-  const [goalStr] = useLocalStorage('hy_cal_goal', '3100')
-  const [proteinGoalStr] = useLocalStorage('hy_cal_protein_goal', '172')
+  const [goalStr, setGoalStr] = useLocalStorage('hy_cal_goal', '3100')
+  const [proteinGoalStr, setProteinGoalStr] = useLocalStorage('hy_cal_protein_goal', '172')
   const [, setCalStamp] = useLocalStorage('hy_cal_stamp', '')
   const goal = Math.max(0, Number(goalStr) || 0)
   const pGoal = Math.max(0, Number(proteinGoalStr) || 0)
@@ -316,7 +316,15 @@ export default function Schedule() {
         <div style={card}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
             <div style={h2}>칼로리 <span style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 500, marginLeft: 6 }}>{sel === todayKey ? '오늘' : sel} · 칼로리 탭과 같은 기록</span></div>
-            <span style={{ fontSize: 11, color: 'var(--text-3)' }}>목표 <b style={mono}>{num(goal)}</b> kcal · 단백질 <b style={mono}>{pGoal}</b>g</span>
+            <span style={{ fontSize: 11, color: 'var(--text-3)', display: 'flex', alignItems: 'center', gap: 4 }}>
+              목표
+              <input value={goalStr} onChange={(e) => setGoalStr(e.target.value.replace(/[^\d]/g, '').slice(0, 5))} inputMode="numeric" title="목표 칼로리 (칼로리 탭과 공유)"
+                style={{ ...field, width: 58, padding: '3px 6px', fontSize: 12, fontWeight: 700, textAlign: 'center', ...mono }} />
+              kcal · 단백질
+              <input value={proteinGoalStr} onChange={(e) => setProteinGoalStr(e.target.value.replace(/[^\d]/g, '').slice(0, 4))} inputMode="numeric" title="목표 단백질 (칼로리 탭과 공유)"
+                style={{ ...field, width: 46, padding: '3px 6px', fontSize: 12, fontWeight: 700, textAlign: 'center', ...mono }} />
+              g
+            </span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, margin: '10px 0' }}>
             {[['섭취', total.kcal, goal, 'kcal'], ['단백질', total.protein, pGoal, 'g']].map(([lbl, v, g, unit]) => {
@@ -383,43 +391,8 @@ export default function Schedule() {
         </div>
       </div>
 
-      {/* 3. 이번 주 횟수 */}
-      <div style={card}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 8 }}>
-          <div style={h2}>이번 주 횟수 <span style={{ ...mono, fontSize: 12, color: 'var(--text-3)', fontWeight: 500, marginLeft: 6 }}>{wk} 주</span></div>
-          <span style={{ fontSize: 11, color: 'var(--text-3)' }}>숫자를 누르면 올라간다 · 일요일 15분 리뷰 때 채운다 · 마지막 둘은 낮을수록 좋다{syncMsg && ` · ${syncMsg}`}</span>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, minmax(0, 1fr))', gap: 8, marginTop: 10 }}>
-          {data.weekly.map((w) => {
-            const v = cur[w.k] || 0
-            const ok = w.lower ? v <= w.goal : v >= w.goal
-            return (
-              <div key={w.k} style={{ background: 'var(--surface2)', borderRadius: 12, padding: '8px 12px', border: `1px solid ${ok ? GREEN : 'var(--line)'}`, minWidth: 0 }}>
-                <div style={{ fontSize: 11, color: 'var(--text-3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{w.label} <span style={mono}>/{w.goal}</span></div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
-                  <span onClick={() => setCount(w.k, v - 1)} style={{ cursor: 'pointer', color: 'var(--text-3)', fontSize: 16, userSelect: 'none' }}>−</span>
-                  <span onClick={() => setCount(w.k, v + 1)} style={{ ...mono, fontSize: 20, fontWeight: 700, cursor: 'pointer', color: ok ? GREEN : 'var(--text)', userSelect: 'none' }}>{v}</span>
-                  <span onClick={() => setCount(w.k, v + 1)} style={{ cursor: 'pointer', color: 'var(--text-3)', fontSize: 16, userSelect: 'none' }}>+</span>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* 4. D-day + 목표 */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, minmax(0, 1fr))', gap: 10, marginBottom: 14 }}>
-        {data.dday.map((d) => (
-          <div key={d.k} style={{ ...card, marginBottom: 0, padding: '12px 14px' }} title={d.note}>
-            <div style={{ fontSize: 11, color: 'var(--text-3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.label}</div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-              <span style={{ ...mono, fontSize: 20, fontWeight: 700 }}>D-{daysLeft(d.date)}</span>
-              <span style={{ ...mono, fontSize: 11, color: 'var(--text-2)' }}>{d.date}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div style={card}>
+      {/* 3. 목표 (이번 주 횟수·D-day 카드는 26-09-04 사용자 요청으로 뺌. 큰 날짜는 달력에만) */}
+      <div style={{ ...card, marginTop: 14 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 8 }}>
           <div style={h2}>2027년 말 목표</div>
           <span style={{ fontSize: 11, color: 'var(--text-3)' }}>측정 가능한 것만 · 지금 → 목표 · 부채·INSEAD 숫자는 인생플랜이 원본</span>
