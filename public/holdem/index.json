@@ -1,0 +1,20 @@
+{
+ "book": "Play Optimal Poker",
+ "author": "Andrew Brokos",
+ "chapters": [
+  {
+   "id": "pop-ch1",
+   "n": 1,
+   "title": "균형 이해하기",
+   "words": 7000,
+   "date": "2026-09-06"
+  },
+  {
+   "id": "pop-ch2",
+   "n": 2,
+   "title": "폴라라이즈드 vs 컨덴스드 레인지",
+   "words": 12000,
+   "date": "2026-09-06"
+  }
+ ]
+}

@@ -13,6 +13,7 @@ import Scratchpad from './pages/Scratchpad.jsx'
 import English from './pages/English.jsx'
 import Schedule from './pages/Schedule.jsx'
 import Goals from './pages/Goals.jsx'
+import Holdem from './pages/Holdem.jsx'
 
 // 첫 화면. 예전엔 'home'(대시보드)이었으나 그 탭을 없애서 칼로리를 기본으로 둔다.
 const DEFAULT_TAB = 'home'   // 2026-09-04 홈(달력 + 오늘 할 일 + 칼로리 + 2027 플랜)
@@ -98,6 +99,7 @@ export default function App() {
           {tab === 'english' && <English />}
           {tab === 'home' && <Schedule />}
           {tab === 'goals' && <Goals />}
+          {tab === 'holdem' && <Holdem />}
         </div>
       </main>
 
