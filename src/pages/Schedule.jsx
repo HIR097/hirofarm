@@ -337,35 +337,7 @@ export default function Schedule() {
       <Calendar embedded extra={extra} dayDecor={dayDecor} onDayPick={setSel} dayItems={dayItems} />
 
       {/* 2. 할 일 / 칼로리 */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14, marginTop: 14 }}>
-        <div style={{ ...card, ...(st.perfect ? { borderColor: GREEN, boxShadow: `0 0 0 1px ${GREEN}` } : null) }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
-            <div style={h2}>
-              {sel === todayKey ? '오늘 할 일' : `${sel} 할 일`}
-              <span style={{ ...mono, fontSize: 12, fontWeight: 500, color: statusColor, marginLeft: 6 }}>{st.n}/{st.total}</span>
-            </div>
-            <span style={{ fontSize: 11, fontWeight: 700, color: statusColor, background: st.perfect ? 'color-mix(in srgb, #22c55e 22%, var(--surface))' : 'transparent', borderRadius: 999, padding: st.perfect ? '3px 10px' : 0 }}>
-              {st.perfect ? '✦ 완벽한 하루' : st.kept ? '성공 (2/3 이상)' : st.some ? `성공까지 ${Math.ceil(st.total * PASS) - st.n}개` : '몸 탭 루틴'}
-            </span>
-          </div>
-          <div style={sub}>몸 탭과 같은 체크. {Math.ceil(items.length * PASS)}개 이상이면 그날은 성공, 전부면 완벽. 달력에 색으로 남는다.</div>
-          {items.map((it) => {
-            const on = !!checksOf(sel)[it.k]
-            const val = timesOf(sel)[it.k] || ''
-            return (
-              <div key={it.k} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 2px', borderTop: '1px solid var(--line)', opacity: selFuture ? 0.5 : 1 }}>
-                <span onClick={() => toggle(sel, it.k)} style={{ width: 22, height: 22, borderRadius: 7, flex: 'none', border: on ? 'none' : '1.5px solid var(--line)', background: on ? 'var(--accent)' : 'transparent', color: 'var(--accent-text)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, cursor: selFuture ? 'default' : 'pointer' }}>{on ? '✓' : ''}</span>
-                <span onClick={() => toggle(sel, it.k)} style={{ fontSize: 13, flex: 1, minWidth: 0, color: on ? 'var(--text-3)' : 'var(--text)', textDecoration: on ? 'line-through' : 'none', cursor: selFuture ? 'default' : 'pointer' }} title={it.label}>
-                  <b>{it.short}</b>
-                  {!isMobile && <span style={{ color: 'var(--text-3)', fontSize: 11.5 }}> — {it.label.length > 46 ? it.label.slice(0, 46) + '…' : it.label}</span>}
-                </span>
-                {it.type && !selFuture && <SmallField kind={it.type} value={val} placeholder={it.ph || ''} onCommit={(v) => setTime(sel, it.k, v)} />}
-                {it.type && selFuture && <span style={{ ...mono, fontSize: 11, color: 'var(--text-3)' }}>—</span>}
-              </div>
-            )
-          })}
-        </div>
-
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, minmax(0, 1fr))', gap: 14, marginTop: 14, alignItems: 'start' }}>
         <div style={card}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
             <div style={h2}>칼로리 <span style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 500, marginLeft: 6 }}>{sel === todayKey ? '오늘' : sel} · 칼로리 탭과 같은 기록</span></div>
@@ -442,13 +414,11 @@ export default function Schedule() {
             ))}
           </div>
         </div>
+        <div style={{ minWidth: 0 }}><MealPlan isMobile={isMobile} /></div>
+        <div style={{ minWidth: 0 }}><MealGuide isMobile={isMobile} /></div>
       </div>
 
       {/* 칼로리 탭에서 옮겨 온 것 (26-09-06): 평일 현실 식단 · 루틴 음식 · 동기화/AI 설정 */}
-      <div style={{ marginTop: 14 }}>
-        <MealPlan isMobile={isMobile} />
-        <MealGuide isMobile={isMobile} />
-      </div>
       <div style={{ ...card, marginTop: 14, padding: '12px 18px' }}>
         <div style={{ fontSize: 12, color: 'var(--text-3)' }}>설정 · 기기 동기화 · AI 음식 검색</div>
         <SyncSettings />
