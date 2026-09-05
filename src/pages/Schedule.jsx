@@ -162,8 +162,10 @@ const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); r
 const mondayOf = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x }
 const MY_KINDS = ['my', 'trip', 'holiday', 'goal', 'check']
 
-function WeekView({ rows, isOn, toggle, status, calSum, goal, extra, todayKey, onPick, view, setView, children }) {
+function WeekView({ rows, isOn, toggle, status, calSum, goal, extra, todayKey, onPick, view, setView, moveRow, hasLayout, resetLayout, children }) {
   const [offset, setOffset] = useState(0)
+  const [drag, setDrag] = useState(null)   // { k, from } 드래그 중인 칩
+  const [over, setOver] = useState('')     // 'i:h' 드롭 후보 칸
   const [rawMine, setRawMine] = useLocalStorage('hy_cal_v1', '[]')
   const mine = useMemo(() => { try { const v = JSON.parse(rawMine); return Array.isArray(v) ? v : [] } catch { return [] } }, [rawMine])
   const [form, setForm] = useState(null)
@@ -183,6 +185,14 @@ function WeekView({ rows, isOn, toggle, status, calSum, goal, extra, todayKey, o
   const evsOf = (d) => (evMaps[`${d.getFullYear()}-${d.getMonth() + 1}`] || {})[d.getDate()] || []
   const rowsFor = (i) => rows.filter((r) => r.days[i])
   const hourOf = (slot) => (/^\d/.test(slot) ? parseInt(slot.slice(0, 2), 10) : null)
+  const slotOf = (r, i) => (r.slots && r.slots[i]) || r.slot
+  const dragProps = (r, i) => ({ draggable: true, onDragStart: (e) => { setDrag({ k: r.k, from: i }); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', r.k) }, onDragEnd: () => { setDrag(null); setOver('') } })
+  const dropProps = (i, h) => ({
+    onDragOver: (e) => { if (drag) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; if (over !== `${i}:${h}`) setOver(`${i}:${h}`) } },
+    onDragLeave: () => setOver((o) => (o === `${i}:${h}` ? '' : o)),
+    onDrop: (e) => { e.preventDefault(); if (drag) moveRow(drag.k, drag.from, i, h); setDrag(null); setOver('') },
+  })
+  const overBg = (i, h) => (over === `${i}:${h}` ? 'color-mix(in srgb, var(--accent) 18%, transparent)' : null)
   const label = `${monday.getMonth() + 1}월 ${monday.getDate()}일 – ${days[6].getMonth() + 1}월 ${days[6].getDate()}일`
   const submit = () => {
     const t = (form?.title || '').trim()
@@ -205,6 +215,7 @@ function WeekView({ rows, isOn, toggle, status, calSum, goal, extra, todayKey, o
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '12px 16px', borderBottom: '1px solid var(--line)' }}>
         <div style={{ fontSize: 15, fontWeight: 700 }}>{view === 'month' ? '월 보기' : offset === 0 ? '이번 주' : offset === -1 ? '지난주' : offset === 1 ? '다음 주' : `${offset > 0 ? '+' : ''}${offset}주`} <span style={{ ...mono, color: 'var(--text-3)', fontWeight: 500, fontSize: 13, marginLeft: 6 }}>{label}</span></div>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+          {hasLayout && <button onClick={() => window.confirm('드래그로 옮긴 배치를 모두 원래대로 되돌릴까요?') && resetLayout()} style={navBtn} title="드래그로 바꾼 배치를 원본대로">배치 초기화</button>}
           <button onClick={() => (form ? setForm(null) : setForm({ title: '', from: todayKey, to: '', kind: 'my' }))} style={navBtn}>{form ? '취소' : '+ 일정'}</button>
           <span style={{ width: 8 }} />
           <button onClick={() => setView('month')} style={tabBtn(view === 'month')}>월</button>
@@ -250,12 +261,12 @@ function WeekView({ rows, isOn, toggle, status, calSum, goal, extra, todayKey, o
           <div style={{ display: 'grid', gridTemplateColumns: '52px repeat(7, minmax(0, 1fr))', borderBottom: '1px solid var(--line)', background: 'var(--surface2)' }}>
             <div style={{ ...mono, fontSize: 10, color: 'var(--text-3)', padding: '6px 6px', textAlign: 'right' }}>종일</div>
             {days.map((d, i) => {
-              const iso = isoOf(d); const evs = evsOf(d); const allday = rowsFor(i).filter((r) => hourOf(r.slot) == null)
+              const iso = isoOf(d); const evs = evsOf(d); const allday = rowsFor(i).filter((r) => hourOf(slotOf(r, i)) == null)
               return (
-                <div key={iso} style={{ padding: '4px 5px', borderLeft: '1px solid var(--line)', minHeight: 30, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <div key={iso} {...dropProps(i, null)} style={{ padding: '4px 5px', borderLeft: '1px solid var(--line)', minHeight: 30, display: 'flex', flexDirection: 'column', gap: 3, background: overBg(i, null) || 'transparent' }}>
                   {allday.map((r) => {
                     const on = isOn(iso, r)
-                    return <div key={r.k} onClick={() => toggle(iso, r.k)} title={r.label} style={{ fontSize: 10.5, padding: '2px 6px', borderRadius: 6, cursor: 'pointer', background: on ? 'var(--accent)' : 'transparent', color: on ? 'var(--accent-text)' : 'var(--text-2)', border: '1px dashed var(--line)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{on ? '✓ ' : ''}{r.short}</div>
+                    return <div key={r.k} {...dragProps(r, i)} onClick={() => toggle(iso, r.k)} title={r.label} style={{ fontSize: 10.5, padding: '2px 6px', borderRadius: 6, cursor: 'grab', background: on ? 'var(--accent)' : 'transparent', color: on ? 'var(--accent-text)' : 'var(--text-2)', border: '1px dashed var(--line)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{on ? '✓ ' : ''}{r.short}</div>
                   })}
                   {evs.slice(0, 4).map((ev, j) => {
                     const color = EVENT_KIND[ev.kind]?.color || 'var(--text-3)'
@@ -273,16 +284,16 @@ function WeekView({ rows, isOn, toggle, status, calSum, goal, extra, todayKey, o
             <div key={h} style={{ display: 'grid', gridTemplateColumns: '52px repeat(7, minmax(0, 1fr))', borderBottom: '1px solid var(--line)', minHeight: 34 }}>
               <div style={{ ...mono, fontSize: 10.5, color: 'var(--text-3)', padding: '6px 6px 0', textAlign: 'right' }}>{pad(h)}:00</div>
               {days.map((d, i) => {
-                const iso = isoOf(d); const items = rowsFor(i).filter((r) => hourOf(r.slot) === h); const future = iso > todayKey; const isT = iso === todayKey
+                const iso = isoOf(d); const items = rowsFor(i).filter((r) => hourOf(slotOf(r, i)) === h); const future = iso > todayKey; const isT = iso === todayKey
                 return (
-                  <div key={iso} style={{ borderLeft: '1px solid var(--line)', padding: '3px 4px', display: 'flex', flexDirection: 'column', gap: 3, background: isT ? 'color-mix(in srgb, var(--accent) 5%, transparent)' : 'transparent' }}>
+                  <div key={iso} {...dropProps(i, h)} style={{ borderLeft: '1px solid var(--line)', padding: '3px 4px', display: 'flex', flexDirection: 'column', gap: 3, background: overBg(i, h) || (isT ? 'color-mix(in srgb, var(--accent) 5%, transparent)' : 'transparent') }}>
                     {items.map((r) => {
                       const on = isOn(iso, r)
                       return (
-                        <div key={r.k} onClick={() => !future && toggle(iso, r.k)} title={`${r.slot} ${r.label}`}
-                          style={{ fontSize: 11.5, lineHeight: 1.3, padding: '5px 7px', borderRadius: 7, cursor: future ? 'default' : 'pointer', opacity: future ? 0.5 : 1,
+                        <div key={r.k} {...dragProps(r, i)} onClick={() => !future && toggle(iso, r.k)} title={`${slotOf(r, i)} ${r.label} (드래그해서 옮기기)`}
+                          style={{ fontSize: 11.5, lineHeight: 1.3, padding: '5px 7px', borderRadius: 7, cursor: future ? 'grab' : 'pointer', opacity: future ? 0.5 : drag?.k === r.k ? 0.4 : 1,
                             background: on ? 'var(--accent)' : 'var(--surface2)', color: on ? 'var(--accent-text)' : 'var(--text)', border: `1px solid ${on ? 'var(--accent)' : 'var(--line)'}`, textDecoration: on ? 'line-through' : 'none' }}>
-                          <span style={{ ...mono, fontSize: 10, opacity: 0.7, marginRight: 4 }}>{r.slot}</span>{r.short}
+                          {r.short}
                         </div>
                       )
                     })}
@@ -297,7 +308,7 @@ function WeekView({ rows, isOn, toggle, status, calSum, goal, extra, todayKey, o
         {['pay', 'repay', 'bonus', 'goal', 'trip', 'post', 'my'].map((k) => (
           <span key={k} style={{ display: 'flex', alignItems: 'center', gap: 5 }}><i style={{ width: 8, height: 8, borderRadius: 2, background: EVENT_KIND[k].color, display: 'inline-block' }} />{EVENT_KIND[k].label}</span>
         ))}
-        <span style={{ marginLeft: 'auto' }}>칩을 누르면 체크 · 요일 머리는 2/3 이상 초록, 전부면 진한 초록 · 내 일정은 종일 줄에서 클릭해 삭제</span>
+        <span style={{ marginLeft: 'auto' }}>칩을 누르면 체크, 끌어서 다른 요일·시간으로 이동 · 요일 머리는 2/3 이상 초록, 전부면 진한 초록 · 내 일정은 종일 줄에서 클릭해 삭제</span>
       </div>
     </div>
   )
@@ -343,6 +354,53 @@ export default function Schedule() {
     return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dayLog])
+
+  // ── 주간 배치도 드래그 이동 — hy_sched_layout {k:{days:[7], slots:[7|null]}}, sync 'sched_layout' ──
+  const [layout, saveLayout] = useJsonStorage('hy_sched_layout', EMPTY)
+  const [layoutStamp, setLayoutStamp] = useLocalStorage('hy_sched_layout_stamp', '')
+  const layoutTouched = useRef(false)
+  useEffect(() => {
+    ;(async () => {
+      if (!sync.isConfigured() || !sync.isLoggedIn()) return
+      try {
+        const remote = await sync.pull('sched_layout')
+        if (remote && newer(remote.updatedAt, layoutStamp) && remote.value?.layout) { saveLayout(remote.value.layout); setLayoutStamp(remote.updatedAt) }
+      } catch { /* 무시 */ }
+    })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  useEffect(() => {
+    if (!layoutTouched.current || !sync.isConfigured() || !sync.isLoggedIn()) return
+    const t = setTimeout(async () => {
+      try {
+        const now = new Date().toISOString()
+        await sync.push('sched_layout', { layout }, now)
+        setLayoutStamp(now)
+      } catch { /* 다음 변경 때 다시 */ }
+    }, 1500)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layout])
+  // 원본 rows 에 드래그 이동값을 덮어씌운 것. slots[i] 가 있으면 그 요일만 다른 시각
+  const rows = useMemo(() => data.week.rows.map((r) => {
+    const ov = layout[r.k]
+    return ov ? { ...r, days: ov.days || r.days, slots: ov.slots || null } : r
+  }), [layout])
+  const moveRow = (k, from, to, hour) => {
+    const r = rows.find((x) => x.k === k)
+    if (!r) return
+    const cur = (r.slots && r.slots[from]) || r.slot
+    const min = /^\d/.test(cur) ? cur.slice(3, 5) : '00'
+    const next = hour == null ? '—' : `${pad(hour)}:${min}`
+    if (from === to && next === cur) return
+    const days = [...r.days]; days[from] = 0; days[to] = 1
+    const slots = r.slots ? [...r.slots] : Array(7).fill(null)
+    if (from !== to) slots[from] = null
+    slots[to] = next === r.slot ? null : next
+    layoutTouched.current = true
+    saveLayout({ ...layout, [k]: { days, slots: slots.some(Boolean) ? slots : null } })
+  }
+  const resetLayout = () => { layoutTouched.current = true; saveLayout(EMPTY) }
 
   // ── 칼로리 저장소 (칼로리 탭과 동일 키) ──
   const [calLog, saveCalLog] = useJsonStorage('hy_cal_log', EMPTY)
@@ -420,14 +478,14 @@ export default function Schedule() {
   const rowsFor = (iso) => {
     const d = new Date(iso + 'T00:00:00')
     const idx = (d.getDay() + 6) % 7
-    return data.week.rows.filter((r) => r.days[idx])
+    return rows.filter((r) => r.days[idx])
   }
   // 식사 행은 체크가 아니라 '그날 그 끼니로 기록된 음식이 있나'로 판정한다. 칩을 누르면 그 날짜·끼니가 칼로리 입력칸에 잡힌다
   const hasMeal = (iso, meal) => (calLog[iso] || EMPTY_LIST).some((it) => it.meal === meal)
   const isOn = (iso, row) => (row.meal ? hasMeal(iso, row.meal) : !!(dayLog[iso] || EMPTY)[row.k])
   const toggleSched = (iso, k) => {
     if (iso > todayKey) return
-    const row = data.week.rows.find((r) => r.k === k)
+    const row = rows.find((r) => r.k === k)
     if (row?.meal) {
       setSel(iso); setMealSel(row.meal)
       setTimeout(() => foodInputRef.current?.focus(), 50)
@@ -495,7 +553,7 @@ export default function Schedule() {
   return (
     <div style={{ width: '100%', minWidth: 0 }}>
       {/* 1. 달력 */}
-      <WeekView rows={data.week.rows} isOn={isOn} toggle={toggleSched} status={schedStatus} calSum={calSum} goal={goal} extra={extra} todayKey={todayKey} onPick={setSel} view={view} setView={setView}>
+      <WeekView rows={rows} isOn={isOn} moveRow={moveRow} hasLayout={Object.keys(layout).length > 0} resetLayout={resetLayout} toggle={toggleSched} status={schedStatus} calSum={calSum} goal={goal} extra={extra} todayKey={todayKey} onPick={setSel} view={view} setView={setView}>
         <Calendar embedded extra={extra} dayDecor={dayDecor} onDayPick={setSel} />
       </WeekView>
 
