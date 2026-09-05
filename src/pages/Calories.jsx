@@ -175,8 +175,10 @@ export function MealGuide({ isMobile, bare = false, cols }) {
 export function MealPlan({ isMobile, bare = false }) {
   const Wrap = bare ? 'div' : Card
   const plan = (typeof window !== 'undefined' && window.__HY_DATA__?.body?.mealPlan) || null
-  const [picks, setPicks] = useState(() => (plan ? plan.slots.map(() => 0) : []))
+  const [stored, setStored] = useJsonStorage('hy_meal_picks', EMPTY_FOODS)   // 홈 주간 뷰의 식사 체크가 같은 선택을 읽는다
   if (!plan) return null
+  const picks = plan.slots.map((_, i) => (Array.isArray(stored) && Number.isInteger(stored[i]) ? stored[i] : 0))
+  const setPicks = (next) => setStored(next)
   const shuffle = () => setPicks(plan.slots.map((s) => Math.floor(Math.random() * s.options.length)))
   const next = (i) => setPicks(picks.map((v, j) => (j === i ? (v + 1) % plan.slots[i].options.length : v)))
   const total = plan.slots.reduce(

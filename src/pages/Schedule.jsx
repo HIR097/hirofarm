@@ -418,11 +418,29 @@ export default function Schedule() {
     const idx = (d.getDay() + 6) % 7
     return data.week.rows.filter((r) => r.days[idx])
   }
+  // 식사 행(meal 슬롯이 있는 것)을 체크하면 평일 현실 식단에서 지금 골라 둔 메뉴가 그날 칼로리에 들어가고, 풀면 빠진다
+  const mealPlan = body?.mealPlan || null
+  const [mealPicks] = useJsonStorage('hy_meal_picks', EMPTY_LIST)
   const toggleSched = (iso, k) => {
     if (iso > todayKey) return
     dayTouched.current = true
     const e = dayLog[iso] || EMPTY
-    saveDayLog({ ...dayLog, [iso]: { ...e, [k]: !e[k] } })
+    const on = !e[k]
+    saveDayLog({ ...dayLog, [iso]: { ...e, [k]: on } })
+    const row = data.week.rows.find((r) => r.k === k)
+    if (row?.meal && mealPlan) {
+      const si = mealPlan.slots.findIndex((sl) => sl.t === row.meal)
+      const slot = si >= 0 ? mealPlan.slots[si] : null
+      const list = calLog[iso] || EMPTY_LIST
+      const tag = `meal-${k}`
+      let next = list.filter((it) => it.id !== tag)
+      if (on && slot) {
+        const o = slot.options[(Array.isArray(mealPicks) && Number.isInteger(mealPicks[si]) ? mealPicks[si] : 0) % slot.options.length]
+        next = [...next, { id: tag, name: o.n, unit: slot.place || row.short, kcal: o.k, protein: o.p || 0, qty: 1 }]
+      }
+      calTouched.current = true
+      saveCalLog({ ...calLog, [iso]: next })
+    }
   }
   const dayItems = (iso) => rowsFor(iso).map((r) => ({ k: r.k, label: r.short, title: r.label, on: !!(dayLog[iso] || EMPTY)[r.k], toggle: () => toggleSched(iso, r.k) }))
   const schedStatus = (iso) => {
