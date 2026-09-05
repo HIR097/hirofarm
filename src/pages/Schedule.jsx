@@ -240,7 +240,7 @@ function WeekView({ rows, isOn, toggle, status, calSum, goal, extra, todayKey, o
                   <div style={{ fontSize: 11, opacity: 0.8 }}>{WD[i]}요일</div>
                   <div style={{ ...mono, fontSize: 17, fontWeight: 700 }}>{d.getDate()}</div>
                   <div style={{ ...mono, fontSize: 10.5, opacity: 0.85, marginTop: 1 }}>
-                    {st ? `${st.n}/${st.total}${st.perfect ? ' 완벽' : st.kept ? ' 성공' : ''}` : '·'}{cs.kcal > 0 ? ` · ${num(cs.kcal)}` : ''}
+                    {st ? `${st.n}/${st.total}${st.perfect ? ' 완벽' : st.kept ? ' 성공' : ''}` : '·'}
                   </div>
                 </div>
               )
