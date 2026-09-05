@@ -54,6 +54,9 @@ export default function App() {
         fontFamily: "'Pretendard Variable', -apple-system, Helvetica, Arial, sans-serif",
         color: 'var(--text)',
         overflow: 'hidden',
+        // 홈 화면 앱(standalone)에서 상태바·홈 인디케이터 밑까지 배경을 깔고, 내용은 그 안쪽에서 시작
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
       }}
     >
       <Sidebar

@@ -68,7 +68,7 @@ export const MENU_ITEMS = [
   { key: 'english', label: '영어', Icon: IconBook, type: 'page' },
   { key: 'holdem', label: '홀덤', Icon: IconBook, type: 'page' },
   { key: 'goals', label: '목표', Icon: IconSchedule, type: 'page' },
-  { key: 'mangrove', ...proj('mangrove'), Icon: IconStack, type: 'project', href: '/mangrove-building.html' },
+  // 맹그로브 신촌 프로젝트 탭은 26-09-06 메뉴에서 삭제 (/mangrove-building.html 파일은 그대로)
   { key: 'lovelab', ...proj('lovelab'), Icon: IconPulse, type: 'project', href: '/lovelab-followers.html' },
   { key: 'cbt', ...proj('cbt'), Icon: IconNote, type: 'project', href: '/cbt.html' },
   // 인생플랜(대출 상환 플랜) 페이지는 26-09-06 목표 탭 세부탭으로 이동 (/plan.html 은 그대로)
@@ -141,6 +141,8 @@ function ProjectOverlay({ project, left, onClose }) {
         zIndex: 80,
         display: 'flex',
         flexDirection: 'column',
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
         background: 'var(--bg)',
         borderLeft: '1px solid var(--line)',
       }}
@@ -247,6 +249,8 @@ export default function Sidebar({ tab, onNavigate, onOpenSettings, mobile, drawe
               left: drawerOpen ? 0 : -(width + 24),
               zIndex: 75,
               overflowY: 'auto',
+              paddingTop: 'env(safe-area-inset-top)',
+              paddingBottom: 'env(safe-area-inset-bottom)',
               boxShadow: drawerOpen ? '0 0 40px rgba(0,0,0,.35)' : 'none',
             }
           : null),
