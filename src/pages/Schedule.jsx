@@ -2,9 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocalStorage } from '../hooks/useLocalStorage.js'
 import { useIsMobile } from '../hooks/useIsMobile.js'
 import { searchFoods } from '../data/foods.js'
-import { lookupFood, getApiKey } from '../lib/foodAI.js'
+import { lookupFood, getApiKey, setApiKey } from '../lib/foodAI.js'
 import * as sync from '../lib/sync.js'
 import Calendar from './Calendar.jsx'
+import { MealGuide, MealPlan } from './Calories.jsx'
 
 // 홈 탭 (파일명은 Schedule.jsx 그대로)
 //   1. 달력 — 달력 탭 그대로(일정 추가 포함). 이번 주 줄을 크게, 날짜 칸에 그날 체크 달성(초록/노랑, 완벽)과 칼로리를 칠한다.
@@ -92,6 +93,63 @@ function SmallField({ kind, value, placeholder, onCommit }) {
       onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
       style={{ ...field, width: kind === 'text' ? 120 : 62, padding: '4px 6px', fontSize: 11, fontWeight: 500, textAlign: 'center', ...mono }}
     />
+  )
+}
+
+// 칼로리 탭에 있던 동기화·AI 키 설정 — 칼로리 탭을 메뉴에서 빼면서 여기로 옮김 (26-09-06)
+function SyncSettings() {
+  const [panel, setPanel] = useState(null)
+  const [sb, setSb] = useState(() => ({ ...sync.getConfig(), email: sync.currentEmail(), pw: '' }))
+  const [loggedIn, setLoggedIn] = useState(sync.isLoggedIn())
+  const [keyDraft, setKeyDraft] = useState(getApiKey())
+  const [msg, setMsg] = useState('')
+  const [busy, setBusy] = useState(false)
+  return (
+    <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--line)' }}>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        <button onClick={() => setPanel(panel === 'sync' ? null : 'sync')} style={{ ...btn, padding: '5px 10px' }}>동기화 {loggedIn ? '· 연결됨' : '· 미설정'}</button>
+        <button onClick={() => setPanel(panel === 'ai' ? null : 'ai')} style={{ ...btn, padding: '5px 10px' }}>AI {getApiKey() ? '· 키 저장됨' : '· 키 없음'}</button>
+        {msg && <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{msg}</span>}
+      </div>
+      {panel === 'sync' && (
+        <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <input value={sb.url} onChange={(e) => setSb({ ...sb, url: e.target.value })} placeholder="https://xxxx.supabase.co" style={field} />
+          <input value={sb.key} onChange={(e) => setSb({ ...sb, key: e.target.value })} placeholder="anon public key" style={field} />
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <input value={sb.email} onChange={(e) => setSb({ ...sb, email: e.target.value })} placeholder="이메일" autoComplete="username" style={{ ...field, flex: 1, minWidth: 150 }} />
+            <input type="password" value={sb.pw} onChange={(e) => setSb({ ...sb, pw: e.target.value })} placeholder="비밀번호" autoComplete="current-password" style={{ ...field, flex: 1, minWidth: 150 }} />
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              disabled={busy}
+              onClick={async () => {
+                setBusy(true); setMsg('')
+                try {
+                  sync.setConfig(sb.url.trim(), sb.key.trim())
+                  await sync.login(sb.email.trim(), sb.pw)
+                  setLoggedIn(true); setSb({ ...sb, pw: '' }); setMsg('연결됨 — 새로고침하면 기록을 불러온다')
+                } catch (e) { setMsg(e.message || '연결 실패') } finally { setBusy(false) }
+              }}
+              style={{ ...btn, padding: '7px 12px' }}
+            >
+              연결
+            </button>
+            <button onClick={() => { sync.logout(); setLoggedIn(false); setMsg('연결 해제됨') }} style={{ ...btn, padding: '7px 12px' }}>연결 해제</button>
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text-3)', lineHeight: 1.6 }}>접속 정보와 세션은 이 브라우저에만 저장된다. 처음 한 번은 Supabase 에 app_state 테이블이 있어야 한다 (src/lib/sync.js 주석).</div>
+        </div>
+      )}
+      {panel === 'ai' && (
+        <div style={{ marginTop: 10 }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <input type="password" value={keyDraft} onChange={(e) => setKeyDraft(e.target.value)} placeholder="sk-ant-..." style={{ ...field, flex: 1, minWidth: 200 }} />
+            <button onClick={() => { setApiKey(keyDraft.trim()); setPanel(null); setMsg('AI 키 저장') }} style={{ ...btn, padding: '7px 12px' }}>저장</button>
+            <button onClick={() => { setApiKey(''); setKeyDraft(''); setMsg('AI 키 삭제') }} style={{ ...btn, padding: '7px 12px' }}>삭제</button>
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 6, lineHeight: 1.6 }}>Anthropic API 키는 이 브라우저에만 저장된다. 목록에 없는 음식을 AI 로 한 번 찾으면 저장돼 다음부터는 호출 없이 검색된다.</div>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -386,9 +444,18 @@ export default function Schedule() {
         </div>
       </div>
 
-      {/* 목표·분기 로드맵·주간 배치도는 '목표' 탭으로 옮김 (26-09-04, 회사에서 홈을 열어도 안 보이게) */}
-      <div style={{ fontSize: 11, color: 'var(--text-3)', lineHeight: 1.6 }}>
-        할 일은 몸 탭 타임라인과 같은 기록이고, 칼로리는 칼로리 탭과 같은 기록.
+      {/* 칼로리 탭에서 옮겨 온 것 (26-09-06): 평일 현실 식단 · 루틴 음식 · 동기화/AI 설정 */}
+      <div style={{ marginTop: 14 }}>
+        <MealPlan isMobile={isMobile} />
+        <MealGuide isMobile={isMobile} />
+      </div>
+      <div style={{ ...card, marginTop: 14, padding: '12px 18px' }}>
+        <div style={{ fontSize: 12, color: 'var(--text-3)' }}>설정 · 기기 동기화 · AI 음식 검색</div>
+        <SyncSettings />
+      </div>
+      {/* 목표·분기 로드맵·대출 상환 플랜은 '목표' 탭 (회사에서 홈을 열어도 안 보이게) */}
+      <div style={{ fontSize: 11, color: 'var(--text-3)', lineHeight: 1.6, marginTop: 8 }}>
+        달력 칸의 체크는 주간 배치도(목표 탭 원본), 오늘 할 일은 몸 루틴, 칼로리는 예전 칼로리 탭과 같은 기록.
       </div>
     </div>
   )

@@ -129,7 +129,7 @@ function QtyBox({ value, onCommit }) {
 }
 
 /** 루틴을 지키는 대표 음식 10 — 내용은 secure/body.js(mealGuide)에서, 누르면 요리법이 펼쳐진다. */
-function MealGuide({ isMobile }) {
+export function MealGuide({ isMobile }) {
   const [openIdx, setOpenIdx] = useState(null)
   const meals = (typeof window !== 'undefined' && window.__HY_DATA__?.body?.mealGuide) || []
   if (!meals.length) return null
@@ -167,7 +167,7 @@ function MealGuide({ isMobile }) {
 
 /** 평일 현실 식단 — 회사 일과 기준 5끼 시간표. 내용은 secure/body.js(mealPlan)에서.
  *  행을 누르면 그 슬롯의 다음 대안으로 넘어가고, 🎲 는 슬롯마다 하나씩 랜덤으로 뽑는다. */
-function MealPlan({ isMobile }) {
+export function MealPlan({ isMobile }) {
   const plan = (typeof window !== 'undefined' && window.__HY_DATA__?.body?.mealPlan) || null
   const [picks, setPicks] = useState(() => (plan ? plan.slots.map(() => 0) : []))
   if (!plan) return null

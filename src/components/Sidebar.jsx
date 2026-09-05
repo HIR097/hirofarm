@@ -62,8 +62,7 @@ const proj = (key) => ({ label: PROJ[key]?.label || '프로젝트', tag: PROJ[ke
 // type: 'page' → 탭 전환, 'project' → 오버레이(iframe)로 바로 열린다
 export const MENU_ITEMS = [
   { key: 'home', label: '홈', Icon: IconHome, type: 'page' },
-  { key: 'calendar', label: '달력', Icon: IconCalendar, type: 'page' },
-  { key: 'calorie', label: '칼로리', Icon: IconFlame, type: 'page' },
+  // 달력·칼로리 탭은 26-09-06 홈으로 흡수 (라우트는 App.jsx 에 남아 있음)
   { key: 'body', label: '몸', Icon: IconBody, type: 'page' },
   { key: 'scratch', label: '낙서장', Icon: IconNote, type: 'page' },
   { key: 'english', label: '영어', Icon: IconBook, type: 'page' },
@@ -72,7 +71,7 @@ export const MENU_ITEMS = [
   { key: 'mangrove', ...proj('mangrove'), Icon: IconStack, type: 'project', href: '/mangrove-building.html' },
   { key: 'lovelab', ...proj('lovelab'), Icon: IconPulse, type: 'project', href: '/lovelab-followers.html' },
   { key: 'cbt', ...proj('cbt'), Icon: IconNote, type: 'project', href: '/cbt.html' },
-  { key: 'plan', ...proj('plan'), Icon: IconSchedule, type: 'project', href: '/plan.html' },
+  // 인생플랜(대출 상환 플랜) 페이지는 26-09-06 목표 탭 세부탭으로 이동 (/plan.html 은 그대로)
 ]
 
 const RAIL = 64
