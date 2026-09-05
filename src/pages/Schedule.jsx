@@ -162,8 +162,9 @@ const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); r
 const mondayOf = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x }
 const MY_KINDS = ['my', 'trip', 'holiday', 'goal', 'check']
 
-function WeekView({ rows, isOn, toggle, status, calSum, goal, extra, todayKey, onPick, view, setView, moveRow, hasLayout, resetLayout, children }) {
+function WeekView({ rows, isOn, toggle, status, calSum, goal, extra, todayKey, onPick, view, setView, moveRow, hasLayout, resetLayout, isMobile, children }) {
   const [offset, setOffset] = useState(0)
+  const [selIdx, setSelIdx] = useState(() => (new Date().getDay() + 6) % 7)   // 모바일: 요일 띠에서 고른 날
   const [drag, setDrag] = useState(null)   // { k, from } 드래그 중인 칩
   const [over, setOver] = useState('')     // 'i:h' 드롭 후보 칸
   const [rawMine, setRawMine] = useLocalStorage('hy_cal_v1', '[]')
@@ -177,7 +178,7 @@ function WeekView({ rows, isOn, toggle, status, calSum, goal, extra, todayKey, o
     const out = {}
     for (const d of days) {
       const key = `${d.getFullYear()}-${d.getMonth() + 1}`
-      if (!out[key]) out[key] = monthEvents(d.getFullYear(), d.getMonth() + 1, { mine, extra })
+      if (!out[key]) out[key] = monthEvents(d.getFullYear(), d.getMonth() + 1, { mine, extra, showPost: false })
     }
     return out
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -212,17 +213,17 @@ function WeekView({ rows, isOn, toggle, status, calSum, goal, extra, todayKey, o
   return (
     <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
       {/* 상단 바 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '12px 16px', borderBottom: '1px solid var(--line)' }}>
-        <div style={{ fontSize: 15, fontWeight: 700 }}>{view === 'month' ? '월 보기' : offset === 0 ? '이번 주' : offset === -1 ? '지난주' : offset === 1 ? '다음 주' : `${offset > 0 ? '+' : ''}${offset}주`} <span style={{ ...mono, color: 'var(--text-3)', fontWeight: 500, fontSize: 13, marginLeft: 6 }}>{label}</span></div>
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: isMobile ? '10px 12px' : '12px 16px', borderBottom: '1px solid var(--line)' }}>
+        <div style={{ fontSize: 15, fontWeight: 700, whiteSpace: 'nowrap' }}>{view === 'month' ? '월 보기' : offset === 0 ? '이번 주' : offset === -1 ? '지난주' : offset === 1 ? '다음 주' : `${offset > 0 ? '+' : ''}${offset}주`} <span style={{ ...mono, color: 'var(--text-3)', fontWeight: 500, fontSize: isMobile ? 12 : 13, marginLeft: 6 }}>{label}</span></div>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           {hasLayout && <button onClick={() => window.confirm('드래그로 옮긴 배치를 모두 원래대로 되돌릴까요?') && resetLayout()} style={navBtn} title="드래그로 바꾼 배치를 원본대로">배치 초기화</button>}
           <button onClick={() => (form ? setForm(null) : setForm({ title: '', from: todayKey, to: '', kind: 'my' }))} style={navBtn}>{form ? '취소' : '+ 일정'}</button>
-          <span style={{ width: 8 }} />
+          {!isMobile && <span style={{ width: 8 }} />}
           <button onClick={() => setView('month')} style={tabBtn(view === 'month')}>월</button>
           <button onClick={() => setView('week')} style={tabBtn(view === 'week')}>주</button>
-          <span style={{ width: 8 }} />
+          {!isMobile && <span style={{ width: 8 }} />}
           <button onClick={() => setOffset(offset - 1)} style={navBtn}>‹</button>
-          <button onClick={() => setOffset(0)} style={navBtn}>이번 주</button>
+          {!isMobile && <button onClick={() => setOffset(0)} style={navBtn}>이번 주</button>}
           <button onClick={() => setOffset(offset + 1)} style={navBtn}>›</button>
         </div>
       </div>
@@ -238,8 +239,70 @@ function WeekView({ rows, isOn, toggle, status, calSum, goal, extra, todayKey, o
         </div>
       )}
       {view === 'month' && <div style={{ padding: '12px 16px' }}>{children}</div>}
-      {/* 격자 */}
-      {view === 'week' && <div style={{ overflowX: 'auto' }}>
+      {/* 모바일: 요일 띠 + 고른 날 세로 타임라인 */}
+      {view === 'week' && isMobile && (() => {
+        const d = days[selIdx]; const iso = isoOf(d); const future = iso > todayKey
+        const evs = evsOf(d); const allday = rowsFor(selIdx).filter((r) => hourOf(slotOf(r, selIdx)) == null)
+        const hours = HOURS.filter((h) => rowsFor(selIdx).some((r) => hourOf(slotOf(r, selIdx)) === h))
+        const st = iso <= todayKey ? status(iso) : null
+        const chip = (r, small) => {
+          const on = isOn(iso, r)
+          return (
+            <div key={r.k} onClick={() => !future && toggle(iso, r.k)} title={r.label}
+              style={{ fontSize: small ? 12 : 13.5, lineHeight: 1.35, padding: small ? '4px 9px' : '8px 11px', borderRadius: 9, cursor: future ? 'default' : 'pointer', opacity: future ? 0.55 : 1, minWidth: 0,
+                background: on ? 'var(--accent)' : 'var(--surface2)', color: on ? 'var(--accent-text)' : 'var(--text)', border: `1px solid ${on ? 'var(--accent)' : 'var(--line)'}`, textDecoration: on ? 'line-through' : 'none',
+                wordBreak: 'keep-all', overflowWrap: 'anywhere' }}>
+              {on ? '✓ ' : ''}{r.short}
+            </div>
+          )
+        }
+        return (
+          <div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', padding: '8px 8px 10px', gap: 4, borderBottom: '1px solid var(--line)' }}>
+              {days.map((dd, i) => {
+                const k = isoOf(dd); const isT = k === todayKey; const on = i === selIdx; const s2 = k <= todayKey ? status(k) : null
+                const dot = s2 ? (s2.perfect ? '#15803d' : s2.kept ? '#22c55e' : s2.some ? '#f59e0b' : 'var(--line)') : 'transparent'
+                return (
+                  <div key={k} onClick={() => { setSelIdx(i); onPick(k) }}
+                    style={{ textAlign: 'center', padding: '7px 0 6px', borderRadius: 12, cursor: 'pointer', minWidth: 0,
+                      background: on ? 'var(--accent)' : 'transparent', color: on ? 'var(--accent-text)' : isT ? 'var(--accent)' : 'var(--text)', boxShadow: isT && !on ? 'inset 0 0 0 1.5px var(--accent)' : 'none' }}>
+                    <div style={{ fontSize: 10.5, opacity: 0.8, lineHeight: 1 }}>{WD[i]}</div>
+                    <div style={{ ...mono, fontSize: 17, fontWeight: 700, lineHeight: 1.25, marginTop: 3 }}>{dd.getDate()}</div>
+                    <i style={{ display: 'block', width: 6, height: 6, borderRadius: 3, margin: '4px auto 0', background: on ? 'var(--accent-text)' : dot, opacity: on && !s2 ? 0 : 1 }} />
+                  </div>
+                )
+              })}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, padding: '10px 14px 2px' }}>
+              <div style={{ fontSize: 15, fontWeight: 700 }}>{d.getMonth() + 1}월 {d.getDate()}일 {WD[selIdx]}요일</div>
+              <div style={{ ...mono, fontSize: 12, color: 'var(--text-3)' }}>{st ? `${st.n}/${st.total}${st.perfect ? ' · 완벽' : st.kept ? ' · 성공' : ''}` : future ? '예정' : ''}</div>
+            </div>
+            {(allday.length > 0 || evs.length > 0) && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '8px 14px 4px' }}>
+                {allday.map((r) => chip(r, true))}
+                {evs.map((ev, j) => {
+                  const color = EVENT_KIND[ev.kind]?.color || 'var(--text-3)'
+                  return <div key={j} onClick={() => ev.mine && removeMine(ev.id)} style={{ fontSize: 12, padding: '4px 9px', borderRadius: 9, background: `color-mix(in srgb, ${color} 18%, var(--surface))`, borderLeft: `3px solid ${color}`, cursor: ev.mine ? 'pointer' : 'default', wordBreak: 'keep-all' }}>{ev.title}</div>
+                })}
+              </div>
+            )}
+            <div style={{ padding: '6px 14px 14px' }}>
+              {hours.map((h) => {
+                const items = rowsFor(selIdx).filter((r) => hourOf(slotOf(r, selIdx)) === h)
+                return (
+                  <div key={h} style={{ display: 'grid', gridTemplateColumns: '44px 1fr', gap: 8, padding: '7px 0', borderTop: '1px solid var(--line)' }}>
+                    <div style={{ ...mono, fontSize: 12, color: 'var(--text-3)', paddingTop: 9, textAlign: 'right' }}>{pad(h)}:00</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0 }}>{items.map((r) => chip(r, false))}</div>
+                  </div>
+                )
+              })}
+              {hours.length === 0 && allday.length === 0 && <div style={{ padding: '18px 0', color: 'var(--text-3)', fontSize: 13, textAlign: 'center' }}>이 날은 배치된 항목이 없다</div>}
+            </div>
+          </div>
+        )
+      })()}
+      {/* 격자 (PC) */}
+      {view === 'week' && !isMobile && <div style={{ overflowX: 'auto' }}>
         <div style={{ minWidth: 760 }}>
           {/* 요일 헤더 */}
           <div style={{ display: 'grid', gridTemplateColumns: '52px repeat(7, minmax(0, 1fr))', borderBottom: '1px solid var(--line)' }}>
@@ -305,10 +368,10 @@ function WeekView({ rows, isOn, toggle, status, calSum, goal, extra, todayKey, o
         </div>
       </div>}
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', padding: '8px 16px', fontSize: 11, color: 'var(--text-3)' }}>
-        {['pay', 'repay', 'bonus', 'goal', 'trip', 'post', 'my'].map((k) => (
+        {['pay', 'repay', 'bonus', 'goal', 'trip', 'my'].map((k) => (
           <span key={k} style={{ display: 'flex', alignItems: 'center', gap: 5 }}><i style={{ width: 8, height: 8, borderRadius: 2, background: EVENT_KIND[k].color, display: 'inline-block' }} />{EVENT_KIND[k].label}</span>
         ))}
-        <span style={{ marginLeft: 'auto' }}>칩을 누르면 체크, 끌어서 다른 요일·시간으로 이동 · 요일 머리는 2/3 이상 초록, 전부면 진한 초록 · 내 일정은 종일 줄에서 클릭해 삭제</span>
+        {!isMobile && <span style={{ marginLeft: 'auto' }}>칩을 누르면 체크, 끌어서 다른 요일·시간으로 이동 · 요일 머리는 2/3 이상 초록, 전부면 진한 초록 · 내 일정은 종일 줄에서 클릭해 삭제</span>}
       </div>
     </div>
   )
@@ -553,7 +616,7 @@ export default function Schedule() {
   return (
     <div style={{ width: '100%', minWidth: 0 }}>
       {/* 1. 달력 */}
-      <WeekView rows={rows} isOn={isOn} moveRow={moveRow} hasLayout={Object.keys(layout).length > 0} resetLayout={resetLayout} toggle={toggleSched} status={schedStatus} calSum={calSum} goal={goal} extra={extra} todayKey={todayKey} onPick={setSel} view={view} setView={setView}>
+      <WeekView isMobile={isMobile} rows={rows} isOn={isOn} moveRow={moveRow} hasLayout={Object.keys(layout).length > 0} resetLayout={resetLayout} toggle={toggleSched} status={schedStatus} calSum={calSum} goal={goal} extra={extra} todayKey={todayKey} onPick={setSel} view={view} setView={setView}>
         <Calendar embedded extra={extra} dayDecor={dayDecor} onDayPick={setSel} />
       </WeekView>
 

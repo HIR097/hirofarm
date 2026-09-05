@@ -125,7 +125,7 @@ export default function Calendar({ embedded = false, extra = null, dayDecor = nu
   const today = useMemo(() => new Date(), [])
   const [cur, setCur] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1))
   const [showWork, setShowWork] = useState(false)
-  const [showPost, setShowPost] = useState(true) // 인스타 게시 일정
+  const [showPost, setShowPost] = useState(false) // 인스타 게시 일정 — 기본 꺼짐(2026-09-06 사용자 지시), 체크하면 다시 보임
   const [sel, setSel] = useState(null) // { day, events }
 
   // 직접 추가한 일정 — 이 브라우저에만 저장된다
