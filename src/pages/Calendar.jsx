@@ -106,6 +106,18 @@ const mergeMaps = (...maps) => {
   return out
 }
 
+// 홈 주간 뷰가 쓴다: 해당 연·월의 일정(재무·내 일정·추가 일정·게시)을 day → [ev] 로
+export function monthEvents(year, month, { mine = [], extra = null, showPost = true } = {}) {
+  return mergeMaps(
+    spreadRanges(FIN?.ranges, year, month),
+    spreadRanges(mine, year, month, { mine: true }),
+    spreadRanges(extra, year, month),
+    showPost ? weeklyEvents(year, month) : {},
+    financeEvents(year, month),
+  )
+}
+export const EVENT_KIND = KIND
+
 // embedded: 홈 탭 안에 들어갈 때 — 이번 주 줄을 크게, 날짜 칸에 dayDecor(iso) 결과(kept/perfect/kcal)를 칠하고 onDayPick(iso) 로 알린다.
 // extra: 홈 탭이 넘기는 추가 일정(롤렉스 조건표 마감 같은 것) — {from, to?, title, kind} 목록
 // dayItems(iso): 이번 주 칸 안에 넣을 체크 항목 [{k, label, on, toggle}] — 홈 탭이 주간 배치도에서 만든다
@@ -396,7 +408,7 @@ export default function Calendar({ embedded = false, extra = null, dayDecor = nu
                   if (onDayPick) onDayPick(dIso)
                 }}
                 style={{
-                  minHeight: embedded ? (inThisWeek ? 128 : 58) : 84, borderRadius: 12, border: '1px solid var(--line)',
+                  minHeight: embedded ? (inThisWeek && dayItems ? 128 : inThisWeek ? 84 : 62) : 84, borderRadius: 12, border: '1px solid var(--line)',
                   background: d ? (decorBg || 'var(--surface)') : 'transparent',
                   padding: d ? '7px 8px' : 0,
                   display: 'flex', flexDirection: 'column', gap: 4,

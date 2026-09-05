@@ -4,7 +4,7 @@ import { useIsMobile } from '../hooks/useIsMobile.js'
 import { searchFoods } from '../data/foods.js'
 import { lookupFood, getApiKey, setApiKey } from '../lib/foodAI.js'
 import * as sync from '../lib/sync.js'
-import Calendar from './Calendar.jsx'
+import Calendar, { monthEvents, EVENT_KIND } from './Calendar.jsx'
 import { MealGuide, MealPlan } from './Calories.jsx'
 
 // 홈 탭 (파일명은 Schedule.jsx 그대로)
@@ -153,12 +153,160 @@ function SyncSettings() {
   )
 }
 
+// ── 주간 뷰: 요일이 열, 시간(07~23시)이 행. 배치도 항목을 시간 칩으로 놓고 클릭해서 체크한다 ──
+const WD = ['월', '화', '수', '목', '금', '토', '일']
+const HOURS = Array.from({ length: 17 }, (_, i) => 7 + i)   // 07 ~ 23
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x }
+const mondayOf = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x }
+const MY_KINDS = ['my', 'trip', 'holiday', 'goal', 'check']
+
+function WeekView({ rows, dayLog, toggle, status, calSum, goal, extra, todayKey, onPick, view, setView }) {
+  const [offset, setOffset] = useState(0)
+  const [rawMine, setRawMine] = useLocalStorage('hy_cal_v1', '[]')
+  const mine = useMemo(() => { try { const v = JSON.parse(rawMine); return Array.isArray(v) ? v : [] } catch { return [] } }, [rawMine])
+  const [form, setForm] = useState(null)
+  const monday = addDays(mondayOf(new Date()), offset * 7)
+  const days = WD.map((_, i) => addDays(monday, i))
+  const isoOf = (d) => dayKey(d)
+  // 이 주가 걸친 달의 일정 맵
+  const evMaps = useMemo(() => {
+    const out = {}
+    for (const d of days) {
+      const key = `${d.getFullYear()}-${d.getMonth() + 1}`
+      if (!out[key]) out[key] = monthEvents(d.getFullYear(), d.getMonth() + 1, { mine, extra })
+    }
+    return out
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [monday.getTime(), mine, extra])
+  const evsOf = (d) => (evMaps[`${d.getFullYear()}-${d.getMonth() + 1}`] || {})[d.getDate()] || []
+  const rowsFor = (i) => rows.filter((r) => r.days[i])
+  const hourOf = (slot) => (/^\d/.test(slot) ? parseInt(slot.slice(0, 2), 10) : null)
+  const label = `${monday.getMonth() + 1}월 ${monday.getDate()}일 – ${days[6].getMonth() + 1}월 ${days[6].getDate()}일`
+  const submit = () => {
+    const t = (form?.title || '').trim()
+    if (!t || !form.from) return
+    const to = form.to && form.to > form.from ? form.to : ''
+    const next = [...mine, { id: `m${Date.now()}`, title: t, from: form.from, ...(to ? { to } : {}), kind: form.kind, action: [] }].sort((a, b) => a.from.localeCompare(b.from))
+    setRawMine(JSON.stringify(next)); setForm(null)
+  }
+  const removeMine = (id) => setRawMine(JSON.stringify(mine.filter((e) => e.id !== id)))
+  const colBg = (iso) => {
+    if (iso > todayKey) return 'transparent'
+    const st = status(iso)
+    return st.perfect ? 'color-mix(in srgb, #22c55e 26%, var(--surface))' : st.kept ? 'color-mix(in srgb, #22c55e 14%, var(--surface))' : st.some ? 'color-mix(in srgb, #f59e0b 12%, var(--surface))' : 'transparent'
+  }
+  const navBtn = { ...btn, padding: '6px 10px', borderRadius: 999 }
+  const tabBtn = (on) => ({ ...btn, padding: '6px 14px', borderRadius: 999, background: on ? 'var(--accent)' : 'var(--surface2)', color: on ? 'var(--accent-text)' : 'var(--text)', borderColor: on ? 'var(--accent)' : 'var(--line)' })
+  return (
+    <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
+      {/* 상단 바 */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '12px 16px', borderBottom: '1px solid var(--line)' }}>
+        <div style={{ fontSize: 15, fontWeight: 700 }}>{offset === 0 ? '이번 주' : offset === -1 ? '지난주' : offset === 1 ? '다음 주' : `${offset > 0 ? '+' : ''}${offset}주`} <span style={{ ...mono, color: 'var(--text-3)', fontWeight: 500, fontSize: 13, marginLeft: 6 }}>{label}</span></div>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+          <button onClick={() => (form ? setForm(null) : setForm({ title: '', from: todayKey, to: '', kind: 'my' }))} style={navBtn}>{form ? '취소' : '+ 일정'}</button>
+          <span style={{ width: 8 }} />
+          <button onClick={() => setView('month')} style={tabBtn(view === 'month')}>월</button>
+          <button onClick={() => setView('week')} style={tabBtn(view === 'week')}>주</button>
+          <span style={{ width: 8 }} />
+          <button onClick={() => setOffset(offset - 1)} style={navBtn}>‹</button>
+          <button onClick={() => setOffset(0)} style={navBtn}>이번 주</button>
+          <button onClick={() => setOffset(offset + 1)} style={navBtn}>›</button>
+        </div>
+      </div>
+      {form && (
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: '10px 16px', borderBottom: '1px solid var(--line)', background: 'var(--surface2)' }}>
+          <input autoFocus value={form.title} placeholder="일정 제목" onChange={(e) => setForm({ ...form, title: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && submit()} style={{ ...field, flex: 2, minWidth: 160 }} />
+          <input type="date" value={form.from} onChange={(e) => setForm({ ...form, from: e.target.value })} style={{ ...field, width: 150 }} />
+          <input type="date" value={form.to} min={form.from} onChange={(e) => setForm({ ...form, to: e.target.value })} style={{ ...field, width: 150 }} title="종료일 (선택)" />
+          <select value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })} style={{ ...field, width: 110 }}>
+            {MY_KINDS.map((k) => <option key={k} value={k}>{EVENT_KIND[k].label}</option>)}
+          </select>
+          <button onClick={submit} style={{ ...btn, background: 'var(--accent)', color: 'var(--accent-text)', borderColor: 'var(--accent)', padding: '6px 14px' }}>추가</button>
+        </div>
+      )}
+      {/* 격자 */}
+      <div style={{ overflowX: 'auto' }}>
+        <div style={{ minWidth: 760 }}>
+          {/* 요일 헤더 */}
+          <div style={{ display: 'grid', gridTemplateColumns: '52px repeat(7, minmax(0, 1fr))', borderBottom: '1px solid var(--line)' }}>
+            <div />
+            {days.map((d, i) => {
+              const iso = isoOf(d); const isT = iso === todayKey; const st = iso <= todayKey ? status(iso) : null; const cs = calSum(iso)
+              return (
+                <div key={iso} onClick={() => onPick(iso)} style={{ padding: '9px 8px', textAlign: 'center', cursor: 'pointer', background: isT ? 'var(--accent)' : colBg(iso), color: isT ? 'var(--accent-text)' : 'var(--text)', borderLeft: '1px solid var(--line)' }}>
+                  <div style={{ fontSize: 11, opacity: 0.8 }}>{WD[i]}요일</div>
+                  <div style={{ ...mono, fontSize: 17, fontWeight: 700 }}>{d.getDate()}</div>
+                  <div style={{ ...mono, fontSize: 10.5, opacity: 0.85, marginTop: 1 }}>
+                    {st ? `${st.n}/${st.total}${st.perfect ? ' 완벽' : st.kept ? ' 성공' : ''}` : '·'}{cs.kcal > 0 ? ` · ${num(cs.kcal)}` : ''}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          {/* 종일: 일정 + 쉬는 날 */}
+          <div style={{ display: 'grid', gridTemplateColumns: '52px repeat(7, minmax(0, 1fr))', borderBottom: '1px solid var(--line)', background: 'var(--surface2)' }}>
+            <div style={{ ...mono, fontSize: 10, color: 'var(--text-3)', padding: '6px 6px', textAlign: 'right' }}>종일</div>
+            {days.map((d, i) => {
+              const iso = isoOf(d); const evs = evsOf(d); const allday = rowsFor(i).filter((r) => hourOf(r.slot) == null)
+              return (
+                <div key={iso} style={{ padding: '4px 5px', borderLeft: '1px solid var(--line)', minHeight: 30, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  {allday.map((r) => {
+                    const on = !!(dayLog[iso] || EMPTY)[r.k]
+                    return <div key={r.k} onClick={() => toggle(iso, r.k)} title={r.label} style={{ fontSize: 10.5, padding: '2px 6px', borderRadius: 6, cursor: 'pointer', background: on ? 'var(--accent)' : 'transparent', color: on ? 'var(--accent-text)' : 'var(--text-2)', border: '1px dashed var(--line)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{on ? '✓ ' : ''}{r.short}</div>
+                  })}
+                  {evs.slice(0, 4).map((ev, j) => {
+                    const color = EVENT_KIND[ev.kind]?.color || 'var(--text-3)'
+                    return (
+                      <div key={j} title={ev.title + (ev.mine ? ' (클릭해서 삭제)' : '')} onClick={() => ev.mine && removeMine(ev.id)} style={{ fontSize: 10.5, padding: '2px 6px', borderRadius: 6, background: `color-mix(in srgb, ${color} 18%, var(--surface))`, borderLeft: `2px solid ${color}`, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: ev.mine ? 'pointer' : 'default' }}>{ev.title}</div>
+                    )
+                  })}
+                  {evs.length > 4 && <span style={{ fontSize: 10, color: 'var(--text-3)' }}>+{evs.length - 4}</span>}
+                </div>
+              )
+            })}
+          </div>
+          {/* 시간 행 */}
+          {HOURS.map((h) => (
+            <div key={h} style={{ display: 'grid', gridTemplateColumns: '52px repeat(7, minmax(0, 1fr))', borderBottom: '1px solid var(--line)', minHeight: 34 }}>
+              <div style={{ ...mono, fontSize: 10.5, color: 'var(--text-3)', padding: '6px 6px 0', textAlign: 'right' }}>{pad(h)}:00</div>
+              {days.map((d, i) => {
+                const iso = isoOf(d); const items = rowsFor(i).filter((r) => hourOf(r.slot) === h); const future = iso > todayKey; const isT = iso === todayKey
+                return (
+                  <div key={iso} style={{ borderLeft: '1px solid var(--line)', padding: '3px 4px', display: 'flex', flexDirection: 'column', gap: 3, background: isT ? 'color-mix(in srgb, var(--accent) 5%, transparent)' : 'transparent' }}>
+                    {items.map((r) => {
+                      const on = !!(dayLog[iso] || EMPTY)[r.k]
+                      return (
+                        <div key={r.k} onClick={() => !future && toggle(iso, r.k)} title={`${r.slot} ${r.label}`}
+                          style={{ fontSize: 11.5, lineHeight: 1.3, padding: '5px 7px', borderRadius: 7, cursor: future ? 'default' : 'pointer', opacity: future ? 0.5 : 1,
+                            background: on ? 'var(--accent)' : 'var(--surface2)', color: on ? 'var(--accent-text)' : 'var(--text)', border: `1px solid ${on ? 'var(--accent)' : 'var(--line)'}`, textDecoration: on ? 'line-through' : 'none' }}>
+                          <span style={{ ...mono, fontSize: 10, opacity: 0.7, marginRight: 4 }}>{r.slot}</span>{r.short}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', padding: '8px 16px', fontSize: 11, color: 'var(--text-3)' }}>
+        {['pay', 'repay', 'bonus', 'goal', 'trip', 'post', 'my'].map((k) => (
+          <span key={k} style={{ display: 'flex', alignItems: 'center', gap: 5 }}><i style={{ width: 8, height: 8, borderRadius: 2, background: EVENT_KIND[k].color, display: 'inline-block' }} />{EVENT_KIND[k].label}</span>
+        ))}
+        <span style={{ marginLeft: 'auto' }}>칩을 누르면 체크 · 요일 머리는 2/3 이상 초록, 전부면 진한 초록 · 내 일정은 종일 줄에서 클릭해 삭제</span>
+      </div>
+    </div>
+  )
+}
+
 export default function Schedule() {
   const data = (typeof window !== 'undefined' && window.__HY_DATA__?.schedule) || null
   const body = (typeof window !== 'undefined' && window.__HY_DATA__?.body) || null
   const isMobile = useIsMobile()
   const todayKey = dayKey(new Date())
   const [sel, setSel] = useState(todayKey)
+  const [view, setView] = useLocalStorage('hy_home_view', 'week')   // 'week' 기본, 'month' 전환
 
   // ── 몸 탭 저장소 (할 일 = 몸 탭 타임라인) ──
   const [bodyLog, saveBodyLog] = useJsonStorage('hy_body_log', EMPTY)
@@ -334,7 +482,17 @@ export default function Schedule() {
   return (
     <div style={{ width: '100%', minWidth: 0 }}>
       {/* 1. 달력 */}
-      <Calendar embedded extra={extra} dayDecor={dayDecor} onDayPick={setSel} dayItems={dayItems} />
+      {view === 'week' ? (
+        <WeekView rows={data.week.rows} dayLog={dayLog} toggle={toggleSched} status={schedStatus} calSum={calSum} goal={goal} extra={extra} todayKey={todayKey} onPick={setSel} view={view} setView={setView} />
+      ) : (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6, marginBottom: 8 }}>
+            <button onClick={() => setView('month')} style={{ ...btn, padding: '6px 14px', borderRadius: 999, background: 'var(--accent)', color: 'var(--accent-text)', borderColor: 'var(--accent)' }}>월</button>
+            <button onClick={() => setView('week')} style={{ ...btn, padding: '6px 14px', borderRadius: 999 }}>주</button>
+          </div>
+          <Calendar embedded extra={extra} dayDecor={dayDecor} onDayPick={setSel} />
+        </div>
+      )}
 
       {/* 2. 할 일 / 칼로리 */}
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, minmax(0, 1fr))', gap: 14, marginTop: 14, alignItems: 'start' }}>
