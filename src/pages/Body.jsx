@@ -474,147 +474,30 @@ export default function Body() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18, ...fade }}>
-      {/* ── 0. 감속 배너 (리뷰 결과) ── */}
-      {slowdown && (
-        <div style={{ background: AMBER_BG, border: `1px solid ${AMBER}`, borderRadius: 14, padding: '12px 16px', fontSize: 13.5, color: 'var(--text)' }}>
-          ⚠ 이번 주 리뷰 신호 감지 — {data.review.slowdown}
-        </div>
-      )}
-
-      {/* ── 1. 하루 타임라인 (어제 · 오늘 · 내일) ── */}
+      {/* ── 인바디 추이 (맨 위, 26-09-06 사용자 요청) ── */}
       <Card>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6, marginBottom: 4 }}>
-          <div style={{ fontSize: 16, fontWeight: 700 }}>하루 타임라인</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {syncMsg && <span style={{ font: "500 11px 'JetBrains Mono'", color: 'var(--text-3)' }}>{syncMsg}</span>}
-            <button style={{ ...btn, padding: '6px 10px' }} onClick={() => setOffset(offset - 1)}>◀</button>
-            {offset !== 0 && (
-              <button style={{ ...btn, padding: '6px 10px' }} onClick={() => setOffset(0)}>오늘</button>
-            )}
-            <button style={{ ...btn, padding: '6px 10px' }} onClick={() => setOffset(offset + 1)}>▶</button>
-          </div>
+        <CardHead title="인바디 추이" caption={`목표 ${data.targets.w}kg · 골격근 ${data.targets.smm}kg · 체지방 ${data.targets.pbf}% · ${data.plan.note}`} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <PlanChart
+            label="체중" unit="kg" color="var(--accent)" field="w" digits={1}
+            plan={data.plan.points} phases={data.plan.phases} target={data.targets.w}
+            actual={inbodyRows.filter((r) => r.w).map((r) => ({ d: r.d, v: r.w }))}
+          />
+          <PlanChart
+            label="골격근량" unit="kg" color="#3b9eff" field="smm" digits={1}
+            plan={data.plan.points} phases={data.plan.phases} target={data.targets.smm}
+            actual={inbodyRows.filter((r) => r.smm).map((r) => ({ d: r.d, v: r.smm }))}
+          />
+          <PlanChart
+            label="체지방률" unit="%" color={AMBER} field="pbf" digits={1}
+            plan={data.plan.points} phases={data.plan.phases} target={data.targets.pbf}
+            actual={inbodyRows.filter((r) => r.pbf).map((r) => ({ d: r.d, v: r.pbf }))}
+          />
         </div>
-        <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 12 }}>위에서 아래 = 하루 순서. 한 열만 내려가며 체크하면 끝</div>
-
-        <div style={{ overflowX: isMobile ? 'visible' : 'auto' }}>
-          <div style={{ minWidth: isMobile ? 0 : 560 }}>
-            {/* 헤더 */}
-            <div style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: 8 }}>
-              <span style={{ flex: 1 }} />
-              {winDays.map((d, i) => {
-                const isT = isMobile || dayKey(d) === todayKey
-                return (
-                  <span key={i} style={{ width: colW(d), flex: 'none', textAlign: 'center' }}>
-                    <span style={{ font: `${isT ? 700 : 600} ${isT ? 13 : 11}px 'JetBrains Mono'`, color: isT ? 'var(--text)' : 'var(--text-3)' }}>
-                      {colName(d)}
-                      <br />
-                      <span style={{ fontWeight: 500, fontSize: 10 }}>{WEEKDAYS[d.getDay()]} {d.getDate()}</span>
-                    </span>
-                  </span>
-                )
-              })}
-            </div>
-            {/* 행 */}
-            {data.timeline.map((it, idx) => (
-              <div key={it.k} style={{ display: 'flex', alignItems: 'center', borderTop: '1px solid var(--line)', padding: '8px 0' }}>
-                <span style={{ flex: 1, display: 'flex', alignItems: 'baseline', gap: 8, paddingRight: 10 }}>
-                  <span style={{ font: "600 10px 'JetBrains Mono'", color: 'var(--text-3)', flex: 'none' }}>{idx + 1}</span>
-                  <span style={{ fontSize: isMobile ? 12 : 13, lineHeight: 1.45 }}>
-                    <b>{it.short}</b>
-                    <span style={{ color: 'var(--text-2)' }}> — {it.label}</span>
-                  </span>
-                </span>
-                {winDays.map((d, i) => {
-                  const dkey = dayKey(d)
-                  const isT = isMobile || dkey === todayKey
-                  const future = dkey > todayKey
-                  const e = log[dkey] || EMPTY
-                  const on = !!(e.checks || EMPTY)[it.k]
-                  const time = (e.times || EMPTY)[it.k] || ''
-                  return (
-                    <span
-                      key={i}
-                      style={{
-                        width: colW(d),
-                        flex: 'none',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: 4,
-                        opacity: future ? 0.3 : 1,
-                        background: isT ? 'var(--surface2)' : 'transparent',
-                        alignSelf: 'stretch',
-                        justifyContent: 'center',
-                        borderRadius: 10,
-                        padding: '4px 0',
-                      }}
-                    >
-                      <span
-                        onClick={() => toggleAt(dkey, it.k)}
-                        style={{
-                          width: isT ? 26 : 20,
-                          height: isT ? 26 : 20,
-                          borderRadius: 8,
-                          border: on ? 'none' : '1.5px solid var(--line)',
-                          background: on ? 'var(--accent)' : 'transparent',
-                          color: 'var(--accent-text)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: isT ? 14 : 11,
-                          fontWeight: 700,
-                          cursor: future ? 'default' : 'pointer',
-                        }}
-                      >
-                        {on ? '✓' : ''}
-                      </span>
-                      {it.type === 'time' &&
-                        (future ? (
-                          <span style={{ font: "500 10px 'JetBrains Mono'", color: 'var(--text-3)' }}>—</span>
-                        ) : isT ? (
-                          <TimeField
-                            value={time}
-                            onCommit={(v) => setTimeAt(dkey, it.k, v)}
-                            style={{ ...field, padding: '3px 4px', width: 62, font: "500 11px 'JetBrains Mono'", textAlign: 'center' }}
-                          />
-                        ) : (
-                          <span style={{ font: "500 10px 'JetBrains Mono'", color: time ? 'var(--text-2)' : 'var(--text-3)' }}>{time || '·'}</span>
-                        ))}
-                      {(it.type === 'num' || it.type === 'text') &&
-                        (future ? (
-                          <span style={{ font: "500 10px 'JetBrains Mono'", color: 'var(--text-3)' }}>—</span>
-                        ) : isT ? (
-                          <ValueField
-                            kind={it.type}
-                            value={time}
-                            placeholder={it.ph || (it.type === 'num' ? '0~10' : '')}
-                            onCommit={(v) => setTimeAt(dkey, it.k, v)}
-                            style={{ ...field, padding: '3px 4px', width: it.type === 'num' ? 46 : Math.max(72, colW(d) - 12), font: "500 11px 'JetBrains Mono'", textAlign: 'center' }}
-                          />
-                        ) : (
-                          <span
-                            title={time}
-                            style={{ font: "500 10px 'JetBrains Mono'", color: time ? 'var(--text-2)' : 'var(--text-3)', maxWidth: colW(d) - 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                          >
-                            {time || '·'}
-                          </span>
-                        ))}
-                    </span>
-                  )
-                })}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* 참조 규칙 — 체크하지 않고 항상 지키는 것 */}
-        <div style={{ marginTop: 14, background: 'var(--surface2)', borderRadius: 12, padding: '11px 14px' }}>
-          <div style={{ font: "600 11px 'JetBrains Mono'", color: 'var(--text-3)', marginBottom: 6 }}>참조 — 체크 없이 지키는 것</div>
-          {data.refs.map((r, i) => (
-            <div key={i} style={{ fontSize: 12.5, color: 'var(--text-2)', padding: '3px 0', lineHeight: 1.55 }}>
-              · {r}
-            </div>
-          ))}
+        <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 14, lineHeight: 1.6 }}>
+          직접 입력하지 않는다 — InBody 앱 캡처를 주면 데이터에 추가되고, 점선(계획) 위/아래 어디에 찍히는지로 판단한다.
+          <br />
+          골격근 42.0 은 벌크 정점(28-11)에서 찍히고 8% 컷을 끝내면 41.8 로 내려온다 — 컷 구간에서 계획선이 꺾이는 건 정상이다.
         </div>
       </Card>
 
@@ -722,99 +605,6 @@ export default function Body() {
         )}
       </Card>
 
-      {/* ── 4. 인바디 추이 — 계획 대비 실측. 입력 없음, 인바디 사진 주면 갱신 ── */}
-      <Card>
-        <CardHead title="인바디 추이" caption={`목표 ${data.targets.w}kg · 골격근 ${data.targets.smm}kg · 체지방 ${data.targets.pbf}% · ${data.plan.note}`} />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <PlanChart
-            label="체중" unit="kg" color="var(--accent)" field="w" digits={1}
-            plan={data.plan.points} phases={data.plan.phases} target={data.targets.w}
-            actual={inbodyRows.filter((r) => r.w).map((r) => ({ d: r.d, v: r.w }))}
-          />
-          <PlanChart
-            label="골격근량" unit="kg" color="#3b9eff" field="smm" digits={1}
-            plan={data.plan.points} phases={data.plan.phases} target={data.targets.smm}
-            actual={inbodyRows.filter((r) => r.smm).map((r) => ({ d: r.d, v: r.smm }))}
-          />
-          <PlanChart
-            label="체지방률" unit="%" color={AMBER} field="pbf" digits={1}
-            plan={data.plan.points} phases={data.plan.phases} target={data.targets.pbf}
-            actual={inbodyRows.filter((r) => r.pbf).map((r) => ({ d: r.d, v: r.pbf }))}
-          />
-        </div>
-        <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 14, lineHeight: 1.6 }}>
-          직접 입력하지 않는다 — InBody 앱 캡처를 주면 데이터에 추가되고, 점선(계획) 위/아래 어디에 찍히는지로 판단한다.
-          <br />
-          골격근 42.0 은 벌크 정점(28-11)에서 찍히고 8% 컷을 끝내면 41.8 로 내려온다 — 컷 구간에서 계획선이 꺾이는 건 정상이다.
-        </div>
-      </Card>
-
-      <div style={two}>
-        {/* ── 5. 일요일 리뷰 ── */}
-        <Card style={isSunday ? { border: `1px solid ${AMBER}` } : undefined}>
-          <CardHead title="주간 리뷰" caption={isSunday ? '오늘이 일요일 — 5분' : '일요일 밤 5분'} />
-          {data.review.questions.map((q) => {
-            const v = rv[q.k]
-            return (
-              <div key={q.k} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 2px', borderBottom: '1px solid var(--line)' }}>
-                <span style={{ flex: 1, fontSize: 13.5 }}>{q.label}</span>
-                {[true, false].map((val) => {
-                  const active = v === val
-                  const isBadPick = val === q.bad
-                  return (
-                    <button
-                      key={String(val)}
-                      onClick={() => setRv(q.k, active ? undefined : val)}
-                      style={{ ...btn, padding: '6px 13px', fontFamily: 'inherit', fontSize: 12.5, fontWeight: 600, background: active ? (isBadPick ? RED_BG : 'rgba(34,197,94,.13)') : 'transparent', color: active ? (isBadPick ? RED : GREEN) : 'var(--text-3)', borderColor: active ? (isBadPick ? RED : GREEN) : 'var(--line)' }}
-                    >
-                      {val ? '응' : '아니'}
-                    </button>
-                  )
-                })}
-              </div>
-            )
-          })}
-          <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 10, lineHeight: 1.55 }}>{data.review.slowdown}</div>
-        </Card>
-
-        {/* ── 6. 하드 룰 · 오픈 이슈 ── */}
-        <Card>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, cursor: 'pointer' }} onClick={() => setRulesOpen(!rulesOpen)}>
-            <div style={{ fontSize: 16, fontWeight: 700 }}>하드 룰 · 오픈 이슈</div>
-            <span style={{ font: mono, color: 'var(--text-3)' }}>{rulesOpen ? '접기 ▲' : `룰 ${data.hardRules.length} · 펼치기 ▼`}</span>
-          </div>
-          {rulesOpen && (
-            <div style={{ marginBottom: 14 }}>
-              {data.hardRules.map((r, i) => (
-                <div key={i} style={{ display: 'flex', gap: 9, padding: '7px 0', fontSize: 13, lineHeight: 1.5, borderBottom: '1px solid var(--line)' }}>
-                  <span style={{ font: "700 12px 'JetBrains Mono'", color: RED }}>{i + 1}</span>
-                  <span>{r}</span>
-                </div>
-              ))}
-              <div style={{ font: mono, color: 'var(--text-3)', margin: '12px 0 4px' }}>반복 패턴 — 보이면 개입</div>
-              {data.patterns.map((p, i) => (
-                <div key={i} style={{ fontSize: 12.5, color: 'var(--text-2)', padding: '5px 0', lineHeight: 1.5 }}>
-                  · {p}
-                </div>
-              ))}
-            </div>
-          )}
-          <div style={{ font: mono, color: 'var(--text-3)', marginBottom: 4 }}>오픈 이슈</div>
-          {data.openIssues.map((it) => {
-            const done = issues[it.k] != null ? !!issues[it.k] : !!it.done
-            return (
-              <div key={it.k} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 2px', borderBottom: '1px solid var(--line)', cursor: 'pointer' }} onClick={() => saveIssues({ ...issues, [it.k]: !done })}>
-                <span style={{ width: 18, height: 18, flex: 'none', borderRadius: 6, border: done ? 'none' : '1.5px solid var(--line)', background: done ? GREEN : 'transparent', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>
-                  {done ? '✓' : ''}
-                </span>
-                <span style={{ flex: 1, fontSize: 13, color: done ? 'var(--text-3)' : 'var(--text)', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.45 }}>
-                  {it.label}
-                </span>
-              </div>
-            )
-          })}
-        </Card>
-      </div>
     </div>
   )
 }

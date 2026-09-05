@@ -108,7 +108,8 @@ const mergeMaps = (...maps) => {
 
 // embedded: 홈 탭 안에 들어갈 때 — 이번 주 줄을 크게, 날짜 칸에 dayDecor(iso) 결과(kept/perfect/kcal)를 칠하고 onDayPick(iso) 로 알린다.
 // extra: 홈 탭이 넘기는 추가 일정(롤렉스 조건표 마감 같은 것) — {from, to?, title, kind} 목록
-export default function Calendar({ embedded = false, extra = null, dayDecor = null, onDayPick = null } = {}) {
+// dayItems(iso): 이번 주 칸 안에 넣을 체크 항목 [{k, label, on, toggle}] — 홈 탭이 주간 배치도에서 만든다
+export default function Calendar({ embedded = false, extra = null, dayDecor = null, onDayPick = null, dayItems = null } = {}) {
   const today = useMemo(() => new Date(), [])
   const [cur, setCur] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1))
   const [showWork, setShowWork] = useState(false)
@@ -419,6 +420,21 @@ export default function Calendar({ embedded = false, extra = null, dayDecor = nu
                         <span style={{ marginLeft: 'auto', fontSize: 9.5, fontWeight: 600, color: decor.kcalOk ? '#22c55e' : 'var(--text-3)' }}>{Math.round(decor.kcal).toLocaleString()}</span>
                       )}
                     </span>
+                    {inThisWeek && dayItems && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, margin: '2px 0 4px' }}>
+                        {dayItems(dIso).map((it) => (
+                          <div
+                            key={it.k}
+                            onClick={(e) => { e.stopPropagation(); it.toggle() }}
+                            title={it.title || it.label}
+                            style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10.5, lineHeight: 1.3, cursor: 'pointer', color: it.on ? 'var(--text-3)' : 'var(--text)', textDecoration: it.on ? 'line-through' : 'none' }}
+                          >
+                            <span style={{ width: 12, height: 12, borderRadius: 4, flex: 'none', border: it.on ? 'none' : '1.5px solid var(--line)', background: it.on ? 'var(--accent)' : 'transparent', color: 'var(--accent-text)', fontSize: 9, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{it.on ? '✓' : ''}</span>
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     {evs.slice(0, 3).map((ev, j) => {
                       const color = ev.source === 'work'
                         ? SCHEDULE_CATEGORIES[ev.category]?.color || 'var(--text-3)'

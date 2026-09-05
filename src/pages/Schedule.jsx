@@ -108,6 +108,33 @@ export default function Schedule() {
   const [bodyIssues] = useJsonStorage('hy_body_issues', EMPTY)
   const [, setBodyStamp] = useLocalStorage('hy_body_stamp', '')
 
+  // ── 주간 배치도 체크 (달력 이번 주 칸 안의 체크박스) — hy_sched_day {iso:{k:true}}, sync 'sched_day' ──
+  const [dayLog, saveDayLog] = useJsonStorage('hy_sched_day', EMPTY)
+  const [dayStamp, setDayStamp] = useLocalStorage('hy_sched_day_stamp', '')
+  const dayTouched = useRef(false)
+  useEffect(() => {
+    ;(async () => {
+      if (!sync.isConfigured() || !sync.isLoggedIn()) return
+      try {
+        const remote = await sync.pull('sched_day')
+        if (remote && newer(remote.updatedAt, dayStamp) && remote.value?.dayLog) { saveDayLog(remote.value.dayLog); setDayStamp(remote.updatedAt) }
+      } catch { /* 무시 */ }
+    })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  useEffect(() => {
+    if (!dayTouched.current || !sync.isConfigured() || !sync.isLoggedIn()) return
+    const t = setTimeout(async () => {
+      try {
+        const now = new Date().toISOString()
+        await sync.push('sched_day', { dayLog }, now)
+        setDayStamp(now)
+      } catch { /* 다음 변경 때 다시 */ }
+    }, 1500)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dayLog])
+
   // ── 칼로리 저장소 (칼로리 탭과 동일 키) ──
   const [calLog, saveCalLog] = useJsonStorage('hy_cal_log', EMPTY)
   const [customFoods] = useJsonStorage('hy_cal_ai_foods', EMPTY_LIST)
@@ -178,10 +205,31 @@ export default function Schedule() {
     const e = bodyLog[dkey] || EMPTY
     saveBodyLog({ ...bodyLog, [dkey]: { ...e, times: { ...(e.times || EMPTY), [k]: v } } })
   }
+  // 달력 이번 주 칸: 그 요일의 주간 배치도 항목 (secure/schedule.js week.rows, days[월=0..일=6])
+  const rowsFor = (iso) => {
+    const d = new Date(iso + 'T00:00:00')
+    const idx = (d.getDay() + 6) % 7
+    return data.week.rows.filter((r) => r.days[idx])
+  }
+  const toggleSched = (iso, k) => {
+    if (iso > todayKey) return
+    dayTouched.current = true
+    const e = dayLog[iso] || EMPTY
+    saveDayLog({ ...dayLog, [iso]: { ...e, [k]: !e[k] } })
+  }
+  const dayItems = (iso) => rowsFor(iso).map((r) => ({ k: r.k, label: r.short, title: r.label, on: !!(dayLog[iso] || EMPTY)[r.k], toggle: () => toggleSched(iso, r.k) }))
+  const schedStatus = (iso) => {
+    const rows = rowsFor(iso)
+    const c = dayLog[iso] || EMPTY
+    const n = rows.filter((r) => c[r.k]).length
+    const total = rows.length
+    return { n, total, perfect: total > 0 && n === total, kept: total > 0 && n / total >= PASS && n < total, some: n > 0 && n / total < PASS }
+  }
+  // 칸 색은 배치도 체크 기준 (2/3 성공, 전부 완벽). 칼로리 달성은 점으로
   const dayDecor = (iso) => {
-    const st = dayStatus(iso)
-    const cs = calSum(iso)
     if (iso > todayKey) return null
+    const st = schedStatus(iso)
+    const cs = calSum(iso)
     return { ...st, kcal: cs.kcal, kcalOk: goal > 0 && cs.kcal >= goal }
   }
   // 달력에 올릴 큰 날짜 (secure/schedule.js dday)
@@ -228,7 +276,7 @@ export default function Schedule() {
   return (
     <div style={{ width: '100%', minWidth: 0 }}>
       {/* 1. 달력 */}
-      <Calendar embedded extra={extra} dayDecor={dayDecor} onDayPick={setSel} />
+      <Calendar embedded extra={extra} dayDecor={dayDecor} onDayPick={setSel} dayItems={dayItems} />
 
       {/* 2. 할 일 / 칼로리 */}
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14, marginTop: 14 }}>
