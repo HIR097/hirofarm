@@ -53,6 +53,8 @@ const COLOR = { good: 'var(--good, #22c55e)', bad: 'var(--bad, #ef4444)', warn: 
 const GREEN = '#22c55e'
 const AMBER = '#f59e0b'
 const PASS = 2 / 3 // 이만큼 체크하면 그날은 성공
+const MEALS = ['아침', '점심', '간식', '저녁', '야식']
+const defaultMeal = () => { const h = new Date().getHours(); return h < 11 ? '아침' : h < 14 ? '점심' : h < 17 ? '간식' : h < 21 ? '저녁' : '야식' }
 
 const card = { background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, padding: 18, marginBottom: 14, minWidth: 0 }
 const h2 = { fontSize: 15, fontWeight: 700, letterSpacing: '-.01em', marginBottom: 2 }
@@ -160,7 +162,7 @@ const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); r
 const mondayOf = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x }
 const MY_KINDS = ['my', 'trip', 'holiday', 'goal', 'check']
 
-function WeekView({ rows, dayLog, toggle, status, calSum, goal, extra, todayKey, onPick, view, setView, children }) {
+function WeekView({ rows, isOn, toggle, status, calSum, goal, extra, todayKey, onPick, view, setView, children }) {
   const [offset, setOffset] = useState(0)
   const [rawMine, setRawMine] = useLocalStorage('hy_cal_v1', '[]')
   const mine = useMemo(() => { try { const v = JSON.parse(rawMine); return Array.isArray(v) ? v : [] } catch { return [] } }, [rawMine])
@@ -252,7 +254,7 @@ function WeekView({ rows, dayLog, toggle, status, calSum, goal, extra, todayKey,
               return (
                 <div key={iso} style={{ padding: '4px 5px', borderLeft: '1px solid var(--line)', minHeight: 30, display: 'flex', flexDirection: 'column', gap: 3 }}>
                   {allday.map((r) => {
-                    const on = !!(dayLog[iso] || EMPTY)[r.k]
+                    const on = isOn(iso, r)
                     return <div key={r.k} onClick={() => toggle(iso, r.k)} title={r.label} style={{ fontSize: 10.5, padding: '2px 6px', borderRadius: 6, cursor: 'pointer', background: on ? 'var(--accent)' : 'transparent', color: on ? 'var(--accent-text)' : 'var(--text-2)', border: '1px dashed var(--line)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{on ? '✓ ' : ''}{r.short}</div>
                   })}
                   {evs.slice(0, 4).map((ev, j) => {
@@ -275,7 +277,7 @@ function WeekView({ rows, dayLog, toggle, status, calSum, goal, extra, todayKey,
                 return (
                   <div key={iso} style={{ borderLeft: '1px solid var(--line)', padding: '3px 4px', display: 'flex', flexDirection: 'column', gap: 3, background: isT ? 'color-mix(in srgb, var(--accent) 5%, transparent)' : 'transparent' }}>
                     {items.map((r) => {
-                      const on = !!(dayLog[iso] || EMPTY)[r.k]
+                      const on = isOn(iso, r)
                       return (
                         <div key={r.k} onClick={() => !future && toggle(iso, r.k)} title={`${r.slot} ${r.label}`}
                           style={{ fontSize: 11.5, lineHeight: 1.3, padding: '5px 7px', borderRadius: 7, cursor: future ? 'default' : 'pointer', opacity: future ? 0.5 : 1,
@@ -351,6 +353,8 @@ export default function Schedule() {
   const goal = Math.max(0, Number(goalStr) || 0)
   const pGoal = Math.max(0, Number(proteinGoalStr) || 0)
   const [query, setQuery] = useState('')
+  const [mealSel, setMealSel] = useState(() => defaultMeal())   // 지금 기록하는 끼니
+  const foodInputRef = useRef(null)
   const [aiBusy, setAiBusy] = useState(false)
   const [aiError, setAiError] = useState('')
 
@@ -418,35 +422,25 @@ export default function Schedule() {
     const idx = (d.getDay() + 6) % 7
     return data.week.rows.filter((r) => r.days[idx])
   }
-  // 식사 행(meal 슬롯이 있는 것)을 체크하면 평일 현실 식단에서 지금 골라 둔 메뉴가 그날 칼로리에 들어가고, 풀면 빠진다
-  const mealPlan = body?.mealPlan || null
-  const [mealPicks] = useJsonStorage('hy_meal_picks', EMPTY_LIST)
+  // 식사 행은 체크가 아니라 '그날 그 끼니로 기록된 음식이 있나'로 판정한다. 칩을 누르면 그 날짜·끼니가 칼로리 입력칸에 잡힌다
+  const hasMeal = (iso, meal) => (calLog[iso] || EMPTY_LIST).some((it) => it.meal === meal)
+  const isOn = (iso, row) => (row.meal ? hasMeal(iso, row.meal) : !!(dayLog[iso] || EMPTY)[row.k])
   const toggleSched = (iso, k) => {
     if (iso > todayKey) return
+    const row = data.week.rows.find((r) => r.k === k)
+    if (row?.meal) {
+      setSel(iso); setMealSel(row.meal)
+      setTimeout(() => foodInputRef.current?.focus(), 50)
+      return
+    }
     dayTouched.current = true
     const e = dayLog[iso] || EMPTY
-    const on = !e[k]
-    saveDayLog({ ...dayLog, [iso]: { ...e, [k]: on } })
-    const row = data.week.rows.find((r) => r.k === k)
-    if (row?.meal && mealPlan) {
-      const si = mealPlan.slots.findIndex((sl) => sl.t === row.meal)
-      const slot = si >= 0 ? mealPlan.slots[si] : null
-      const list = calLog[iso] || EMPTY_LIST
-      const tag = `meal-${k}`
-      let next = list.filter((it) => it.id !== tag)
-      if (on && slot) {
-        const o = slot.options[(Array.isArray(mealPicks) && Number.isInteger(mealPicks[si]) ? mealPicks[si] : 0) % slot.options.length]
-        next = [...next, { id: tag, name: o.n, unit: slot.place || row.short, kcal: o.k, protein: o.p || 0, qty: 1 }]
-      }
-      calTouched.current = true
-      saveCalLog({ ...calLog, [iso]: next })
-    }
+    saveDayLog({ ...dayLog, [iso]: { ...e, [k]: !e[k] } })
   }
-  const dayItems = (iso) => rowsFor(iso).map((r) => ({ k: r.k, label: r.short, title: r.label, on: !!(dayLog[iso] || EMPTY)[r.k], toggle: () => toggleSched(iso, r.k) }))
+  const dayItems = (iso) => rowsFor(iso).map((r) => ({ k: r.k, label: r.short, title: r.label, on: isOn(iso, r), toggle: () => toggleSched(iso, r.k) }))
   const schedStatus = (iso) => {
     const rows = rowsFor(iso)
-    const c = dayLog[iso] || EMPTY
-    const n = rows.filter((r) => c[r.k]).length
+    const n = rows.filter((r) => isOn(iso, r)).length
     const total = rows.length
     return { n, total, perfect: total > 0 && n === total, kept: total > 0 && n / total >= PASS && n < total, some: n > 0 && n / total < PASS }
   }
@@ -469,10 +463,10 @@ export default function Schedule() {
   }
   const addFood = (food) => {
     if (!food) return
-    const at = foods.findIndex((it) => it.name === food.n && it.kcal === food.k)
+    const at = foods.findIndex((it) => it.name === food.n && it.kcal === food.k && (it.meal || '') === mealSel)
     const next = at >= 0
       ? foods.map((it, i) => (i === at ? { ...it, qty: roundQty(it.qty + 1) } : it))
-      : [...foods, { id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, name: food.n, unit: food.u, kcal: food.k, protein: food.p || 0, qty: 1 }]
+      : [...foods, { id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, name: food.n, unit: food.u, kcal: food.k, protein: food.p || 0, qty: 1, meal: mealSel }]
     updateSel(next)
     setQuery('')
     setAiError('')
@@ -501,7 +495,7 @@ export default function Schedule() {
   return (
     <div style={{ width: '100%', minWidth: 0 }}>
       {/* 1. 달력 */}
-      <WeekView rows={data.week.rows} dayLog={dayLog} toggle={toggleSched} status={schedStatus} calSum={calSum} goal={goal} extra={extra} todayKey={todayKey} onPick={setSel} view={view} setView={setView}>
+      <WeekView rows={data.week.rows} isOn={isOn} toggle={toggleSched} status={schedStatus} calSum={calSum} goal={goal} extra={extra} todayKey={todayKey} onPick={setSel} view={view} setView={setView}>
         <Calendar embedded extra={extra} dayDecor={dayDecor} onDayPick={setSel} />
       </WeekView>
 
@@ -537,8 +531,14 @@ export default function Schedule() {
               )
             })}
           </div>
+          <div style={{ display: 'flex', gap: 4, marginBottom: 6, flexWrap: 'wrap' }}>
+            {MEALS.map((m) => (
+              <button key={m} onClick={() => { setMealSel(m); foodInputRef.current?.focus() }} style={{ ...btn, padding: '4px 10px', borderRadius: 999, background: mealSel === m ? 'var(--accent)' : 'var(--surface2)', color: mealSel === m ? 'var(--accent-text)' : 'var(--text)', borderColor: mealSel === m ? 'var(--accent)' : 'var(--line)' }}>{m}</button>
+            ))}
+          </div>
           <div style={{ position: 'relative' }}>
             <input
+              ref={foodInputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => {
@@ -547,7 +547,7 @@ export default function Schedule() {
                   else askAI()
                 }
               }}
-              placeholder="먹은 것 입력 후 Enter (예: 닭가슴살 덮밥)"
+              placeholder={`${mealSel}에 먹은 것 입력 후 Enter (예: 닭가슴살 덮밥)`}
               style={field}
             />
             {matches.length > 0 && (
@@ -569,7 +569,12 @@ export default function Schedule() {
           )}
           <div style={{ marginTop: 10 }}>
             {foods.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-3)', padding: '8px 0' }}>아직 기록 없음</div>}
-            {foods.map((it) => (
+            {[...MEALS, ''].filter((m) => foods.some((it) => (it.meal || '') === m)).map((m) => (
+              <div key={m || 'none'}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: mealSel === m ? 'var(--accent)' : 'var(--text-3)', marginTop: 8, cursor: 'pointer' }} onClick={() => m && setMealSel(m)}>
+                  {m || '끼니 미지정'} <span style={{ ...mono, fontWeight: 500 }}>{num(foods.filter((it) => (it.meal || '') === m).reduce((a, it) => a + it.kcal * it.qty, 0))} kcal</span>
+                </div>
+                {foods.filter((it) => (it.meal || '') === m).map((it) => (
               <div key={it.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 0', borderTop: '1px solid var(--line)' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.name}</div>
@@ -580,6 +585,8 @@ export default function Schedule() {
                 <button onClick={() => setQty(it.id, 0.5)} style={btn}>+</button>
                 <span style={{ ...mono, fontSize: 13, fontWeight: 700, width: 46, textAlign: 'right' }}>{num(it.kcal * it.qty)}</span>
                 <button onClick={() => removeItem(it.id)} style={{ ...btn, color: 'var(--text-3)' }}>✕</button>
+              </div>
+                ))}
               </div>
             ))}
           </div>
