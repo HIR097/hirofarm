@@ -129,14 +129,19 @@ function QtyBox({ value, onCommit }) {
 }
 
 /** 루틴을 지키는 대표 음식 10 — 내용은 secure/body.js(mealGuide)에서, 누르면 요리법이 펼쳐진다. */
-export function MealGuide({ isMobile }) {
+export function MealGuide({ isMobile, bare = false, cols }) {
   const [openIdx, setOpenIdx] = useState(null)
+  const Wrap = bare ? 'div' : Card
   const meals = (typeof window !== 'undefined' && window.__HY_DATA__?.body?.mealGuide) || []
   if (!meals.length) return null
   return (
-    <Card style={{ marginBottom: 14, padding: isMobile ? 16 : 22 }}>
-      <CardHead title="루틴 음식" caption={isMobile ? '누르면 요리법' : '전부 조리 10분 이하 · 누르면 요리법 · 검색창에서 이름으로 기록'} />
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0 22px' }}>
+    <Wrap style={bare ? {} : { marginBottom: 14, padding: isMobile ? 16 : 22 }}>
+      {bare ? (
+        <div style={{ marginBottom: 6 }}><span style={{ fontSize: 15, fontWeight: 700 }}>루틴 음식</span> <span style={{ fontSize: 11, color: 'var(--text-3)', marginLeft: 6 }}>누르면 요리법</span></div>
+      ) : (
+        <CardHead title="루틴 음식" caption={isMobile ? '누르면 요리법' : '전부 조리 10분 이하 · 누르면 요리법 · 검색창에서 이름으로 기록'} />
+      )}
+      <div style={{ display: 'grid', gridTemplateColumns: cols === 1 || isMobile ? '1fr' : '1fr 1fr', gap: '0 22px' }}>
         {meals.map((m, i) => {
           const open = openIdx === i
           return (
@@ -161,13 +166,14 @@ export function MealGuide({ isMobile }) {
           )
         })}
       </div>
-    </Card>
+    </Wrap>
   )
 }
 
 /** 평일 현실 식단 — 회사 일과 기준 5끼 시간표. 내용은 secure/body.js(mealPlan)에서.
  *  행을 누르면 그 슬롯의 다음 대안으로 넘어가고, 🎲 는 슬롯마다 하나씩 랜덤으로 뽑는다. */
-export function MealPlan({ isMobile }) {
+export function MealPlan({ isMobile, bare = false }) {
+  const Wrap = bare ? 'div' : Card
   const plan = (typeof window !== 'undefined' && window.__HY_DATA__?.body?.mealPlan) || null
   const [picks, setPicks] = useState(() => (plan ? plan.slots.map(() => 0) : []))
   if (!plan) return null
@@ -181,9 +187,9 @@ export function MealPlan({ isMobile }) {
     { k: 0, p: 0 },
   )
   return (
-    <Card style={{ marginBottom: 14, padding: isMobile ? 16 : 22 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
-        <div style={{ fontSize: 16, fontWeight: 700 }}>평일 현실 식단</div>
+    <Wrap style={bare ? {} : { marginBottom: 14, padding: isMobile ? 16 : 22 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: bare ? 6 : 12, flexWrap: 'wrap' }}>
+        <div style={{ fontSize: bare ? 15 : 16, fontWeight: 700 }}>평일 현실 식단</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {!isMobile && <span style={{ font: mono, color: 'var(--text-3)' }}>행을 누르면 다른 대안</span>}
           <button onClick={shuffle} style={{ ...btn, padding: '7px 13px', fontSize: 13 }} title="슬롯마다 하나씩 랜덤으로 뽑기">
@@ -229,7 +235,7 @@ export function MealPlan({ isMobile }) {
         </span>
       </div>
       <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 8, lineHeight: 1.55 }}>{plan.note}</div>
-    </Card>
+    </Wrap>
   )
 }
 

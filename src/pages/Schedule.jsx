@@ -160,7 +160,7 @@ const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); r
 const mondayOf = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x }
 const MY_KINDS = ['my', 'trip', 'holiday', 'goal', 'check']
 
-function WeekView({ rows, dayLog, toggle, status, calSum, goal, extra, todayKey, onPick, view, setView }) {
+function WeekView({ rows, dayLog, toggle, status, calSum, goal, extra, todayKey, onPick, view, setView, children }) {
   const [offset, setOffset] = useState(0)
   const [rawMine, setRawMine] = useLocalStorage('hy_cal_v1', '[]')
   const mine = useMemo(() => { try { const v = JSON.parse(rawMine); return Array.isArray(v) ? v : [] } catch { return [] } }, [rawMine])
@@ -201,7 +201,7 @@ function WeekView({ rows, dayLog, toggle, status, calSum, goal, extra, todayKey,
     <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
       {/* 상단 바 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '12px 16px', borderBottom: '1px solid var(--line)' }}>
-        <div style={{ fontSize: 15, fontWeight: 700 }}>{offset === 0 ? '이번 주' : offset === -1 ? '지난주' : offset === 1 ? '다음 주' : `${offset > 0 ? '+' : ''}${offset}주`} <span style={{ ...mono, color: 'var(--text-3)', fontWeight: 500, fontSize: 13, marginLeft: 6 }}>{label}</span></div>
+        <div style={{ fontSize: 15, fontWeight: 700 }}>{view === 'month' ? '월 보기' : offset === 0 ? '이번 주' : offset === -1 ? '지난주' : offset === 1 ? '다음 주' : `${offset > 0 ? '+' : ''}${offset}주`} <span style={{ ...mono, color: 'var(--text-3)', fontWeight: 500, fontSize: 13, marginLeft: 6 }}>{label}</span></div>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
           <button onClick={() => (form ? setForm(null) : setForm({ title: '', from: todayKey, to: '', kind: 'my' }))} style={navBtn}>{form ? '취소' : '+ 일정'}</button>
           <span style={{ width: 8 }} />
@@ -224,8 +224,9 @@ function WeekView({ rows, dayLog, toggle, status, calSum, goal, extra, todayKey,
           <button onClick={submit} style={{ ...btn, background: 'var(--accent)', color: 'var(--accent-text)', borderColor: 'var(--accent)', padding: '6px 14px' }}>추가</button>
         </div>
       )}
+      {view === 'month' && <div style={{ padding: '12px 16px' }}>{children}</div>}
       {/* 격자 */}
-      <div style={{ overflowX: 'auto' }}>
+      {view === 'week' && <div style={{ overflowX: 'auto' }}>
         <div style={{ minWidth: 760 }}>
           {/* 요일 헤더 */}
           <div style={{ display: 'grid', gridTemplateColumns: '52px repeat(7, minmax(0, 1fr))', borderBottom: '1px solid var(--line)' }}>
@@ -289,7 +290,7 @@ function WeekView({ rows, dayLog, toggle, status, calSum, goal, extra, todayKey,
             </div>
           ))}
         </div>
-      </div>
+      </div>}
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', padding: '8px 16px', fontSize: 11, color: 'var(--text-3)' }}>
         {['pay', 'repay', 'bonus', 'goal', 'trip', 'post', 'my'].map((k) => (
           <span key={k} style={{ display: 'flex', alignItems: 'center', gap: 5 }}><i style={{ width: 8, height: 8, borderRadius: 2, background: EVENT_KIND[k].color, display: 'inline-block' }} />{EVENT_KIND[k].label}</span>
@@ -482,21 +483,14 @@ export default function Schedule() {
   return (
     <div style={{ width: '100%', minWidth: 0 }}>
       {/* 1. 달력 */}
-      {view === 'week' ? (
-        <WeekView rows={data.week.rows} dayLog={dayLog} toggle={toggleSched} status={schedStatus} calSum={calSum} goal={goal} extra={extra} todayKey={todayKey} onPick={setSel} view={view} setView={setView} />
-      ) : (
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6, marginBottom: 8 }}>
-            <button onClick={() => setView('month')} style={{ ...btn, padding: '6px 14px', borderRadius: 999, background: 'var(--accent)', color: 'var(--accent-text)', borderColor: 'var(--accent)' }}>월</button>
-            <button onClick={() => setView('week')} style={{ ...btn, padding: '6px 14px', borderRadius: 999 }}>주</button>
-          </div>
-          <Calendar embedded extra={extra} dayDecor={dayDecor} onDayPick={setSel} />
-        </div>
-      )}
+      <WeekView rows={data.week.rows} dayLog={dayLog} toggle={toggleSched} status={schedStatus} calSum={calSum} goal={goal} extra={extra} todayKey={todayKey} onPick={setSel} view={view} setView={setView}>
+        <Calendar embedded extra={extra} dayDecor={dayDecor} onDayPick={setSel} />
+      </WeekView>
 
       {/* 2. 할 일 / 칼로리 */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, minmax(0, 1fr))', gap: 14, marginTop: 14, alignItems: 'start' }}>
-        <div style={card}>
+      <div style={{ ...card, marginTop: 14, padding: 0, overflow: 'hidden' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, minmax(0, 1fr))', alignItems: 'stretch' }}>
+        <div style={{ padding: 18, minWidth: 0 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
             <div style={h2}>칼로리 <span style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 500, marginLeft: 6 }}>{sel === todayKey ? '오늘' : sel} · 칼로리 탭과 같은 기록</span></div>
             <span style={{ fontSize: 11, color: 'var(--text-3)', display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -572,8 +566,9 @@ export default function Schedule() {
             ))}
           </div>
         </div>
-        <div style={{ minWidth: 0 }}><MealPlan isMobile={isMobile} /></div>
-        <div style={{ minWidth: 0 }}><MealGuide isMobile={isMobile} /></div>
+        <div style={{ padding: 18, minWidth: 0, borderLeft: isMobile ? 'none' : '1px solid var(--line)', borderTop: isMobile ? '1px solid var(--line)' : 'none' }}><MealPlan isMobile={isMobile} bare /></div>
+        <div style={{ padding: 18, minWidth: 0, borderLeft: isMobile ? 'none' : '1px solid var(--line)', borderTop: isMobile ? '1px solid var(--line)' : 'none' }}><MealGuide isMobile={isMobile} bare cols={1} /></div>
+      </div>
       </div>
 
       {/* 칼로리 탭에서 옮겨 온 것 (26-09-06): 평일 현실 식단 · 루틴 음식 · 동기화/AI 설정 */}
