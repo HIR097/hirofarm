@@ -1,5 +1,4 @@
-import { IconSearch, IconSun, IconMoon, WeatherIcon } from './icons.jsx'
-import { useWeather } from '../hooks/useWeather.js'
+import { IconSearch, IconSun, IconMoon } from './icons.jsx'
 
 const pill = {
   display: 'flex',
@@ -21,8 +20,7 @@ function IconMenu({ size = 20 }) {
 // 메일 알림 버튼은 Outlook 연동과 함께 2026-08-17 제거했다 (회사 보안 정책상 API 개방 불가).
 export default function Header({ title, sub, isDark, onToggleTheme, mobile, onOpenMenu }) {
   const round = mobile ? 36 : 42
-  // 서울 실황 온도 — 로딩/실패 시 알약 자체를 숨기지 않고 마지막 더미 값 표시
-  const weather = useWeather()
+  // 날씨 알약은 2026-09-06 제거(사용자 요청). useWeather 훅은 남아 있다.
 
   return (
     <header
@@ -76,17 +74,12 @@ export default function Header({ title, sub, isDark, onToggleTheme, mobile, onOp
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 'none' }}>
-        {/* 좁은 화면에서는 검색·날씨 알약을 숨긴다 */}
+        {/* 좁은 화면에서는 검색 알약을 숨긴다 */}
         {!mobile && (
           <>
             <div style={{ ...pill, gap: 9, padding: '9px 14px' }}>
               <IconSearch />
               <span style={{ fontSize: 13, color: 'var(--text-3)' }}>검색…</span>
-            </div>
-            <div style={{ ...pill, gap: 8, padding: '9px 14px', color: 'var(--text)' }}>
-              {weather ? <WeatherIcon kind={weather.current.icon} size={16} /> : <IconSun size={16} />}
-              <span style={{ font: "600 13px 'JetBrains Mono'" }}>{weather ? `${weather.current.temp}°` : '—°'}</span>
-              <span style={{ fontSize: 12, color: 'var(--text-3)' }}>서울</span>
             </div>
           </>
         )}
