@@ -366,6 +366,106 @@ function ValueField({ kind, value, onCommit, placeholder, style }) {
   )
 }
 
+// ── 세부탭 바 (목표 탭과 같은 모양) ──
+function SubTabs({ value, onChange, items }) {
+  return (
+    <div style={{ display: 'flex', gap: 22, borderBottom: '1px solid var(--line)', margin: '0 0 16px' }}>
+      {items.map(([k, label]) => (
+        <button
+          key={k}
+          onClick={() => onChange(k)}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer', padding: '8px 2px 10px',
+            font: `${value === k ? 600 : 500} 14px 'Pretendard Variable'`, color: value === k ? 'var(--text)' : 'var(--text-3)',
+            borderBottom: value === k ? '2px solid var(--accent)' : '2px solid transparent', marginBottom: -1,
+          }}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// ── 이도황 루틴 — 부위 칩(가슴/어깨/팔) → 요약·분할 계획 → 종목 카드(영상 캡처 + 설명) ──
+const mmss = (t) => `${Math.floor(t / 60)}:${pad(t % 60)}`
+function Routines({ data, isMobile }) {
+  const [part, setPart] = useLocalStorage('hy_body_routine_part', data.parts[0].k)
+  const cur = data.parts.find((p) => p.k === part) || data.parts[0]
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <Card>
+        <CardHead title="이도황 루틴" caption="가슴 · 어깨 · 팔 — 영상 3편 정리" />
+        <div style={{ fontSize: 12.5, color: 'var(--text-2)', lineHeight: 1.6, marginBottom: 14 }}>{data.note}</div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {data.parts.map((p) => {
+            const on = p.k === cur.k
+            return (
+              <button
+                key={p.k}
+                onClick={() => setPart(p.k)}
+                style={{
+                  ...btn, padding: '7px 16px', borderRadius: 999, font: `${on ? 700 : 500} 13.5px 'Pretendard Variable'`,
+                  background: on ? 'var(--accent)' : 'var(--bg2)', color: on ? 'var(--accent-text)' : 'var(--text-2)',
+                  border: on ? '1px solid var(--accent)' : '1px solid var(--line)',
+                }}
+              >
+                {p.name}
+              </button>
+            )
+          })}
+        </div>
+      </Card>
+
+      <Card>
+        <CardHead title={cur.title} caption={<a href={cur.url} target="_blank" rel="noreferrer" style={{ color: 'var(--accent)' }}>유튜브에서 보기 ↗</a>} />
+        <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.65 }}>{cur.summary}</div>
+        {cur.plan && (
+          <div style={{ marginTop: 12, borderTop: '1px solid var(--line)' }}>
+            {cur.plan.map(([k, v]) => (
+              <div key={k} style={{ display: 'flex', gap: 10, padding: '8px 2px', borderBottom: '1px solid var(--line)', alignItems: 'baseline', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 13, fontWeight: 700, minWidth: 64 }}>{k}</span>
+                <span style={{ fontSize: 12.5, color: 'var(--text-2)', flex: 1, minWidth: 200, lineHeight: 1.5 }}>{v}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      {cur.exercises.map((e, i) => (
+        <Card key={e.n}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
+            <span style={{ font: "700 12px 'JetBrains Mono'", color: 'var(--text-3)' }}>{pad(i + 1)}</span>
+            <span style={{ fontSize: 16, fontWeight: 700 }}>{e.n}</span>
+            <span style={{ font: "600 11px 'JetBrains Mono'", padding: '2px 8px', borderRadius: 7, background: 'var(--bg2)', color: 'var(--text-2)' }}>{e.sets}</span>
+            {typeof e.t === 'number' && (
+              <a href={`${cur.url}&t=${e.t}s`} target="_blank" rel="noreferrer" style={{ font: "500 11px 'JetBrains Mono'", color: 'var(--text-3)', marginLeft: 'auto' }}>
+                ▶ {mmss(e.t)}
+              </a>
+            )}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : `repeat(${e.img.length}, minmax(0, 320px))`, gap: 10, marginBottom: 12 }}>
+            {e.img.map((im) => (
+              <img
+                key={im}
+                src={`/body/idh/${im}.jpg`}
+                alt={e.n}
+                loading="lazy"
+                style={{ width: '100%', borderRadius: 10, border: '1px solid var(--line)', display: 'block', background: '#000' }}
+              />
+            ))}
+          </div>
+          <ul style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {e.tips.map((t, j) => (
+              <li key={j} style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.55 }}>{t}</li>
+            ))}
+          </ul>
+        </Card>
+      ))}
+    </div>
+  )
+}
+
 export default function Body() {
   const data = (typeof window !== 'undefined' && window.__HY_DATA__?.body) || null
   const isMobile = useIsMobile()
@@ -458,6 +558,7 @@ export default function Body() {
   const slowdown = rv.q1 === true || rv.q2 === true
 
   const [rulesOpen, setRulesOpen] = useState(false)
+  const [sub, setSub] = useLocalStorage('hy_body_sub', 'body')
   const two = { display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 18 }
 
   if (!data)
@@ -479,8 +580,18 @@ export default function Body() {
   // 오늘 컬럼을 가장 넓고 진하게 (모바일은 컬럼이 하나뿐이라 항상 넓게)
   const colW = (d) => (isMobile || dayKey(d) === todayKey ? 96 : 64)
 
+  const tabs = <SubTabs value={sub} onChange={setSub} items={[['body', '몸'], ['routine', '이도황 루틴']]} />
+  if (sub === 'routine' && data.routines)
+    return (
+      <div style={fade}>
+        {tabs}
+        <Routines data={data.routines} isMobile={isMobile} />
+      </div>
+    )
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18, ...fade }}>
+      {tabs}
       {/* ── 인바디 추이 (맨 위, 26-09-06 사용자 요청) ── */}
       <Card>
         <CardHead title="인바디 추이" caption={`목표 ${data.targets.w}kg · 골격근 ${data.targets.smm}kg · 체지방 ${data.targets.pbf}% · ${data.plan.note}`} />
