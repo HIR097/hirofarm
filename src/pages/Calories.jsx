@@ -9,6 +9,7 @@ import * as sync from '../lib/sync.js'
 
 const fade = { animation: 'hyFade .4s ease', marginTop: 8 }
 const OVER = '#22c55e' // 목표 초과 = 초록 (벌크업 기준)
+const SHORT = '#ef4444' // 목표 미달 = 빨강
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 const SYNC_KEY = 'calories'
 
@@ -176,26 +177,40 @@ export function MealPlan({ isMobile, bare = false }) {
   const Wrap = bare ? 'div' : Card
   const plan = (typeof window !== 'undefined' && window.__HY_DATA__?.body?.mealPlan) || null
   const [stored, setStored] = useJsonStorage('hy_meal_picks', EMPTY_FOODS)   // 홈 주간 뷰의 식사 체크가 같은 선택을 읽는다
+  const [goalStr] = useLocalStorage('hy_cal_goal', '3300')                  // 칼로리 목표(칼로리 패널과 같은 키)
+  const [pGoalStr] = useLocalStorage('hy_cal_protein_goal', '172')
   if (!plan) return null
+  const goal = Math.max(0, Number(goalStr) || 0)
+  const pGoal = Math.max(0, Number(pGoalStr) || 0)
   const picks = plan.slots.map((_, i) => (Array.isArray(stored) && Number.isInteger(stored[i]) ? stored[i] : 0))
   const setPicks = (next) => setStored(next)
-  const shuffle = () => setPicks(plan.slots.map((s) => Math.floor(Math.random() * s.options.length)))
+  const sumOf = (ps) => ps.reduce((a, v, i) => { const o = plan.slots[i].options[v % plan.slots[i].options.length]; return { k: a.k + o.k, p: a.p + o.p } }, { k: 0, p: 0 })
+  // 🎲 목표를 채우는 조합만 뽑는다. 대안 평균 합이 목표보다 낮아 그냥 뽑으면 거의 항상 미달이므로,
+  //    무작위 조합을 여러 번 시도해 kcal·단백질 목표를 둘 다 넘는 것 중 하나를 고르고, 하나도 없으면 가장 큰 합을 쓴다.
+  const shuffle = () => {
+    const rand = () => plan.slots.map((s) => Math.floor(Math.random() * s.options.length))
+    const ok = []
+    let best = null
+    for (let n = 0; n < 300; n++) {
+      const ps = rand()
+      const t = sumOf(ps)
+      if (t.k >= goal && t.p >= pGoal) ok.push(ps)
+      if (!best || t.k > best.t.k) best = { ps, t }
+      if (ok.length >= 20) break
+    }
+    setPicks(ok.length ? ok[Math.floor(Math.random() * ok.length)] : best.ps)
+  }
   const next = (i) => setPicks(picks.map((v, j) => (j === i ? (v + 1) % plan.slots[i].options.length : v)))
-  const total = plan.slots.reduce(
-    (a, s, i) => {
-      const o = s.options[picks[i] % s.options.length]
-      return { k: a.k + o.k, p: a.p + o.p }
-    },
-    { k: 0, p: 0 },
-  )
+  const total = sumOf(picks)
+  const short = goal > 0 ? goal - total.k : 0
   return (
     <Wrap style={bare ? {} : { marginBottom: 14, padding: isMobile ? 16 : 22 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: bare ? 6 : 12, flexWrap: 'wrap' }}>
         <div style={{ fontSize: bare ? 15 : 16, fontWeight: 700 }}>평일 현실 식단</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {!isMobile && <span style={{ font: mono, color: 'var(--text-3)' }}>행을 누르면 다른 대안</span>}
-          <button onClick={shuffle} style={{ ...btn, padding: '7px 13px', fontSize: 13 }} title="슬롯마다 하나씩 랜덤으로 뽑기">
-            🎲 랜덤
+          <button onClick={shuffle} style={{ ...btn, padding: '7px 13px', fontSize: 13 }} title={`목표(${goal.toLocaleString()} kcal · P${pGoal})를 채우는 조합으로 랜덤`}>
+            🎲 목표 채우기
           </button>
         </div>
       </div>
@@ -228,11 +243,16 @@ export function MealPlan({ isMobile, bare = false }) {
         )
       })}
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, padding: '12px 2px 0', borderTop: '1px solid var(--line)', alignItems: 'baseline' }}>
+        {goal > 0 && (
+          <span style={{ font: mono, color: short > 0 ? SHORT : OVER }}>
+            {short > 0 ? `목표 ${goal.toLocaleString()} 까지 -${short.toLocaleString()}` : `목표 ${goal.toLocaleString()} 달성 +${(-short).toLocaleString()}`}
+          </span>
+        )}
         <span style={{ font: mono, color: 'var(--text-3)' }}>합계</span>
-        <span style={{ fontSize: 18, fontWeight: 700 }}>
+        <span style={{ fontSize: 18, fontWeight: 700, color: short > 0 ? SHORT : OVER }}>
           {total.k.toLocaleString()} <span style={{ fontSize: 12, color: 'var(--text-3)' }}>kcal</span>
         </span>
-        <span style={{ fontSize: 15, fontWeight: 700, color: total.p >= 170 ? OVER : 'var(--text)' }}>
+        <span style={{ fontSize: 15, fontWeight: 700, color: total.p >= pGoal ? OVER : SHORT }}>
           P{total.p}
         </span>
       </div>
@@ -248,7 +268,7 @@ export default function Calories() {
   const [log, saveLog] = useJsonStorage('hy_cal_log', EMPTY_LOG)
   // AI로 찾은 음식은 여기에 쌓여 다음부터는 호출 없이 검색된다.
   const [customFoods, saveCustomFoods] = useJsonStorage('hy_cal_ai_foods', EMPTY_FOODS)
-  const [goalStr, setGoalStr] = useLocalStorage('hy_cal_goal', '3100')
+  const [goalStr, setGoalStr] = useLocalStorage('hy_cal_goal', '3300')
   const [proteinGoalStr, setProteinGoalStr] = useLocalStorage('hy_cal_protein_goal', '172')
   const [stamp, setStamp] = useLocalStorage('hy_cal_stamp', '')
 
@@ -466,7 +486,7 @@ export default function Calories() {
         <CardHead title="목표" caption={isMobile ? '1일 기준' : '1일 기준 · 운동일/휴식일 구분 없음'} />
         <div style={{ display: 'flex', gap: isMobile ? 14 : 20, flexWrap: 'wrap' }}>
           {[
-            { label: '칼로리', unit: 'kcal', value: goalStr, set: setGoalStr, presets: [2700, 3100, 3400] },
+            { label: '칼로리', unit: 'kcal', value: goalStr, set: setGoalStr, presets: [2700, 3300, 3600] },
             { label: '단백질', unit: 'g', value: proteinGoalStr, set: setProteinGoalStr, presets: [140, 160, 172] },
           ].map((f) => (
             <div key={f.label} style={{ flex: 1, minWidth: isMobile ? 130 : 200 }}>

@@ -448,7 +448,7 @@ export default function Schedule() {
   // ── 칼로리 저장소 (칼로리 탭과 동일 키) ──
   const [calLog, saveCalLog] = useJsonStorage('hy_cal_log', EMPTY)
   const [customFoods, saveCustomFoods] = useJsonStorage('hy_cal_ai_foods', EMPTY_LIST)
-  const [goalStr, setGoalStr] = useLocalStorage('hy_cal_goal', '3100')
+  const [goalStr, setGoalStr] = useLocalStorage('hy_cal_goal', '3300')
   const [proteinGoalStr, setProteinGoalStr] = useLocalStorage('hy_cal_protein_goal', '172')
   const [calStamp, setCalStamp] = useLocalStorage('hy_cal_stamp', '')
   const goal = Math.max(0, Number(goalStr) || 0)
