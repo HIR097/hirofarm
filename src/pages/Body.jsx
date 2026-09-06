@@ -407,12 +407,15 @@ export default function Body() {
     if (v.review) saveReview(v.review)
     if (v.issues) saveIssues(v.issues)
   }
+  const stampRef = useRef(stamp)
+  stampRef.current = stamp
   useEffect(() => {
-    ;(async () => {
+    // 처음 열 때 + 앱을 다시 앞으로 가져올 때(폰 홈 화면 앱은 재마운트가 안 되므로) 원격을 받아온다
+    const pull = async () => {
       if (!sync.isConfigured() || !sync.isLoggedIn()) return
       try {
         const remote = await sync.pull(SYNC_KEY)
-        if (remote && newer(remote.updatedAt, stamp)) {
+        if (remote && newer(remote.updatedAt, stampRef.current)) {
           applyRemote(remote.value)
           setStamp(remote.updatedAt)
           setSyncMsg(`${clock(remote.updatedAt)} 불러옴`)
@@ -420,7 +423,11 @@ export default function Body() {
       } catch (e) {
         setSyncMsg(e.message || '동기화 실패')
       }
-    })()
+    }
+    pull()
+    const onVis = () => { if (document.visibilityState === 'visible') pull() }
+    document.addEventListener('visibilitychange', onVis)
+    return () => document.removeEventListener('visibilitychange', onVis)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   useEffect(() => {

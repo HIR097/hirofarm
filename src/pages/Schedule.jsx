@@ -389,22 +389,12 @@ export default function Schedule() {
   const [bodyLog, saveBodyLog] = useJsonStorage('hy_body_log', EMPTY)
   const [bodyReview] = useJsonStorage('hy_body_review', EMPTY)
   const [bodyIssues] = useJsonStorage('hy_body_issues', EMPTY)
-  const [, setBodyStamp] = useLocalStorage('hy_body_stamp', '')
+  const [bodyStamp, setBodyStamp] = useLocalStorage('hy_body_stamp', '')
 
   // ── 주간 배치도 체크 (달력 이번 주 칸 안의 체크박스) — hy_sched_day {iso:{k:true}}, sync 'sched_day' ──
   const [dayLog, saveDayLog] = useJsonStorage('hy_sched_day', EMPTY)
   const [dayStamp, setDayStamp] = useLocalStorage('hy_sched_day_stamp', '')
   const dayTouched = useRef(false)
-  useEffect(() => {
-    ;(async () => {
-      if (!sync.isConfigured() || !sync.isLoggedIn()) return
-      try {
-        const remote = await sync.pull('sched_day')
-        if (remote && newer(remote.updatedAt, dayStamp) && remote.value?.dayLog) { saveDayLog(remote.value.dayLog); setDayStamp(remote.updatedAt) }
-      } catch { /* 무시 */ }
-    })()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
   useEffect(() => {
     if (!dayTouched.current || !sync.isConfigured() || !sync.isLoggedIn()) return
     const t = setTimeout(async () => {
@@ -422,16 +412,6 @@ export default function Schedule() {
   const [layout, saveLayout] = useJsonStorage('hy_sched_layout', EMPTY)
   const [layoutStamp, setLayoutStamp] = useLocalStorage('hy_sched_layout_stamp', '')
   const layoutTouched = useRef(false)
-  useEffect(() => {
-    ;(async () => {
-      if (!sync.isConfigured() || !sync.isLoggedIn()) return
-      try {
-        const remote = await sync.pull('sched_layout')
-        if (remote && newer(remote.updatedAt, layoutStamp) && remote.value?.layout) { saveLayout(remote.value.layout); setLayoutStamp(remote.updatedAt) }
-      } catch { /* 무시 */ }
-    })()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
   useEffect(() => {
     if (!layoutTouched.current || !sync.isConfigured() || !sync.isLoggedIn()) return
     const t = setTimeout(async () => {
@@ -467,10 +447,10 @@ export default function Schedule() {
 
   // ── 칼로리 저장소 (칼로리 탭과 동일 키) ──
   const [calLog, saveCalLog] = useJsonStorage('hy_cal_log', EMPTY)
-  const [customFoods] = useJsonStorage('hy_cal_ai_foods', EMPTY_LIST)
+  const [customFoods, saveCustomFoods] = useJsonStorage('hy_cal_ai_foods', EMPTY_LIST)
   const [goalStr, setGoalStr] = useLocalStorage('hy_cal_goal', '3100')
   const [proteinGoalStr, setProteinGoalStr] = useLocalStorage('hy_cal_protein_goal', '172')
-  const [, setCalStamp] = useLocalStorage('hy_cal_stamp', '')
+  const [calStamp, setCalStamp] = useLocalStorage('hy_cal_stamp', '')
   const goal = Math.max(0, Number(goalStr) || 0)
   const pGoal = Math.max(0, Number(proteinGoalStr) || 0)
   const [query, setQuery] = useState('')
@@ -481,6 +461,48 @@ export default function Schedule() {
 
   // ── 동기화: 몸 / 칼로리 (여기서 고친 것도 각 탭과 같은 키로 올린다) ──
   const bodyTouched = useRef(false)
+  const calTouched = useRef(false)
+
+  // ── 원격 → 로컬 받아오기. 홈이 보여주는 네 묶음(배치 체크·배치 이동·몸·칼로리)을 한 번에 맞춘다.
+  //    처음 열 때 + 앱을 다시 앞으로 가져올 때(폰 홈 화면 앱은 페이지가 다시 마운트되지 않으므로 visibilitychange 로 잡는다).
+  //    받아온 값을 저장할 때는 touched 를 내려 곧바로 다시 올리지 않게 한다. 최신 쪽이 이긴다.
+  const stampsRef = useRef({})
+  stampsRef.current = { dayStamp, layoutStamp, bodyStamp, calStamp }
+  const pulling = useRef(false)
+  const pullAll = async () => {
+    if (pulling.current || !sync.isConfigured() || !sync.isLoggedIn()) return
+    pulling.current = true
+    const st = stampsRef.current
+    const jobs = [
+      ['sched_day', st.dayStamp, (v, at) => { if (v?.dayLog) { dayTouched.current = false; saveDayLog(v.dayLog); setDayStamp(at) } }],
+      ['sched_layout', st.layoutStamp, (v, at) => { if (v?.layout) { layoutTouched.current = false; saveLayout(v.layout); setLayoutStamp(at) } }],
+      ['body', st.bodyStamp, (v, at) => { if (v?.log) { bodyTouched.current = false; saveBodyLog(v.log); setBodyStamp(at) } }],
+      ['calories', st.calStamp, (v, at) => {
+        if (!v) return
+        calTouched.current = false
+        if (v.log) saveCalLog(v.log)
+        if (v.goal != null) setGoalStr(String(v.goal))
+        if (v.proteinGoal != null) setProteinGoalStr(String(v.proteinGoal))
+        if (v.aiFoods) saveCustomFoods(v.aiFoods)
+        setCalStamp(at)
+      }],
+    ]
+    await Promise.all(jobs.map(async ([k, stamp, apply]) => {
+      try {
+        const remote = await sync.pull(k)
+        if (remote && newer(remote.updatedAt, stamp)) apply(remote.value, remote.updatedAt)
+      } catch { /* 다음 기회에 */ }
+    }))
+    pulling.current = false
+  }
+  useEffect(() => {
+    pullAll()
+    const onVis = () => { if (document.visibilityState === 'visible') pullAll() }
+    document.addEventListener('visibilitychange', onVis)
+    window.addEventListener('focus', onVis)
+    return () => { document.removeEventListener('visibilitychange', onVis); window.removeEventListener('focus', onVis) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   useEffect(() => {
     if (!bodyTouched.current || !sync.isConfigured() || !sync.isLoggedIn()) return
     const t = setTimeout(async () => {
@@ -493,7 +515,6 @@ export default function Schedule() {
     return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bodyLog])
-  const calTouched = useRef(false)
   useEffect(() => {
     if (!calTouched.current || !sync.isConfigured() || !sync.isLoggedIn()) return
     const t = setTimeout(async () => {

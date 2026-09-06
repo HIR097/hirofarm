@@ -74,12 +74,15 @@ export default function Goals() {
 
   const bundle = useMemo(() => ({ week, done }), [week, done])
   const skipPush = useRef(true)
+  const stampRef = useRef(stamp)
+  stampRef.current = stamp
   useEffect(() => {
-    ;(async () => {
+    // 처음 열 때 + 앱을 다시 앞으로 가져올 때(폰 홈 화면 앱은 재마운트가 안 되므로) 원격을 받아온다
+    const pull = async () => {
       if (!sync.isConfigured() || !sync.isLoggedIn()) return
       try {
         const remote = await sync.pull(SYNC_KEY)
-        if (remote && newer(remote.updatedAt, stamp)) {
+        if (remote && newer(remote.updatedAt, stampRef.current)) {
           skipPush.current = true
           if (remote.value?.done) saveDone(remote.value.done)
           setStamp(remote.updatedAt)
@@ -88,7 +91,11 @@ export default function Goals() {
       } catch (e) {
         setSyncMsg(e.message || '불러오기 실패')
       }
-    })()
+    }
+    pull()
+    const onVis = () => { if (document.visibilityState === 'visible') pull() }
+    document.addEventListener('visibilitychange', onVis)
+    return () => document.removeEventListener('visibilitychange', onVis)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   useEffect(() => {
