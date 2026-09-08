@@ -6,7 +6,7 @@ import { Card, mono } from '../components/ui.jsx'
 // 홀덤 — 포커 책을 장별로 정리한 노트 (영어 탭 보고서 형식).
 // 데이터는 public/holdem/ (공개 번들, 암호화 대상 아님). Claude 가 원서를 읽고 쓴 정리본.
 //   index.json      책·장 목록
-//   <chapterId>.md  장별 정리 (마크다운 일부 문법: #, ##, ###, -, 1., |표|, **굵게**)
+//   <chapterId>.md  장별 정리 (마크다운 일부 문법: #, ##, ###, -, 1., 중첩 목록, > 인용, |표|, **굵게**)
 // 읽은 장 체크는 localStorage hy_holdem_done.
 
 const fade = { animation: 'hyFade .4s ease', marginTop: 8 }
@@ -28,6 +28,30 @@ function inline(s) {
     if (p.startsWith('`') && p.endsWith('`')) return <code key={i} style={{ background: 'var(--surface2)', borderRadius: 4, padding: '0 4px', fontSize: '0.92em' }}>{p.slice(1, -1)}</code>
     return p
   })
+}
+
+// 들여쓰기로 중첩된 목록 (items: {indent, ordered, text})
+function List({ items, P, nested }) {
+  const base = items[0].indent
+  const nodes = []
+  let k = 0
+  while (k < items.length) {
+    const node = { text: items[k].text, kids: [] }
+    k++
+    while (k < items.length && items[k].indent > base) { node.kids.push(items[k]); k++ }
+    nodes.push(node)
+  }
+  const Tag = items[0].ordered ? 'ol' : 'ul'
+  return (
+    <Tag style={{ margin: nested ? '5px 0 2px' : '0 0 12px', paddingLeft: 22 }}>
+      {nodes.map((n, j) => (
+        <li key={j} style={{ ...P, margin: '0 0 5px' }}>
+          {inline(n.text)}
+          {n.kids.length > 0 && <List items={n.kids} P={P} nested />}
+        </li>
+      ))}
+    </Tag>
+  )
 }
 
 function Markdown({ text, mobile }) {
@@ -56,20 +80,27 @@ function Markdown({ text, mobile }) {
       )
       continue
     }
+    if (ln.startsWith('> ')) {
+      const quote = []
+      while (i < lines.length && lines[i].startsWith('> ')) { quote.push(lines[i].slice(2)); i++ }
+      out.push(
+        <blockquote key={i} style={{ margin: '0 0 12px', padding: '2px 0 2px 14px', borderLeft: '3px solid var(--accent)' }}>
+          {quote.map((q, k) => <p key={k} style={{ ...P, margin: k === quote.length - 1 ? 0 : '0 0 6px' }}>{inline(q)}</p>)}
+        </blockquote>,
+      )
+      continue
+    }
     if (/^\s*[-•] /.test(ln) || /^\s*\d+\. /.test(ln)) {
       const items = []
-      const ordered = /^\s*\d+\. /.test(ln)
       while (i < lines.length && (/^\s*[-•] /.test(lines[i]) || /^\s*\d+\. /.test(lines[i]))) {
-        const indent = lines[i].match(/^\s*/)[0].length
-        items.push([indent, lines[i].replace(/^\s*([-•]|\d+\.) /, '')])
+        items.push({
+          indent: lines[i].match(/^\s*/)[0].length,
+          ordered: /^\s*\d+\. /.test(lines[i]),
+          text: lines[i].replace(/^\s*([-•]|\d+\.) /, ''),
+        })
         i++
       }
-      const Tag = ordered ? 'ol' : 'ul'
-      out.push(
-        <Tag key={i} style={{ margin: '0 0 12px', paddingLeft: 22 }}>
-          {items.map(([ind, t], k) => <li key={k} style={{ ...P, margin: '0 0 5px', marginLeft: ind >= 2 ? 16 : 0 }}>{inline(t)}</li>)}
-        </Tag>,
-      )
+      out.push(<List key={i} items={items} P={P} />)
       continue
     }
     out.push(<p key={i} style={P}>{inline(ln)}</p>)
