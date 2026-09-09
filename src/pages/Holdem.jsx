@@ -25,10 +25,12 @@ const btn = (active) => ({
 
 // ── 아주 작은 마크다운 렌더러 (정리본에 쓰는 문법만) ──
 function inline(s) {
-  const parts = s.split(/(\*\*[^*]+\*\*|`[^`]+`)/g)
+  const parts = s.split(/(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\([^)]+\))/g)
   return parts.map((p, i) => {
     if (p.startsWith('**') && p.endsWith('**')) return <b key={i} style={{ color: 'var(--text)' }}>{p.slice(2, -2)}</b>
     if (p.startsWith('`') && p.endsWith('`')) return <code key={i} style={{ background: 'var(--surface2)', borderRadius: 4, padding: '0 4px', fontSize: '0.92em' }}>{p.slice(1, -1)}</code>
+    const link = /^\[([^\]]+)\]\((https?:\/\/[^)]+)\)$/.exec(p)  // http(s) 만 (javascript: 차단)
+    if (link) return <a key={i} href={link[2]} target="_blank" rel="noreferrer" style={{ color: 'var(--accent)', textDecoration: 'none', borderBottom: '1px solid var(--accent)', paddingBottom: 1 }}>{link[1]}</a>
     return p
   })
 }

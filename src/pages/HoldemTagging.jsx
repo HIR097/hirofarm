@@ -16,6 +16,13 @@ const EPS = ['EP03', 'EP04', 'EP05', 'EP06', 'EP07', 'EP08', 'EP09', 'EP10', 'EP
 const DONE_EPS = ['EP03', 'EP04', 'EP05']  // 1차 태그로 이미 훑은 편
 const LABELS = ['상대유형', '속도·텔', '스택·SPR', 'ICM·페이', '포지션', '내레인지', '상대레인지', '블락커', '사이즈이유', '다음거리', '메타·이미지']
 
+// Winamax Europe 공식 재생목록의 영상 ID (마테오스 편만)
+const VIDEOS = {
+  EP03: 'LOzYpTgw6n0', EP04: 'z1muMBpv0XU', EP05: '4RFOlbCTNZE', EP06: '0vEj-T_BjHg', EP07: 'MlU7Ej5IU54',
+  EP08: 'Dfta5BxEX4c', EP09: '6yz7LhuVDt0', EP10: 'OqnXXMfS2po', EP11: 'fz2EHsuBfDo', EP12: 'FLCfOr0krcQ',
+  EP13: 'LPTJKX2RoWY', EP14: 'GhzqcTPZP-A', EP25: 'O1UMDEYKxIQ', EP26: 'laIxvbAz35E', EP27: '3QciQnNU8rY',
+}
+
 const pad = (n) => String(n).padStart(2, '0')
 const newer = (a, b) => !b || Date.parse(a) > Date.parse(b)
 const clock = (iso) => {
@@ -28,6 +35,13 @@ const clock = (iso) => {
 }
 // "12:37" / "1:03:29" → 정렬용 초
 const secs = (t) => String(t || '').split(':').reduce((a, p) => a * 60 + (parseInt(p, 10) || 0), 0)
+// 시각이 있으면 그 순간부터 재생된다
+const ytUrl = (ep, t) => {
+  const id = VIDEOS[ep]
+  if (!id) return null
+  const s = t ? secs(t) : 0
+  return `https://youtu.be/${id}${s ? `?t=${s}` : ''}`
+}
 
 const input = {
   font: "500 13px 'Pretendard Variable'",
@@ -194,9 +208,12 @@ export default function Tagging({ mobile }) {
             const n = perEp[e] || 0
             const seeded = DONE_EPS.includes(e)
             return (
-              <span
+              <a
                 key={e}
-                title={seeded ? '1차 태그 완료(시트)' : `${n}개`}
+                href={ytUrl(e)}
+                target="_blank"
+                rel="noreferrer"
+                title={`${e} 유튜브로 열기 · ${seeded ? '1차 태그 완료(시트)' : `${n}개`}`}
                 style={{
                   font: mono,
                   color: seeded || n ? 'var(--accent-text)' : 'var(--text-3)',
@@ -205,10 +222,12 @@ export default function Tagging({ mobile }) {
                   border: '1px solid var(--line)',
                   borderRadius: 6,
                   padding: '3px 7px',
+                  textDecoration: 'none',
+                  cursor: 'pointer',
                 }}
               >
                 {e.slice(2)}{n ? ` ${n}` : ''}
-              </span>
+              </a>
             )
           })}
         </div>
@@ -225,6 +244,15 @@ export default function Tagging({ mobile }) {
             {EPS.map((e) => <option key={e} value={e}>{e}{DONE_EPS.includes(e) ? ' (1차 완료)' : ''}</option>)}
           </select>
           <input value={t} onChange={(e) => setT(e.target.value)} placeholder="시각 12:37" style={{ ...input, width: 110 }} />
+          <a
+            href={ytUrl(ep, t)}
+            target="_blank"
+            rel="noreferrer"
+            title={t ? `${ep} ${t} 부터 재생` : `${ep} 처음부터 재생`}
+            style={{ ...input, display: 'flex', alignItems: 'center', gap: 5, color: 'var(--accent)', textDecoration: 'none', cursor: 'pointer', flexShrink: 0 }}
+          >
+            ▶ {t ? '그 순간부터' : '열기'}
+          </a>
           <input value={spot} onChange={(e) => setSpot(e.target.value)} placeholder="스팟 — 예: AJs vs SB 스퀴즈" style={{ ...input, flex: '1 1 220px' }} />
         </div>
 
@@ -287,7 +315,15 @@ export default function Tagging({ mobile }) {
           <div key={r.id} style={{ padding: '10px 0', borderTop: i ? '1px solid var(--line)' : 'none' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 9, flexWrap: 'wrap' }}>
               <span style={{ font: mono, color: 'var(--text-3)', flexShrink: 0 }}>{SEEDED + i + 1}</span>
-              <span style={{ font: mono, color: 'var(--accent)', flexShrink: 0 }}>{r.ep.slice(2)}@{r.t}</span>
+              <a
+                href={ytUrl(r.ep, r.t)}
+                target="_blank"
+                rel="noreferrer"
+                title={`${r.ep} ${r.t} 부터 재생`}
+                style={{ font: mono, color: 'var(--accent)', flexShrink: 0, textDecoration: 'none', borderBottom: '1px solid var(--accent)' }}
+              >
+                {r.ep.slice(2)}@{r.t}
+              </a>
               <span style={{ fontSize: 13.5, color: 'var(--text)', fontWeight: 600 }}>{r.spot}</span>
               <span style={{ marginLeft: 'auto', display: 'flex', gap: 4, flexShrink: 0 }}>
                 <button onClick={() => edit(r)} style={{ ...chip(false), padding: '3px 9px' }}>수정</button>
