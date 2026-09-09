@@ -1,6 +1,14 @@
 {
  "book": "Play Optimal Poker",
  "author": "Andrew Brokos",
+ "guides": [
+  {
+   "id": "roadmap-copy",
+   "tab": "로드맵",
+   "title": "스타일 카피 로드맵",
+   "date": "2026-09-09"
+  }
+ ],
  "chapters": [
   {
    "id": "pop-ch1",

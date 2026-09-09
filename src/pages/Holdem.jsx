@@ -5,7 +5,7 @@ import { Card, mono } from '../components/ui.jsx'
 
 // 홀덤 — 포커 책을 장별로 정리한 노트 (영어 탭 보고서 형식).
 // 데이터는 public/holdem/ (공개 번들, 암호화 대상 아님). Claude 가 원서를 읽고 쓴 정리본.
-//   index.json      책·장 목록
+//   index.json      가이드(guides)·책 장(chapters) 목록
 //   <chapterId>.md  장별 정리 (마크다운 일부 문법: #, ##, ###, -, 1., 중첩 목록, > 인용, |표|, **굵게**)
 // 읽은 장 체크는 localStorage hy_holdem_done.
 
@@ -141,7 +141,8 @@ export default function Holdem() {
   useEffect(() => {
     fetch('/holdem/index.json?cb=' + Date.now()).then((r) => r.json()).then((ix) => {
       setIndex(ix)
-      if (!cur && ix.chapters?.length) setCur(ix.chapters[0].id)
+      const first = (ix.guides || [])[0] || (ix.chapters || [])[0]
+      if (!cur && first) setCur(first.id)
     }).catch((e) => setErr('목록을 못 불러왔다: ' + e.message))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -153,19 +154,20 @@ export default function Holdem() {
     return () => { alive = false }
   }, [cur])
 
-  const ch = index?.chapters?.find((c) => c.id === cur)
+  const docs = [...(index?.guides || []), ...(index?.chapters || [])]
+  const ch = docs.find((c) => c.id === cur)
   const toggleDone = () => setDoneStr(JSON.stringify({ ...done, [cur]: !done[cur] }))
 
   return (
     <div style={fade}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, margin: '4px 0 16px' }}>
-        <div style={{ font: mono, color: 'var(--text-3)' }}>{index ? `${index.book} · ${index.author} · ${index.chapters.length}장 정리` : ''}</div>
+        <div style={{ font: mono, color: 'var(--text-3)' }}>{index ? `${index.book} · ${index.author} · ${index.chapters.length}장 정리${index.guides?.length ? ' + 가이드 ' + index.guides.length : ''}` : ''}</div>
         <div style={{ font: mono, color: 'var(--text-3)' }}>읽은 장 {Object.values(done).filter(Boolean).length}</div>
       </div>
       {err && <Card><div style={{ color: 'var(--text-2)', fontSize: 14 }}>{err}</div></Card>}
       {index && (
         <>
-          <SubTabs value={cur} onChange={setCur} items={index.chapters.map((c) => [c.id, `${c.n}장${done[c.id] ? ' ✓' : ''}`])} />
+          <SubTabs value={cur} onChange={setCur} items={docs.map((c) => [c.id, `${c.tab || c.n + '장'}${done[c.id] ? ' ✓' : ''}`])} />
           {ch && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
               <span style={{ font: mono, color: 'var(--text-3)' }}>{ch.words ? `원문 약 ${ch.words.toLocaleString()}단어` : ''}{ch.date ? ` · ${ch.date}` : ''}</span>
