@@ -13,6 +13,13 @@
    "tab": "마테오스 태깅",
    "title": "마테오스 태깅 시트 — Inside the Mind of a Pro",
    "date": "2026-09-09"
+  },
+  {
+   "id": "tagging",
+   "tab": "태깅 입력",
+   "tool": "tagging",
+   "title": "태깅 입력",
+   "date": "2026-09-09"
   }
  ],
  "chapters": [

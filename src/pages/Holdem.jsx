@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useLocalStorage } from '../hooks/useLocalStorage.js'
 import { useIsMobile } from '../hooks/useIsMobile.js'
 import { Card, mono } from '../components/ui.jsx'
+import Tagging from './HoldemTagging.jsx'
 
 // 홀덤 — 포커 책을 장별로 정리한 노트 (영어 탭 보고서 형식).
 // 데이터는 public/holdem/ (공개 번들, 암호화 대상 아님). Claude 가 원서를 읽고 쓴 정리본.
@@ -10,6 +11,8 @@ import { Card, mono } from '../components/ui.jsx'
 // 읽은 장 체크는 localStorage hy_holdem_done.
 
 const fade = { animation: 'hyFade .4s ease', marginTop: 8 }
+// md 대신 컴포넌트를 띄우는 탭 (index.json guides 의 tool 값)
+const TOOLS = new Set(['tagging'])
 const btn = (active) => ({
   font: "500 12px 'Pretendard Variable'",
   color: active ? 'var(--accent-text)' : 'var(--text-2)',
@@ -147,7 +150,7 @@ export default function Holdem() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   useEffect(() => {
-    if (!cur) return
+    if (!cur || TOOLS.has(cur)) return
     let alive = true
     setText('')
     fetch(`/holdem/${cur}.md?cb=` + Date.now()).then((r) => r.text()).then((t) => alive && setText(t)).catch(() => alive && setText('# 불러오기 실패'))
@@ -168,15 +171,19 @@ export default function Holdem() {
       {index && (
         <>
           <SubTabs value={cur} onChange={setCur} items={docs.map((c) => [c.id, `${c.tab || c.n + '장'}${done[c.id] ? ' ✓' : ''}`])} />
-          {ch && (
+          {ch && !TOOLS.has(cur) && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
               <span style={{ font: mono, color: 'var(--text-3)' }}>{ch.words ? `원문 약 ${ch.words.toLocaleString()}단어` : ''}{ch.date ? ` · ${ch.date}` : ''}</span>
               <button onClick={toggleDone} style={{ ...btn(!!done[cur]), marginLeft: 'auto' }}>{done[cur] ? '읽음 ✓' : '읽음으로 표시'}</button>
             </div>
           )}
-          <Card style={{ padding: mobile ? '16px 16px' : '22px 26px' }}>
-            {text ? <Markdown text={text} mobile={mobile} /> : <div style={{ font: mono, color: 'var(--text-3)' }}>여는 중…</div>}
-          </Card>
+          {TOOLS.has(cur) ? (
+            <Tagging mobile={mobile} />
+          ) : (
+            <Card style={{ padding: mobile ? '16px 16px' : '22px 26px' }}>
+              {text ? <Markdown text={text} mobile={mobile} /> : <div style={{ font: mono, color: 'var(--text-3)' }}>여는 중…</div>}
+            </Card>
+          )}
         </>
       )}
     </div>
