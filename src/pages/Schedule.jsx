@@ -615,14 +615,36 @@ export default function Schedule() {
   }
   const setQty = (id, delta) => updateSel(foods.map((it) => (it.id === id ? { ...it, qty: roundQty(it.qty + delta) } : it)).filter((it) => it.qty > 0))
   const removeItem = (id) => updateSel(foods.filter((it) => it.id !== id))
-  const matches = query.trim() ? searchFoods(query, 6, customFoods) : []
+  // 과거에 기록한 음식 전부(모든 날짜)를 최근 순으로 모아 검색 대상에 넣는다.
+  // AI 로 찾았든 직접 넣었든 한 번 기록한 음식은 다시 AI 를 부르지 않고 바로 뜬다.
+  const pastFoods = useMemo(() => {
+    const seen = new Set()
+    const out = []
+    for (const iso of Object.keys(calLog).sort().reverse()) {
+      for (const it of [...(calLog[iso] || EMPTY_LIST)].reverse()) {
+        const key = `${it.name}|${it.kcal}`
+        if (seen.has(key)) continue
+        seen.add(key)
+        out.push({ n: it.name, k: it.kcal, p: it.protein || 0, u: it.unit || '', c: '기록한 음식', ai: true })
+      }
+    }
+    return out
+  }, [calLog])
+  const knownFoods = useMemo(() => {
+    const names = new Set(customFoods.map((f) => f.n))
+    return [...customFoods, ...pastFoods.filter((f) => !names.has(f.n))]
+  }, [customFoods, pastFoods])
+  const recentFoods = pastFoods.slice(0, 8)
+  const matches = query.trim() ? searchFoods(query, 6, knownFoods) : []
   const askAI = async () => {
     const q = query.trim()
     if (!q || aiBusy) return
     setAiBusy(true)
     setAiError('')
     try {
-      addFood(await lookupFood(q))
+      const food = await lookupFood(q)
+      saveCustomFoods([food, ...customFoods.filter((f) => f.n !== food.n)].slice(0, 200))
+      addFood(food)
     } catch (e) {
       setAiError(e.message || 'AI 검색 실패')
     } finally {
@@ -703,6 +725,16 @@ export default function Schedule() {
               </div>
             )}
           </div>
+          {!query.trim() && recentFoods.length > 0 && (
+            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 6 }}>
+              {recentFoods.map((f) => (
+                <button key={f.n + f.k} onClick={() => addFood(f)} title={`${f.u ? f.u + ' · ' : ''}${num(f.k)} kcal · P${f.p}`}
+                  style={{ ...btn, padding: '3px 8px', borderRadius: 999, fontSize: 11, color: 'var(--text-2)', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {f.n} <span style={{ ...mono, color: 'var(--text-3)' }}>{num(f.k)}</span>
+                </button>
+              ))}
+            </div>
+          )}
           {query.trim() && !matches.length && (
             <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 6 }}>
               목록에 없음 — {getApiKey() ? <span onClick={askAI} style={{ color: 'var(--accent)', cursor: 'pointer' }}>{aiBusy ? 'AI 검색 중…' : 'Enter 로 AI 검색'}</span> : '칼로리 탭에서 AI 키를 넣으면 검색된다'}
