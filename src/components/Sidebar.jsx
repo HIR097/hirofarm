@@ -67,6 +67,7 @@ export const MENU_ITEMS = [
   { key: 'scratch', label: '낙서장', Icon: IconNote, type: 'page' },
   { key: 'english', label: '영어', Icon: IconBook, type: 'page' },
   { key: 'holdem', label: '홀덤', Icon: IconBook, type: 'page' },
+  { key: 'crypto', label: '크립토', Icon: IconBook, type: 'page' },
   { key: 'goals', label: '목표', Icon: IconSchedule, type: 'page' },
   // 맹그로브 신촌 프로젝트 탭은 26-09-06 메뉴에서 삭제 (/mangrove-building.html 파일은 그대로)
   { key: 'lovelab', ...proj('lovelab'), Icon: IconPulse, type: 'project', href: '/lovelab-followers.html' },

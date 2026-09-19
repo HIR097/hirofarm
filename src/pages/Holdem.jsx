@@ -13,7 +13,7 @@ import Tagging from './HoldemTagging.jsx'
 const fade = { animation: 'hyFade .4s ease', marginTop: 8 }
 // md 대신 컴포넌트를 띄우는 탭 (index.json guides 의 tool 값)
 const TOOLS = new Set(['tagging'])
-const btn = (active) => ({
+export const btn = (active) => ({
   font: "500 12px 'Pretendard Variable'",
   color: active ? 'var(--accent-text)' : 'var(--text-2)',
   background: active ? 'var(--accent)' : 'var(--surface2)',
@@ -59,7 +59,7 @@ function List({ items, P, nested }) {
   )
 }
 
-function Markdown({ text, mobile }) {
+export function Markdown({ text, mobile }) {
   const lines = text.replace(/\r/g, '').split('\n')
   const out = []
   let i = 0
@@ -114,7 +114,7 @@ function Markdown({ text, mobile }) {
   return <div>{out}</div>
 }
 
-function SubTabs({ value, onChange, items }) {
+export function SubTabs({ value, onChange, items }) {
   return (
     <div style={{ display: 'flex', gap: 22, borderBottom: '1px solid var(--line)', margin: '0 0 16px', overflowX: 'auto' }}>
       {items.map(([k, label]) => (
