@@ -3,10 +3,22 @@
  "author": "Andrew Brokos",
  "guides": [
   {
-   "id": "roadmap-copy",
-   "tab": "로드맵",
-   "title": "스타일 카피 로드맵",
-   "date": "2026-09-09"
+   "id": "roadmap-cash",
+   "tab": "로드맵 · 캐시",
+   "title": "캐시 로드맵 — 기준선은 솔버, 사고 훈련은 브래드 오언",
+   "date": "2026-09-19"
+  },
+  {
+   "id": "roadmap-mtt",
+   "tab": "로드맵 · MTT",
+   "title": "MTT 로드맵 — 마테오스",
+   "date": "2026-09-19"
+  },
+  {
+   "id": "roadmap-common",
+   "tab": "로드맵 · 공통",
+   "title": "로드맵 공통 — 카피 엔진·주간 시간",
+   "date": "2026-09-19"
   },
   {
    "id": "mateos-tagging",

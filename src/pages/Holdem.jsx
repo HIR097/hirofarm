@@ -147,7 +147,9 @@ export default function Holdem() {
     fetch('/holdem/index.json?cb=' + Date.now()).then((r) => r.json()).then((ix) => {
       setIndex(ix)
       const first = (ix.guides || [])[0] || (ix.chapters || [])[0]
-      if (!cur && first) setCur(first.id)
+      // 저장된 탭이 목록에서 빠졌으면(문서 분리·삭제) 첫 탭으로
+      const known = [...(ix.guides || []), ...(ix.chapters || [])].some((c) => c.id === cur)
+      if ((!cur || !known) && first) setCur(first.id)
     }).catch((e) => setErr('목록을 못 불러왔다: ' + e.message))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
