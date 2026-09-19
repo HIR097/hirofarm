@@ -3,6 +3,7 @@ import { useLocalStorage } from '../hooks/useLocalStorage.js'
 import { useIsMobile } from '../hooks/useIsMobile.js'
 import { Card, mono } from '../components/ui.jsx'
 import Tagging from './HoldemTagging.jsx'
+import Ranges from './HoldemRanges.jsx'
 
 // 홀덤 — 포커 책을 장별로 정리한 노트 (영어 탭 보고서 형식).
 // 데이터는 public/holdem/ (공개 번들, 암호화 대상 아님). Claude 가 원서를 읽고 쓴 정리본.
@@ -12,7 +13,7 @@ import Tagging from './HoldemTagging.jsx'
 
 const fade = { animation: 'hyFade .4s ease', marginTop: 8 }
 // md 대신 컴포넌트를 띄우는 탭 (index.json guides 의 tool 값)
-const TOOLS = new Set(['tagging'])
+const TOOLS = new Set(['tagging', 'ranges'])
 export const btn = (active) => ({
   font: "500 12px 'Pretendard Variable'",
   color: active ? 'var(--accent-text)' : 'var(--text-2)',
@@ -210,7 +211,7 @@ export default function Holdem() {
             </div>
           )}
           {TOOLS.has(cur) ? (
-            <Tagging mobile={mobile} />
+            cur === 'ranges' ? <Ranges mobile={mobile} /> : <Tagging mobile={mobile} />
           ) : (
             <Card style={{ padding: mobile ? '16px 15px' : '22px 26px' }}>
               {text ? <Markdown text={text} mobile={mobile} /> : <div style={{ font: mono, color: 'var(--text-3)' }}>여는 중…</div>}

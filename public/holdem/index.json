@@ -3,6 +3,13 @@
  "author": "Andrew Brokos",
  "guides": [
   {
+   "id": "ranges",
+   "tab": "오픈 레인지",
+   "tool": "ranges",
+   "title": "프리플랍 레인지 17 케이스 (GTO Wizard 추출)",
+   "date": "2026-09-20"
+  },
+  {
    "id": "roadmap-cash",
    "tab": "로드맵 · 캐시",
    "title": "캐시 로드맵 — 기준선은 솔버, 사고 훈련은 브래드 오언",
