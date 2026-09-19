@@ -37,6 +37,13 @@ body {
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+/* 가로로 미는 탭 줄 — 스크롤바 없이 */
+.hy-noscroll {
+  scrollbar-width: none;
+}
+.hy-noscroll::-webkit-scrollbar {
+  display: none;
+}
 @keyframes hyFade {
   from {
     opacity: 0;

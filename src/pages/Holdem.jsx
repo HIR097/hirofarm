@@ -36,7 +36,7 @@ function inline(s) {
 }
 
 // 들여쓰기로 중첩된 목록 (items: {indent, ordered, text})
-function List({ items, P, nested }) {
+function List({ items, P, pad, nested }) {
   const base = items[0].indent
   const nodes = []
   let k = 0
@@ -48,11 +48,11 @@ function List({ items, P, nested }) {
   }
   const Tag = items[0].ordered ? 'ol' : 'ul'
   return (
-    <Tag style={{ margin: nested ? '5px 0 2px' : '0 0 12px', paddingLeft: 22 }}>
+    <Tag style={{ margin: nested ? '5px 0 2px' : '0 0 12px', paddingLeft: pad }}>
       {nodes.map((n, j) => (
         <li key={j} style={{ ...P, margin: '0 0 5px' }}>
           {inline(n.text)}
-          {n.kids.length > 0 && <List items={n.kids} P={P} nested />}
+          {n.kids.length > 0 && <List items={n.kids} P={P} pad={pad} nested />}
         </li>
       ))}
     </Tag>
@@ -63,23 +63,51 @@ export function Markdown({ text, mobile }) {
   const lines = text.replace(/\r/g, '').split('\n')
   const out = []
   let i = 0
-  const P = { fontSize: mobile ? 14 : 15, lineHeight: 1.75, color: 'var(--text-2)', margin: '0 0 10px' }
+  const P = { fontSize: 15, lineHeight: mobile ? 1.7 : 1.75, color: 'var(--text-2)', margin: '0 0 10px', overflowWrap: 'anywhere' }
   while (i < lines.length) {
     const ln = lines[i]
     if (!ln.trim()) { i++; continue }
-    if (ln.startsWith('# ')) { out.push(<h1 key={i} style={{ fontSize: mobile ? 19 : 22, fontWeight: 700, letterSpacing: '-.02em', margin: '4px 0 6px', lineHeight: 1.35 }}>{inline(ln.slice(2))}</h1>); i++; continue }
-    if (ln.startsWith('## ')) { out.push(<h2 key={i} style={{ fontSize: mobile ? 16 : 18, fontWeight: 700, margin: '26px 0 8px', paddingTop: 14, borderTop: '1px solid var(--line)' }}>{inline(ln.slice(3))}</h2>); i++; continue }
-    if (ln.startsWith('### ')) { out.push(<h3 key={i} style={{ fontSize: mobile ? 14 : 15, fontWeight: 700, margin: '16px 0 6px' }}>{inline(ln.slice(4))}</h3>); i++; continue }
+    if (ln.startsWith('# ')) { out.push(<h1 key={i} style={{ fontSize: mobile ? 20 : 22, fontWeight: 700, letterSpacing: '-.02em', margin: '4px 0 6px', lineHeight: 1.35 }}>{inline(ln.slice(2))}</h1>); i++; continue }
+    if (ln.startsWith('## ')) { out.push(<h2 key={i} style={{ fontSize: mobile ? 17 : 18, fontWeight: 700, margin: '26px 0 8px', paddingTop: 14, borderTop: '1px solid var(--line)' }}>{inline(ln.slice(3))}</h2>); i++; continue }
+    if (ln.startsWith('### ')) { out.push(<h3 key={i} style={{ fontSize: mobile ? 15.5 : 15, fontWeight: 700, margin: mobile ? '20px 0 8px' : '16px 0 6px', color: 'var(--text)' }}>{inline(ln.slice(4))}</h3>); i++; continue }
     if (ln.startsWith('|')) {
       const rows = []
       while (i < lines.length && lines[i].startsWith('|')) { rows.push(lines[i]); i++ }
       const cells = rows.filter((r) => !/^\|\s*-+/.test(r)).map((r) => r.split('|').slice(1, -1).map((c) => c.trim()))
       const [head, ...body] = cells
+      // 폰에서는 3열 이상 표가 가로로 넘쳐 읽기 어렵다 → 행마다 카드로 쌓는다.
+      // 첫 칸 = 제목, 짧은 둘째 칸(품사 등) = 제목 옆 꼬리표, 나머지 = "머리글 + 값" 줄.
+      if (mobile && head.length >= 3) {
+        const short = body.every((r) => (r[1] || '').length <= 8)
+        out.push(
+          <div key={i} style={{ margin: '6px 0 14px', borderTop: '1px solid var(--line)' }}>
+            {body.map((r, k) => (
+              <div key={k} style={{ padding: '10px 0 9px', borderBottom: '1px solid var(--line)' }}>
+                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', lineHeight: 1.45, overflowWrap: 'anywhere' }}>
+                  {r[0] ? inline(r[0]) : <span style={{ color: 'var(--text-3)' }}>{head[0] || '—'}</span>}
+                  {short && r[1] && <span style={{ marginLeft: 7, fontSize: 12, fontWeight: 500, color: 'var(--text-3)' }}>{r[1]}</span>}
+                </div>
+                {r.slice(short ? 2 : 1).map((c, j) => {
+                  const label = head[j + (short ? 2 : 1)]
+                  if (!c) return null
+                  return (
+                    <div key={j} style={{ display: 'flex', gap: 8, marginTop: 4, fontSize: 14, lineHeight: 1.55, color: 'var(--text-2)' }}>
+                      {label && <span style={{ flex: '0 0 auto', minWidth: 44, maxWidth: 84, fontSize: 12, lineHeight: '21.7px', color: 'var(--text-3)' }}>{label}</span>}
+                      <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{inline(c)}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            ))}
+          </div>,
+        )
+        continue
+      }
       out.push(
         <div key={i} style={{ overflowX: 'auto', margin: '6px 0 12px' }}>
-          <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: mobile ? 12.5 : 13.5 }}>
-            <thead><tr>{head.map((c, j) => <th key={j} style={{ textAlign: 'left', padding: '7px 10px', borderBottom: '1px solid var(--line)', color: 'var(--text-3)', fontWeight: 600, whiteSpace: 'nowrap' }}>{inline(c)}</th>)}</tr></thead>
-            <tbody>{body.map((r, k) => <tr key={k}>{r.map((c, j) => <td key={j} style={{ padding: '7px 10px', borderBottom: '1px solid var(--line)', verticalAlign: 'top', lineHeight: 1.5 }}>{inline(c)}</td>)}</tr>)}</tbody>
+          <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: mobile ? 14 : 13.5 }}>
+            <thead><tr>{head.map((c, j) => <th key={j} style={{ textAlign: 'left', padding: mobile ? '7px 8px 7px 0' : '7px 10px', borderBottom: '1px solid var(--line)', color: 'var(--text-3)', fontWeight: 600, whiteSpace: 'nowrap' }}>{inline(c)}</th>)}</tr></thead>
+            <tbody>{body.map((r, k) => <tr key={k}>{r.map((c, j) => <td key={j} style={{ padding: mobile ? '8px 8px 8px 0' : '7px 10px', borderBottom: '1px solid var(--line)', verticalAlign: 'top', lineHeight: 1.5, overflowWrap: 'anywhere', ...(mobile && j === 0 ? { width: '34%', color: 'var(--text)' } : null) }}>{inline(c)}</td>)}</tr>)}</tbody>
           </table>
         </div>,
       )
@@ -105,7 +133,7 @@ export function Markdown({ text, mobile }) {
         })
         i++
       }
-      out.push(<List key={i} items={items} P={P} />)
+      out.push(<List key={i} items={items} P={P} pad={mobile ? 19 : 22} />)
       continue
     }
     out.push(<p key={i} style={P}>{inline(ln)}</p>)
@@ -116,7 +144,7 @@ export function Markdown({ text, mobile }) {
 
 export function SubTabs({ value, onChange, items }) {
   return (
-    <div style={{ display: 'flex', gap: 22, borderBottom: '1px solid var(--line)', margin: '0 0 16px', overflowX: 'auto' }}>
+    <div className="hy-noscroll" style={{ display: 'flex', gap: 22, borderBottom: '1px solid var(--line)', margin: '0 0 16px', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
       {items.map(([k, label]) => (
         <button
           key={k}
@@ -184,7 +212,7 @@ export default function Holdem() {
           {TOOLS.has(cur) ? (
             <Tagging mobile={mobile} />
           ) : (
-            <Card style={{ padding: mobile ? '16px 16px' : '22px 26px' }}>
+            <Card style={{ padding: mobile ? '16px 15px' : '22px 26px' }}>
               {text ? <Markdown text={text} mobile={mobile} /> : <div style={{ font: mono, color: 'var(--text-3)' }}>여는 중…</div>}
             </Card>
           )}
