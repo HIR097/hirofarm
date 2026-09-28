@@ -122,7 +122,13 @@ function EdgeQuiz({ spots, mobile, chip }) {
   }
   const resetStats = () => { if (window.confirm('틀린 기록과 누적 점수를 지울까요?')) { setStatsStr('{}'); setBest('{"asked":0,"ok":0}'); setScore({ asked: 0, ok: 0 }) } }
   const rowLabel = (k) => { const [n, rk] = k.split(':'); const sp = spots.find((x) => x.n === Number(n)); const rw = ROWS.find((x) => x.key === rk); return sp && rw ? `${sp.hero} ${rw.label}` : k }
-  const weak = Object.entries(stats).filter(([, v]) => v.wrong > 0).sort((a, b) => (b[1].wrong / b[1].asked) - (a[1].wrong / a[1].asked) || b[1].wrong - a[1].wrong).slice(0, 6)
+  // 진행도: 현재 포지션 필터의 전체 문항 / 한 번 이상 출제된 문항 / 오답노트(틀린 뒤 아직 연속 2회 정답이 안 된 문항)
+  const scopeSpots = spots.filter((s) => pos === 'all' || s.hero === pos)
+  const allKeys = scopeSpots.flatMap((sp) => ROWS.map((r) => qKey(sp, r)))
+  const askedN = allKeys.filter((k) => stats[k]?.asked).length
+  const notebook = allKeys.filter((k) => stats[k] && stats[k].wrong > 0 && stats[k].streak < 2)
+  const done = askedN === allKeys.length && notebook.length === 0
+  const weak = notebook.map((k) => [k, stats[k]]).sort((a, b) => (b[1].wrong / b[1].asked) - (a[1].wrong / a[1].asked) || b[1].wrong - a[1].wrong).slice(0, 8)
   const cur = stats[q.key]
   // 키보드: 1~5 로 보기 선택, 답한 뒤 Enter·Space 로 다음
   useEffect(() => {
@@ -156,6 +162,19 @@ function EdgeQuiz({ spots, mobile, chip }) {
           이번 {score.ok}/{score.asked} · 누적 {bestObj.ok}/{bestObj.asked}{bestObj.asked ? ` (${Math.round(bestObj.ok / bestObj.asked * 100)}%)` : ''}
         </span>
       </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14, font: mono, color: 'var(--text-3)' }}>
+        <span>출제 {askedN}/{allKeys.length}줄</span>
+        <span style={{ flex: 1, height: 4, background: 'var(--surface2)', borderRadius: 2, minWidth: 80, overflow: 'hidden' }}>
+          <span style={{ display: 'block', height: '100%', width: `${allKeys.length ? askedN / allKeys.length * 100 : 0}%`, background: 'var(--accent)' }} />
+        </span>
+        <span style={{ color: notebook.length ? '#e5484d' : 'var(--text-3)' }}>오답노트 {notebook.length}</span>
+      </div>
+      {done && (
+        <div style={{ padding: '14px 16px', borderRadius: 10, background: 'var(--accent)', color: 'var(--accent-text)', marginBottom: 14, animation: 'hyFade .3s ease' }}>
+          <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-.02em' }}>끝 ✓ {pos === 'all' ? '5개 포지션' : pos}</div>
+          <div style={{ fontSize: 13, opacity: .9, marginTop: 2 }}>{allKeys.length}줄 전부 한 번 이상 출제되었고, 틀렸던 줄은 모두 연속 2회 정답으로 정리됨. 계속 풀면 유지 연습, 다른 포지션을 고르면 새로 시작.</div>
+        </div>
+      )}
 
       <div style={{ fontSize: mobile ? 18 : 22, fontWeight: 700, letterSpacing: '-.02em', lineHeight: 1.4, marginBottom: 4 }}>
         <span style={{ color: 'var(--accent)' }}>{q.spot.hero}</span> 오픈 · <span style={{ color: 'var(--accent)' }}>{q.row.label}</span> 줄의 윤곽점은?
@@ -196,9 +215,9 @@ function EdgeQuiz({ spots, mobile, chip }) {
       )}
       {weak.length > 0 && (
         <div style={{ marginTop: 16, padding: '10px 12px', background: 'var(--surface2)', borderRadius: 8 }}>
-          <div style={{ font: mono, color: 'var(--text-3)', marginBottom: 6 }}>자주 틀리는 줄 (자동으로 더 자주 나옴)</div>
+          <div style={{ font: mono, color: 'var(--text-3)', marginBottom: 6 }}>오답노트 · 연속 2회 맞히면 빠짐 (자동으로 더 자주 나옴)</div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {weak.map(([k, v]) => <span key={k} style={{ fontSize: 12.5, padding: '3px 9px', borderRadius: 999, background: 'rgba(229,72,77,.14)', color: 'var(--text)' }}>{rowLabel(k)} <span style={{ color: 'var(--text-3)' }}>{v.wrong}/{v.asked}</span></span>)}
+            {weak.map(([k, v]) => <span key={k} style={{ fontSize: 12.5, padding: '3px 9px', borderRadius: 999, background: 'rgba(229,72,77,.14)', color: 'var(--text)' }}>{rowLabel(k)} <span style={{ color: 'var(--text-3)' }}>{v.wrong}/{v.asked}{v.streak === 1 ? ' · 1/2' : ''}</span></span>)}
             <button onClick={resetStats} style={{ ...chip(false), marginLeft: 'auto', fontSize: 11 }}>기록 초기화</button>
           </div>
         </div>
