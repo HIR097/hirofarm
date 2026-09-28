@@ -12,9 +12,10 @@ import { Card, mono } from '../components/ui.jsx'
 const RANKS = 'AKQJT98765432'
 const COLOR = { R: '#e63946', C: '#2ea05a', A: '#6e1428' }
 const FOLD = 'var(--surface2)'
+const EDGE = '#ffd60a' // 윤곽점 테두리(노랑) — 레이즈 빨강·콜 초록과 구분
 const handAt = (r, c) => (r === c ? RANKS[r] + RANKS[r] : c > r ? RANKS[r] + RANKS[c] + 's' : RANKS[c] + RANKS[r] + 'o')
 
-function Cell({ hand, fr, mode, size }) {
+function Cell({ hand, fr, mode, size, edge, extra }) {
   const entries = Object.entries(fr || {}).filter(([, v]) => v >= 1)
   const total = Math.min(100, entries.reduce((s, [, v]) => s + v, 0))
   let bg = FOLD
@@ -34,9 +35,12 @@ function Cell({ hand, fr, mode, size }) {
     }
   }
   const strong = mode === 'pure' ? bg !== FOLD : total >= 50
+  if (edge) title += ' · 윤곽점'
+  else if (extra) title += ' · 끊긴 뒤 예외'
   return (
     <div title={title} style={{ background: bg, height: size, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 3,
-      font: `${hand.length === 2 ? 600 : 500} ${size < 30 ? 9 : 11}px 'Pretendard Variable'`, color: strong ? '#fff' : 'var(--text-3)', userSelect: 'none' }}>
+      font: `${edge ? 800 : hand.length === 2 ? 600 : 500} ${size < 30 ? 9 : 11}px 'Pretendard Variable'`, color: strong ? '#fff' : 'var(--text-3)', userSelect: 'none',
+      boxSizing: 'border-box', outline: edge ? `${size < 30 ? 2 : 3}px solid ${EDGE}` : extra ? `2px dashed ${EDGE}` : 'none', outlineOffset: edge ? -2 : -2, position: 'relative', zIndex: edge || extra ? 1 : 0 }}>
       {hand}
     </div>
   )
@@ -248,6 +252,9 @@ export default function HoldemRanges({ mobile }) {
   if (err) return <Card><div style={{ color: 'var(--text-2)', fontSize: 14 }}>{err}</div></Card>
   if (!data || !spot) return <div style={{ font: mono, color: 'var(--text-3)' }}>여는 중…</div>
   const groups = Object.entries(data.groups)
+  // 현재 스팟의 윤곽점·예외 (퀴즈와 같은 edgeOf 기준: 순수전략 50% 규칙)
+  const edges = new Set(), extras = new Set()
+  for (const row of ROWS) { const e = edgeOf(spot, row); if (e.edge) edges.add(e.edge); e.extras.forEach((h) => extras.add(h)) }
   const rfi = data.spots.filter((s) => s.group === 'rfi')
   return (
     <div>
@@ -297,18 +304,20 @@ export default function HoldemRanges({ mobile }) {
           {!spot.cards.length && <div style={{ fontSize: 13, color: 'var(--text-3)' }}>순수전략으로 남는 핸드가 없다 (전부 50% 미만 혼합).</div>}
         </div>
 
-        {/* 13×13 격자 */}
+        {/* 13×13 격자 — 윤곽점(줄마다 위에서부터 이어지다 끊기는 마지막 칸)은 노란 테두리, 끊긴 뒤 예외는 점선 */}
         <div style={{ overflowX: 'auto' }}>
           <div style={{ display: 'grid', gridTemplateColumns: `repeat(13, ${size}px)`, gap: 2, width: 13 * size + 24 }}>
             {Array.from({ length: 169 }, (_, i) => {
               const r = Math.floor(i / 13), c = i % 13, h = handAt(r, c)
-              return <Cell key={h} hand={h} fr={spot.grid[h]} mode={mode} size={size} />
+              return <Cell key={h} hand={h} fr={spot.grid[h]} mode={mode} size={size} edge={edges.has(h)} extra={extras.has(h)} />
             })}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginTop: 10, font: mono, color: 'var(--text-3)' }}>
           {Object.entries(spot.labels).map(([k, l]) => <span key={k}><span style={{ display: 'inline-block', width: 10, height: 10, background: COLOR[k], borderRadius: 2, marginRight: 5, verticalAlign: -1 }} />{l}</span>)}
           <span><span style={{ display: 'inline-block', width: 10, height: 10, background: FOLD, border: '1px solid var(--line)', borderRadius: 2, marginRight: 5, verticalAlign: -1 }} />폴드</span>
+          <span><span style={{ display: 'inline-block', width: 10, height: 10, background: FOLD, outline: `2px solid ${EDGE}`, outlineOffset: -2, borderRadius: 2, marginRight: 5, verticalAlign: -1 }} />윤곽점 {edges.size}</span>
+          {extras.size > 0 && <span><span style={{ display: 'inline-block', width: 10, height: 10, background: FOLD, outline: `2px dashed ${EDGE}`, outlineOffset: -2, borderRadius: 2, marginRight: 5, verticalAlign: -1 }} />끊긴 뒤 예외 {extras.size}</span>}
           <span>· 칸에 마우스를 올리면 빈도. 대각선 위 수딧, 아래 오프수트</span>
         </div>
       </Card>
