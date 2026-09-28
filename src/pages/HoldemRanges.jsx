@@ -66,12 +66,26 @@ function edgeOf(spot, row) {
   return { edge, extras }
 }
 const shuffle = (a) => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]] } return b }
-function makeQuestion(spots, posFilter) {
+// 문제 선택 = 라이트너 방식. 문항 키 = "포지션번호:줄". 틀릴수록 가중치 ↑, 연속 정답일수록 ↓, 한 번도 안 나온 문항은 우선.
+const qKey = (spot, row) => `${spot.n}:${row.key}`
+function weightOf(st, hasEdge) {
+  const base = hasEdge ? 3 : 1
+  if (!st || !st.asked) return base * 2                     // 아직 안 나온 문항
+  return base * (1 + 3 * st.wrong) / (1 + st.streak)        // 틀린 횟수만큼 ×, 연속 정답만큼 ÷
+}
+function makeQuestion(spots, posFilter, stats = {}, avoidKey = null) {
   const pool = spots.filter((s) => posFilter === 'all' || s.hero === posFilter)
-  const spot = pool[Math.floor(Math.random() * pool.length)]
-  // 비어 있는 줄은 가끔만 (가중치 1 : 채워진 줄 3)
-  const weighted = ROWS.flatMap((r) => Array(edgeOf(spot, r).edge ? 3 : 1).fill(r))
-  const row = weighted[Math.floor(Math.random() * weighted.length)]
+  const cands = []
+  for (const spot of pool) for (const row of ROWS) {
+    const k = qKey(spot, row)
+    if (k === avoidKey) continue
+    const { edge } = edgeOf(spot, row)
+    cands.push({ spot, row, w: weightOf(stats[k], !!edge) })
+  }
+  let r = Math.random() * cands.reduce((a, c) => a + c.w, 0)
+  let pick = cands[cands.length - 1]
+  for (const c of cands) { r -= c.w; if (r <= 0) { pick = c; break } }
+  const { spot, row } = pick
   const { edge, extras } = edgeOf(spot, row)
   const cells = row.cells
   let choices
@@ -83,7 +97,7 @@ function makeQuestion(spots, posFilter) {
   } else {
     choices = ['없음', ...shuffle(cells.slice(0, Math.min(6, cells.length))).slice(0, 4)]
   }
-  return { spot, row, edge: edge || '없음', extras, choices: shuffle(choices.slice(0, 5)) }
+  return { spot, row, key: qKey(spot, row), edge: edge || '없음', extras, choices: shuffle(choices.slice(0, 5)) }
 }
 
 function EdgeQuiz({ spots, mobile, chip }) {
@@ -92,17 +106,24 @@ function EdgeQuiz({ spots, mobile, chip }) {
   const [picked, setPicked] = useState(null)
   const [score, setScore] = useState({ asked: 0, ok: 0 })
   const [best, setBest] = useLocalStorage('hy_holdem_quiz_best', '{"asked":0,"ok":0}')
+  const [statsStr, setStatsStr] = useLocalStorage('hy_holdem_quiz_stats', '{}')
   const bestObj = (() => { try { return JSON.parse(best) } catch { return { asked: 0, ok: 0 } } })()
-  const next = (p = pos) => { setQ(makeQuestion(spots, p)); setPicked(null) }
+  const stats = (() => { try { return JSON.parse(statsStr) || {} } catch { return {} } })()
+  const next = (p = pos) => { setQ(makeQuestion(spots, p, stats, q.key)); setPicked(null) }
   const answer = (c) => {
     if (picked) return
     setPicked(c)
     const ok = c === q.edge
-    const s = { asked: score.asked + 1, ok: score.ok + (ok ? 1 : 0) }
-    setScore(s)
-    const t = { asked: bestObj.asked + 1, ok: bestObj.ok + (ok ? 1 : 0) }
-    setBest(JSON.stringify(t))
+    setScore({ asked: score.asked + 1, ok: score.ok + (ok ? 1 : 0) })
+    setBest(JSON.stringify({ asked: bestObj.asked + 1, ok: bestObj.ok + (ok ? 1 : 0) }))
+    const st = stats[q.key] || { asked: 0, wrong: 0, streak: 0 }
+    const nst = { asked: st.asked + 1, wrong: st.wrong + (ok ? 0 : 1), streak: ok ? st.streak + 1 : 0, last: Date.now() }
+    setStatsStr(JSON.stringify({ ...stats, [q.key]: nst }))
   }
+  const resetStats = () => { if (window.confirm('틀린 기록과 누적 점수를 지울까요?')) { setStatsStr('{}'); setBest('{"asked":0,"ok":0}'); setScore({ asked: 0, ok: 0 }) } }
+  const rowLabel = (k) => { const [n, rk] = k.split(':'); const sp = spots.find((x) => x.n === Number(n)); const rw = ROWS.find((x) => x.key === rk); return sp && rw ? `${sp.hero} ${rw.label}` : k }
+  const weak = Object.entries(stats).filter(([, v]) => v.wrong > 0).sort((a, b) => (b[1].wrong / b[1].asked) - (a[1].wrong / a[1].asked) || b[1].wrong - a[1].wrong).slice(0, 6)
+  const cur = stats[q.key]
   const cellBtn = (c) => {
     const isAns = picked && c === q.edge
     const isWrong = picked && c === picked && c !== q.edge
@@ -141,6 +162,7 @@ function EdgeQuiz({ spots, mobile, chip }) {
           <div style={{ fontSize: 15, fontWeight: 600, color: picked === q.edge ? 'var(--accent)' : '#e5484d', marginBottom: 8 }}>
             {picked === q.edge ? '정답' : `오답 · 정답은 ${q.edge}`}
             {q.extras.length > 0 && <span style={{ color: 'var(--text-2)', fontWeight: 500 }}> · 끊긴 뒤 예외: {q.extras.join(' ')}</span>}
+            {cur && cur.asked > 1 && <span style={{ color: 'var(--text-3)', fontWeight: 500, fontSize: 13 }}> · 이 문항 {cur.asked}번 중 {cur.wrong}번 틀림{cur.streak >= 2 ? ` · 연속 ${cur.streak}회 정답` : ''}</span>}
           </div>
           {/* 그 줄 전체를 띠로 보여 준다 */}
           <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', marginBottom: 14 }}>
@@ -156,8 +178,18 @@ function EdgeQuiz({ spots, mobile, chip }) {
           <button onClick={() => next()} style={{ ...chip(true), padding: '8px 18px', fontSize: 14 }}>다음 →</button>
         </div>
       )}
+      {weak.length > 0 && (
+        <div style={{ marginTop: 16, padding: '10px 12px', background: 'var(--surface2)', borderRadius: 8 }}>
+          <div style={{ font: mono, color: 'var(--text-3)', marginBottom: 6 }}>자주 틀리는 줄 (자동으로 더 자주 나옴)</div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {weak.map(([k, v]) => <span key={k} style={{ fontSize: 12.5, padding: '3px 9px', borderRadius: 999, background: 'rgba(229,72,77,.14)', color: 'var(--text)' }}>{rowLabel(k)} <span style={{ color: 'var(--text-3)' }}>{v.wrong}/{v.asked}</span></span>)}
+            <button onClick={resetStats} style={{ ...chip(false), marginLeft: 'auto', fontSize: 11 }}>기록 초기화</button>
+          </div>
+        </div>
+      )}
       <div style={{ font: mono, color: 'var(--text-3)', marginTop: 16, lineHeight: 1.7 }}>
-        윤곽점 = 격자 한 줄에서 위(높은 킥커)부터 연속으로 채워진 마지막 칸. 점만 외우면 선은 저절로 그려진다. 예외(A5o 같은 것)는 정답 판정과 무관하게 따로 알려 준다.
+        출제 = 라이트너 방식. 틀린 문항은 (1 + 3×틀린 횟수)배로 더 나오고, 연속 정답은 그만큼 덜 나온다. 한 번도 안 나온 줄은 우선 출제. 같은 문항 연속 출제는 막음.
+        {' '}윤곽점 = 격자 한 줄에서 위(높은 킥커)부터 연속으로 채워진 마지막 칸. 점만 외우면 선은 저절로 그려진다. 예외(A5o 같은 것)는 정답 판정과 무관하게 따로 알려 준다.
       </div>
     </Card>
   )
