@@ -124,6 +124,17 @@ function EdgeQuiz({ spots, mobile, chip }) {
   const rowLabel = (k) => { const [n, rk] = k.split(':'); const sp = spots.find((x) => x.n === Number(n)); const rw = ROWS.find((x) => x.key === rk); return sp && rw ? `${sp.hero} ${rw.label}` : k }
   const weak = Object.entries(stats).filter(([, v]) => v.wrong > 0).sort((a, b) => (b[1].wrong / b[1].asked) - (a[1].wrong / a[1].asked) || b[1].wrong - a[1].wrong).slice(0, 6)
   const cur = stats[q.key]
+  // 키보드: 1~5 로 보기 선택, 답한 뒤 Enter·Space 로 다음
+  useEffect(() => {
+    const onKey = (e) => {
+      const tag = (e.target && e.target.tagName) || ''
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || e.metaKey || e.ctrlKey || e.altKey) return
+      if (!picked && /^[1-5]$/.test(e.key)) { const c = q.choices[Number(e.key) - 1]; if (c) { e.preventDefault(); answer(c) } }
+      else if (picked && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); next() }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
   const cellBtn = (c) => {
     const isAns = picked && c === q.edge
     const isWrong = picked && c === picked && c !== q.edge
@@ -150,11 +161,16 @@ function EdgeQuiz({ spots, mobile, chip }) {
         <span style={{ color: 'var(--accent)' }}>{q.spot.hero}</span> 오픈 · <span style={{ color: 'var(--accent)' }}>{q.row.label}</span> 줄의 윤곽점은?
       </div>
       <div style={{ font: mono, color: 'var(--text-3)', marginBottom: 14 }}>
-        {q.spot.n === 5 ? '레이즈+림프 합쳐 치는 손 기준' : '레이즈 50% 이상 기준'} · 그 줄에서 위에서부터 이어지다 끊기는 마지막 칸
+        {q.spot.n === 5 ? '레이즈+림프 합쳐 치는 손 기준' : '레이즈 50% 이상 기준'} · 그 줄에서 위에서부터 이어지다 끊기는 마지막 칸 · 키보드 1~5
       </div>
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
-        {q.choices.map((c) => <button key={c} onClick={() => answer(c)} style={cellBtn(c)}>{c}</button>)}
+        {q.choices.map((c, i) => (
+          <button key={c} onClick={() => answer(c)} style={{ ...cellBtn(c), position: 'relative' }}>
+            <span style={{ position: 'absolute', top: 5, left: 8, font: "600 10px 'JetBrains Mono', monospace", color: 'var(--text-3)', opacity: .8 }}>{i + 1}</span>
+            {c}
+          </button>
+        ))}
       </div>
 
       {picked && (
@@ -175,7 +191,7 @@ function EdgeQuiz({ spots, mobile, chip }) {
               )
             })}
           </div>
-          <button onClick={() => next()} style={{ ...chip(true), padding: '8px 18px', fontSize: 14 }}>다음 →</button>
+          <button onClick={() => next()} style={{ ...chip(true), padding: '8px 18px', fontSize: 14 }}>다음 → <span style={{ opacity: .7, fontSize: 11 }}>Enter</span></button>
         </div>
       )}
       {weak.length > 0 && (
