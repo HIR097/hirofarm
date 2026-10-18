@@ -63,7 +63,8 @@ def main():
 
     with open(DATA, encoding="utf-8") as f:
         src = f.read()
-    handles = re.findall(r'handle:\s*"([^"]+)"', src)
+    # 주석 처리된(제외된) 계정은 세지 않는다 — 줄 머리가 `{ handle:` 인 것만
+    handles = re.findall(r'^\s*\{\s*handle:\s*"([^"]+)"', src, re.M)
     if f'"{date}"' in src:
         print(f"이미 {date} 스냅샷이 있습니다 — 건너뜀")
         return
