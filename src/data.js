@@ -19,6 +19,7 @@ export const PAGE_TITLES = {
   goals: ['목표', '괴물 프로젝트 · 2027-12-31 까지 · 2027 목표 · 분기 로드맵 · 주간 배치도'],
   holdem: ['홀덤', 'Play Optimal Poker → 장별 정리 · 용어 · 리텔 질문'],
   crypto: ['크립토', 'The Block 뉴스 → 토플 기준 어휘 · 문법 예습 노트'],
+  cook: ['요리', '가진 재료 → 끼니별 요리 3가지 추천 · 칼로리 · 요리법 · 레시피 북'],
 }
 
 export const HABITS = [

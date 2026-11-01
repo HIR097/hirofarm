@@ -64,6 +64,7 @@ export const MENU_ITEMS = [
   { key: 'home', label: '홈', Icon: IconHome, type: 'page' },
   // 달력·칼로리 탭은 26-09-06 홈으로 흡수 (라우트는 App.jsx 에 남아 있음)
   { key: 'body', label: '몸', Icon: IconBody, type: 'page' },
+  { key: 'cook', label: '요리', Icon: IconFlame, type: 'page' },
   { key: 'scratch', label: '낙서장', Icon: IconNote, type: 'page' },
   { key: 'english', label: '영어', Icon: IconBook, type: 'page' },
   { key: 'holdem', label: '홀덤', Icon: IconBook, type: 'page' },
