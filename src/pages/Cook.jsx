@@ -4,7 +4,7 @@ import { useIsMobile } from '../hooks/useIsMobile.js'
 import { Card, mono } from '../components/ui.jsx'
 import * as sync from '../lib/sync.js'
 import { getApiKey } from '../lib/foodAI.js'
-import { MEALS, MEAL_HINT, recommend } from '../lib/cookAI.js'
+import { MEALS, MEAL_HINT, DEFAULT_INGS, recommend } from '../lib/cookAI.js'
 import { btn as pill, SubTabs } from './Holdem.jsx'
 
 // 요리 — 가진 재료를 넣고 끼니(아침/점심/간식/저녁/야식) 버튼을 누르면 요리 3개를 추천한다.
@@ -136,7 +136,7 @@ function RecipeForm({ init, onSave, onCancel }) {
 export default function Cook() {
   const mobile = useIsMobile()
   const [sub, setSub] = useLocalStorage('hy_cook_tab', 'rec')
-  const [ings, saveIngs] = useJsonStorage('hy_cook_ings', EMPTY_LIST)
+  const [ings, saveIngs] = useJsonStorage('hy_cook_ings', DEFAULT_INGS)
   const [last, saveLast] = useJsonStorage('hy_cook_last', EMPTY)
   const [book, saveBook] = useJsonStorage('hy_cook_book', EMPTY_LIST)
   const [stamp, setStamp] = useLocalStorage('hy_cook_stamp', '')
@@ -240,6 +240,7 @@ export default function Cook() {
               <div style={{ display: 'flex', gap: 6 }}>
                 <button onClick={() => setBulk(!bulk)} style={btn}>{bulk ? '한 개씩 입력' : '여러 개 붙여넣기'}</button>
                 {ings.length > 0 && <button onClick={() => { if (confirm('재료를 모두 지울까요?')) setIngs([]) }} style={{ ...btn, color: 'var(--text-3)' }}>모두 지우기</button>}
+                {ings.length === 0 && <button onClick={() => setIngs(DEFAULT_INGS)} style={btn}>기본 재료 불러오기</button>}
               </div>
             </div>
             {bulk ? (
