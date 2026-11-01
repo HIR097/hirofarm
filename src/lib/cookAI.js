@@ -21,12 +21,32 @@ export const DEFAULT_INGS = [
 ]
 
 export const MEALS = ['아침', '점심', '간식', '저녁', '야식']
+// 벌크업 기준 끼니 배분 — 홈 탭 목표(기본 3300kcal·172g, hy_cal_goal/hy_cal_protein_goal)를 이 비율로 나눈다.
+export const MEAL_SHARE = { 아침: 0.20, 점심: 0.27, 간식: 0.12, 저녁: 0.29, 야식: 0.12 }
 export const MEAL_HINT = {
-  아침: '빠르게(15분 안), 소화 편하고 단백질 포함. 300~600kcal',
-  점심: '든든한 한 끼, 탄수+단백질 균형. 500~800kcal',
-  간식: '가볍고 간단(10분 안), 단백질 보충 위주. 150~350kcal',
-  저녁: '제대로 된 한 끼, 단백질 넉넉히. 500~800kcal',
-  야식: '가볍고 자극 적게, 잠에 방해 안 되는 것. 150~350kcal',
+  아침: '15분 안, 소화 편하게. 탄수(밥·빵·오트)+단백질 30g 이상으로 하루를 연다',
+  점심: '가장 든든한 한 끼. 탄수 넉넉히 + 단백질 40g 이상',
+  간식: '운동 전후 보충. 빠른 탄수 + 단백질 25g 이상(쉐이크·요거트·떡 OK)',
+  저녁: '메인 단백질(고기·생선) 150g 이상 + 밥. 채소 곁들이기',
+  야식: '단백질 위주로 가볍게, 기름·매운맛 적게. 부족한 칼로리는 여기서 메운다',
+}
+
+// 홈 탭 목표·오늘 기록을 읽어 이 끼니의 목표 kcal·단백질과 오늘 남은 양을 계산한다.
+export function bulkTargets(meal) {
+  let goal = 3300, pGoal = 172, eaten = 0, pEaten = 0
+  try {
+    goal = Math.max(0, Number(localStorage.getItem('hy_cal_goal')) || 3300)
+    pGoal = Math.max(0, Number(localStorage.getItem('hy_cal_protein_goal')) || 172)
+    const d = new Date(); const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    const list = (JSON.parse(localStorage.getItem('hy_cal_log') || '{}') || {})[day] || []
+    for (const it of list) { eaten += (it.kcal || 0) * (it.qty || 1); pEaten += (it.protein || 0) * (it.qty || 1) }
+  } catch { /* 기본값 */ }
+  const share = MEAL_SHARE[meal] || 0.2
+  return {
+    goal, pGoal, eaten: Math.round(eaten), pEaten: Math.round(pEaten),
+    left: Math.max(0, Math.round(goal - eaten)), pLeft: Math.max(0, Math.round(pGoal - pEaten)),
+    kcal: Math.round(goal * share), protein: Math.round(pGoal * share),
+  }
 }
 
 const SCHEMA = {
@@ -58,14 +78,17 @@ const SCHEMA = {
   additionalProperties: false,
 }
 
-const SYSTEM = `너는 한국 가정식 요리 코치다. 사용자가 지금 집에 있는 재료 목록과 끼니(아침/점심/간식/저녁/야식)를 주면,
+const SYSTEM = `너는 벌크업(근육량 증가) 식단을 짜는 한국 가정식 요리 코치다. 사용자가 집에 있는 재료 목록, 끼니, 그 끼니의 목표 칼로리·단백질을 주면
 그 재료로 만들 수 있는 요리 정확히 3개를 추천한다.
+사용자: 185cm 남성, 체중 76kg → 목표 80kg 클린벌크. 주 4회 웨이트 + 주 2회 러닝. 하루 목표는 입력으로 온다(기본 3300kcal·단백질 172g).
 규칙:
+- 끼니 목표 칼로리의 ±20% 안에 들어오게 1인분 분량을 잡는다. 모자라면 밥 양·계란 개수·고기 g 을 늘려서 맞추고, uses 에 그 분량을 명시한다(예: "햇반 300g 1개", "닭가슴살 200g").
+- 단백질은 끼니 목표 이상을 우선 확보한다. 3개 중 최소 2개는 단백질 ≥ 목표.
 - 가진 재료를 최대한 활용한다. 없는 재료는 missing 에 솔직히 적되, 소금·후추·식용유·간장·설탕·마늘 같은 기본 조미료는 있다고 가정하고 missing 에 넣지 않는다.
-- 3개는 서로 다른 스타일(예: 볶음/국물/구이, 한식/양식)로 겹치지 않게 한다. 1개는 10분 안에 되는 아주 쉬운 것으로 한다.
-- 사용자는 185cm 남성, 웨이트·러닝을 하며 클린벌크 중이다. 단백질이 넉넉한 쪽을 우선한다.
-- 칼로리·단백질은 1인분 기준으로 현실적인 추정치를 적는다.
-- steps 는 초보가 따라 할 수 있게 불 세기(센 불/중불/약불)와 시간을 적는다.
+- 3개는 서로 다른 스타일(볶음/국물/구이, 한식/양식)로 겹치지 않게 한다. 1개는 10분 안에 되는 아주 쉬운 것으로 한다.
+- 프로틴 파우더·슬로우카보린·크레아틴이 재료에 있으면 간식·야식·아침에서 쉐이크나 토핑으로 적극 활용한다.
+- 야식은 소화 부담이 적은 쪽(기름·매운맛 적게). 오늘 남은 칼로리가 많이 남았으면 야식·간식에서 보충하라고 summary 에 적는다.
+- 칼로리·단백질은 1인분 기준 현실적인 추정치. steps 는 초보가 따라 할 수 있게 불 세기(센 불/중불/약불)와 시간을 적는다.
 - 모든 텍스트는 한국어.`
 
 // ── 오프라인 레시피 DB ──
@@ -179,13 +202,17 @@ const DB = [
 const norm = (s) => s.replace(/\d+[a-zA-Z가-힣]*\s*/g, '').replace(/\s+/g, '').trim()
 const hits = (ing, list) => list.some((t) => { const a = norm(t); return a && (a.includes(ing) || ing.includes(a)) })
 
-export function offlineRecommend(ingredients, meal) {
+export function offlineRecommend(ingredients, meal, target) {
   const have = ingredients.map(norm).filter(Boolean)
+  const t = target || bulkTargets(meal)
   const scored = DB.map((r) => {
     const keyHit = r.key.filter((k) => hits(k, have)).length
     const optHit = r.optional.filter((k) => hits(k, have)).length
     const mealFit = r.meals[0] === meal ? 2 : r.meals.includes(meal) ? 1 : -3
-    const score = keyHit * 3 - (r.key.length - keyHit) * 2 + optHit + mealFit
+    // 벌크업: 단백질 많을수록 +, 끼니 목표 칼로리에서 멀수록 -
+    const proteinFit = Math.min(3, r.protein / 12)
+    const kcalFit = -Math.min(3, Math.abs(r.kcal - t.kcal) / Math.max(150, t.kcal * 0.35))
+    const score = keyHit * 3 - (r.key.length - keyHit) * 2 + optHit + mealFit + proteinFit + kcalFit
     return { r, score, keyHit }
   })
     .filter((x) => x.keyHit > 0 || have.length === 0)
@@ -208,7 +235,7 @@ export function offlineRecommend(ingredients, meal) {
     name: r.name, summary: r.summary, kcal: r.kcal, protein: r.protein, minutes: r.minutes, difficulty: r.difficulty,
     uses: [...r.key, ...r.optional].filter((k) => hits(k, have)),
     missing: r.key.filter((k) => !hits(k, have)),
-    steps: r.steps, tip: r.tip,
+    steps: r.steps, tip: r.kcal < t.kcal * 0.8 ? `${r.tip} 벌크업 기준 ${t.kcal}kcal 에 못 미친다 — 밥·계란·고기 양을 1.5배로.`.trim() : r.tip,
   }))
 }
 
@@ -250,11 +277,12 @@ export async function aiRecommend(ingredients, meal, note = '') {
 
 // AI 우선, 키가 없거나 실패하면 오프라인. 반환 { dishes, source: 'ai'|'offline', error }
 export async function recommend(ingredients, meal, note) {
+  const target = bulkTargets(meal)
   try {
-    const dishes = await aiRecommend(ingredients, meal, note)
+    const dishes = await aiRecommend(ingredients, meal, note, target)
     return { dishes, source: 'ai', error: '' }
   } catch (e) {
     const msg = e?.message === 'NO_KEY' ? '' : (e?.message || 'AI 호출 실패')
-    return { dishes: offlineRecommend(ingredients, meal), source: 'offline', error: msg }
+    return { dishes: offlineRecommend(ingredients, meal, target), source: 'offline', error: msg }
   }
 }

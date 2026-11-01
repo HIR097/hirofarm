@@ -4,7 +4,7 @@ import { useIsMobile } from '../hooks/useIsMobile.js'
 import { Card, mono } from '../components/ui.jsx'
 import * as sync from '../lib/sync.js'
 import { getApiKey } from '../lib/foodAI.js'
-import { MEALS, MEAL_HINT, DEFAULT_INGS, recommend } from '../lib/cookAI.js'
+import { MEALS, MEAL_HINT, DEFAULT_INGS, recommend, bulkTargets } from '../lib/cookAI.js'
 import { btn as pill, SubTabs } from './Holdem.jsx'
 
 // 요리 — 가진 재료를 넣고 끼니(아침/점심/간식/저녁/야식) 버튼을 누르면 요리 3개를 추천한다.
@@ -197,6 +197,7 @@ export default function Cook() {
     setBusy(false)
   }
   const cur = last[meal]
+  const tgt = useMemo(() => bulkTargets(meal), [meal, cur]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // 레시피 북
   const inBook = (d) => book.some((b) => b.name === d.name)
@@ -276,6 +277,10 @@ export default function Cook() {
               </span>
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 8 }}>{meal} · {MEAL_HINT[meal]}</div>
+            <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginTop: 8, fontSize: 12 }}>
+              <span><b style={{ color: 'var(--text)' }}>벌크업 기준</b> 이 끼니 목표 <b style={{ color: 'var(--accent)' }}>{tgt.kcal} kcal</b> · 단백질 <b style={{ color: 'var(--accent)' }}>{tgt.protein} g</b></span>
+              <span style={{ color: 'var(--text-3)' }}>하루 {tgt.goal} kcal · {tgt.pGoal} g 중 오늘 {tgt.eaten} kcal · {tgt.pEaten} g 먹음 → 남은 {tgt.left} kcal · {tgt.pLeft} g</span>
+            </div>
             <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="요청 (선택) — 예: 매운 거, 15분 안에, 밥 없이, 고단백" style={{ ...field, marginTop: 10 }} />
             {err && <div style={{ fontSize: 12, color: '#ef4444', marginTop: 8 }}>{err}</div>}
           </Card>
