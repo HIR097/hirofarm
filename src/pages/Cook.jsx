@@ -284,7 +284,13 @@ export default function Cook() {
               <span><b style={{ color: 'var(--text)' }}>벌크업 기준</b> 이 끼니 목표 <b style={{ color: 'var(--accent)' }}>{tgt.kcal} kcal</b> · 단백질 <b style={{ color: 'var(--accent)' }}>{tgt.protein} g</b></span>
               <span style={{ color: 'var(--text-3)' }}>하루 {tgt.goal} kcal · {tgt.pGoal} g 중 오늘 {tgt.eaten} kcal · {tgt.pEaten} g 먹음 → 남은 {tgt.left} kcal · {tgt.pLeft} g</span>
             </div>
-            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="요청 (선택) — 예: 매운 거, 15분 안에, 밥 없이, 고단백" style={{ ...field, marginTop: 10 }} />
+            <input
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing && !busy) run(meal, true) }}
+              placeholder={`요청 (선택) — 예: 매운 거, 15분 안에, 밥 없이, 고단백 · Enter 로 ${meal} 새로 추천`}
+              style={{ ...field, marginTop: 10 }}
+            />
             {err && <div style={{ fontSize: 12, color: '#ef4444', marginTop: 8 }}>{err}</div>}
           </Card>
 
