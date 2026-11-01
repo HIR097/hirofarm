@@ -202,10 +202,39 @@ const DB = [
 const norm = (s) => s.replace(/\d+[a-zA-Z가-힣]*\s*/g, '').replace(/\s+/g, '').trim()
 const hits = (ing, list) => list.some((t) => { const a = norm(t); return a && (a.includes(ing) || ing.includes(a)) })
 
+// ── 학습 DB ──
+// AI 가 만들어 낸 요리는 전부 여기에 쌓인다(localStorage hy_cook_learned, 동기화 'cook' 번들의 learned).
+// 다음에 같은 재료 조합이면 AI 를 부르기 전에 여기서 먼저 꺼낸다. 레시피 북(사용자가 고른 것)과는 별개.
+export const LEARNED_KEY = 'hy_cook_learned'
+export function loadLearned() { try { return JSON.parse(localStorage.getItem(LEARNED_KEY) || '[]') || [] } catch { return [] } }
+export function saveLearned(list) { try { localStorage.setItem(LEARNED_KEY, JSON.stringify(list)) } catch { /* ignore */ } }
+// 같은 이름이면 최신으로 덮고, 끼니는 합친다. 반환: 바뀐 전체 목록
+export function learn(dishes, meal) {
+  const list = loadLearned()
+  for (const d of dishes) {
+    if (!d?.name || !d.uses?.length) continue
+    const at = list.findIndex((x) => x.name === d.name)
+    const meals = Array.from(new Set([...(at >= 0 ? list[at].meals || [] : []), meal]))
+    const rec = { ...d, id: at >= 0 ? list[at].id : `l${Date.now()}${Math.random().toString(36).slice(2, 5)}`, meals, key: d.uses.map(norm).filter(Boolean), optional: [], ts: new Date().toISOString(), hits: (at >= 0 ? list[at].hits || 0 : 0) }
+    if (at >= 0) list[at] = rec; else list.unshift(rec)
+  }
+  saveLearned(list.slice(0, 300))
+  return list
+}
+// 지금 재료로 전부 만들 수 있는(핵심 재료 모두 보유) 학습 레시피 중 이 끼니에 맞는 것
+export function learnedMatches(ingredients, meal) {
+  const have = ingredients.map(norm).filter(Boolean)
+  return loadLearned()
+    .filter((r) => r.key?.length && r.key.every((k) => hits(k, have)))
+    .sort((a, b) => ((b.meals || []).includes(meal) ? 1 : 0) - ((a.meals || []).includes(meal) ? 1 : 0) || (b.protein || 0) - (a.protein || 0))
+    .filter((r) => (r.meals || []).includes(meal))
+}
+
 export function offlineRecommend(ingredients, meal, target) {
   const have = ingredients.map(norm).filter(Boolean)
   const t = target || bulkTargets(meal)
-  const scored = DB.map((r) => {
+  const pool = [...loadLearned(), ...DB]
+  const scored = pool.map((r) => {
     const keyHit = r.key.filter((k) => hits(k, have)).length
     const optHit = r.optional.filter((k) => hits(k, have)).length
     const mealFit = r.meals[0] === meal ? 2 : r.meals.includes(meal) ? 1 : -3
@@ -225,7 +254,7 @@ export function offlineRecommend(ingredients, meal, target) {
   }
   // 재료가 아주 적어 3개가 안 채워지면 끼니에 맞는 것으로 보충
   if (picked.length < 3) {
-    for (const r of DB) {
+    for (const r of pool) {
       if (picked.length >= 3) break
       if (picked.some((p) => p.r.name === r.name) || !r.meals.includes(meal)) continue
       picked.push({ r, score: 0, keyHit: 0 })
@@ -276,10 +305,21 @@ export async function aiRecommend(ingredients, meal, note = '') {
 }
 
 // AI 우선, 키가 없거나 실패하면 오프라인. 반환 { dishes, source: 'ai'|'offline', error }
-export async function recommend(ingredients, meal, note) {
+// 순서: ① 학습 DB 에 이 재료 조합으로 되는 요리가 3개 이상이면 그걸 돌려준다(force 가 아닐 때, 요청 문구가 없을 때)
+//       ② AI 추천 → 결과를 학습 DB 에 저장  ③ 키 없음·실패 → 내장 DB + 학습 DB 점수 매칭
+export async function recommend(ingredients, meal, note, { force = false } = {}) {
   const target = bulkTargets(meal)
+  if (!force && !note) {
+    const got = learnedMatches(ingredients, meal)
+    if (got.length >= 3) {
+      const dishes = got.slice(0, 3)
+      saveLearned(loadLearned().map((r) => (dishes.some((d) => d.id === r.id) ? { ...r, hits: (r.hits || 0) + 1 } : r)))
+      return { dishes, source: 'learned', error: '' }
+    }
+  }
   try {
     const dishes = await aiRecommend(ingredients, meal, note, target)
+    learn(dishes, meal)
     return { dishes, source: 'ai', error: '' }
   } catch (e) {
     const msg = e?.message === 'NO_KEY' ? '' : (e?.message || 'AI 호출 실패')

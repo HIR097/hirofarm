@@ -4,7 +4,7 @@ import { useIsMobile } from '../hooks/useIsMobile.js'
 import { Card, mono } from '../components/ui.jsx'
 import * as sync from '../lib/sync.js'
 import { getApiKey } from '../lib/foodAI.js'
-import { MEALS, MEAL_HINT, DEFAULT_INGS, recommend, bulkTargets } from '../lib/cookAI.js'
+import { MEALS, MEAL_HINT, DEFAULT_INGS, recommend, bulkTargets, loadLearned, saveLearned } from '../lib/cookAI.js'
 import { btn as pill, SubTabs } from './Holdem.jsx'
 
 // 요리 — 가진 재료를 넣고 끼니(아침/점심/간식/저녁/야식) 버튼을 누르면 요리 3개를 추천한다.
@@ -140,6 +140,7 @@ export default function Cook() {
   const [last, saveLast] = useJsonStorage('hy_cook_last', EMPTY)
   const [book, saveBook] = useJsonStorage('hy_cook_book', EMPTY_LIST)
   const [stamp, setStamp] = useLocalStorage('hy_cook_stamp', '')
+  const [learnedN, setLearnedN] = useState(() => loadLearned().length)  // 학습 DB 크기 — 바뀌면 동기화 push
   const [draft, setDraft] = useState('')
   const [bulk, setBulk] = useState(false)
   const [note, setNote] = useState('')
@@ -163,6 +164,7 @@ export default function Cook() {
         const v = row.value || {}
         if (Array.isArray(v.ings)) saveIngs(v.ings)
         if (Array.isArray(v.book)) saveBook(v.book)
+        if (Array.isArray(v.learned)) saveLearned(v.learned)
         setStamp(row.updated_at)
       } catch { /* 오프라인이면 로컬만 */ }
     })()
@@ -172,11 +174,11 @@ export default function Cook() {
   useEffect(() => {
     if (!touched.current || !sync.isConfigured() || !sync.isLoggedIn()) return
     const t = setTimeout(async () => {
-      try { const now = new Date().toISOString(); await sync.push(SYNC_KEY, { ings, book }, now); setStamp(now) } catch { /* 다음 변경 때 */ }
+      try { const now = new Date().toISOString(); await sync.push(SYNC_KEY, { ings, book, learned: loadLearned() }, now); setStamp(now) } catch { /* 다음 변경 때 */ }
     }, 1500)
     return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ings, book])
+  }, [ings, book, learnedN])
 
   const setIngs = (n) => { touched.current = true; saveIngs(n) }
   const setBook = (n) => { touched.current = true; saveBook(n) }
@@ -187,11 +189,12 @@ export default function Cook() {
   }
   const removeIng = (x) => setIngs(ings.filter((y) => y !== x))
 
-  const run = async (m) => {
+  const run = async (m, force = false) => {
     setMeal(m)
     if (!ings.length) { setErr('재료를 먼저 넣어 주세요.'); return }
     setBusy(true); setErr('')
-    const r = await recommend(ings, m, note.trim())
+    const r = await recommend(ings, m, note.trim(), { force })
+    if (r.source === 'ai') { touched.current = true; setLearnedN(loadLearned().length) }
     saveLast({ ...last, [m]: { dishes: r.dishes, source: r.source, ts: new Date().toISOString() } })
     if (r.error) setErr(`AI 호출 실패(${r.error}) — 내장 레시피로 대신 추천했다`)
     setBusy(false)
@@ -273,7 +276,7 @@ export default function Cook() {
                 <button key={m} onClick={() => run(m)} disabled={busy} style={{ ...pill(meal === m), fontSize: 14, padding: '8px 18px', opacity: busy ? 0.6 : 1 }}>{m}</button>
               ))}
               <span style={{ font: mono, color: 'var(--text-3)', marginLeft: 'auto' }}>
-                {busy ? 'AI 가 고르는 중…' : getApiKey() ? 'AI 추천' : '내장 레시피 (홈 탭 AI 설정에 키를 넣으면 AI 추천)'}
+                {busy ? 'AI 가 고르는 중…' : getApiKey() ? `AI 추천 · 학습 ${learnedN}` : `내장 레시피 · 학습 ${learnedN} (홈 탭 AI 설정에 키를 넣으면 AI 추천)`}
               </span>
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 8 }}>{meal} · {MEAL_HINT[meal]}</div>
@@ -291,8 +294,8 @@ export default function Cook() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8, padding: '0 4px' }}>
                 <div style={{ fontSize: 15, fontWeight: 700 }}>{meal} 추천 3가지</div>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                  <span style={{ font: mono, color: 'var(--text-3)' }}>{cur.source === 'ai' ? 'AI' : '내장'} · {cur.ts.slice(5, 16).replace('T', ' ')}</span>
-                  <button onClick={() => run(meal)} disabled={busy} style={btn}>다시 추천</button>
+                  <span style={{ font: mono, color: 'var(--text-3)' }}>{cur.source === 'ai' ? 'AI' : cur.source === 'learned' ? '학습 DB' : '내장'} · {cur.ts.slice(5, 16).replace('T', ' ')}</span>
+                  <button onClick={() => run(meal, true)} disabled={busy} style={btn}>새로 추천</button>
                 </div>
               </div>
               <div style={grid}>
