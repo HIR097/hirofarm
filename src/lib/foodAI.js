@@ -17,18 +17,20 @@ const SCHEMA = {
     unit: { type: 'string', description: '기준 1회 제공량. 예: "1개", "1인분 200g", "1스쿱"' },
     kcal: { type: 'integer', description: '기준 제공량당 칼로리(kcal) 추정치' },
     protein: { type: 'number', description: '기준 제공량당 단백질(g) 추정치' },
+    fat: { type: 'number', description: '기준 제공량당 지방(g) 추정치' },
+    carb: { type: 'number', description: '기준 제공량당 탄수화물(g) 추정치' },
     note: { type: 'string', description: '추정 근거나 주의사항 한 줄. 없으면 빈 문자열' },
   },
-  required: ['name', 'unit', 'kcal', 'protein', 'note'],
+  required: ['name', 'unit', 'kcal', 'protein', 'fat', 'carb', 'note'],
   additionalProperties: false,
 }
 
 const SYSTEM = `너는 한국 음식의 영양 정보를 추정하는 도우미다.
-사용자가 먹은 음식 이름을 주면 일반적인 1회 제공량 기준으로 칼로리(kcal)와 단백질(g)을 추정한다.
+사용자가 먹은 음식 이름을 주면 일반적인 1회 제공량 기준으로 칼로리(kcal)·단백질(g)·지방(g)·탄수화물(g)을 추정한다. 탄단지 합이 칼로리(단백질·탄수 4kcal/g, 지방 9kcal/g)와 대략 맞아야 한다.
 - 브랜드 제품(예: "런베뮤 다크초코베이글", "옵티멈 하이드로웨이")이면 그 제품의 실제 크기와 성분을 최대한 반영한다.
 - 제공량이 애매하면 한국에서 가장 흔한 1인분/1개 기준으로 잡고 unit에 명시한다.
 - 확실하지 않으면 보수적인 중간값을 쓰고 note에 근거를 한 줄로 적는다.
-- 입력이 음식이 아니면 kcal 0, protein 0, note에 "음식으로 인식할 수 없음"이라고 적는다.`
+- 입력이 음식이 아니면 kcal 0, protein 0, fat 0, carb 0, note에 "음식으로 인식할 수 없음"이라고 적는다.`
 
 export function getApiKey() {
   try {
@@ -47,7 +49,7 @@ export function setApiKey(key) {
   }
 }
 
-// 성공하면 { n, k, p, u, note } (foods.js와 같은 형태)를 돌려준다.
+// 성공하면 { n, k, p, f, cb, u, note } (foods.js와 같은 형태)를 돌려준다.
 export async function lookupFood(query) {
   const apiKey = getApiKey()
   if (!apiKey) throw new Error('API 키가 없습니다. 아래 "AI 설정"에서 키를 먼저 입력해 주세요.')
@@ -95,6 +97,8 @@ export async function lookupFood(query) {
     n: parsed.name || query,
     k: Math.max(0, Math.round(parsed.kcal || 0)),
     p: Math.max(0, Math.round((parsed.protein || 0) * 10) / 10),
+    f: Math.max(0, Math.round((parsed.fat || 0) * 10) / 10),
+    cb: Math.max(0, Math.round((parsed.carb || 0) * 10) / 10),
     u: parsed.unit || '1회분',
     note: parsed.note || '',
     ai: true,

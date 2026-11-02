@@ -21,7 +21,7 @@ export const DEFAULT_INGS = [
 ]
 
 export const MEALS = ['아침', '점심', '간식', '저녁', '야식']
-// 벌크업 기준 끼니 배분 — 홈 탭 목표(기본 3300kcal·172g, hy_cal_goal/hy_cal_protein_goal)를 이 비율로 나눈다.
+// 벌크업 기준 끼니 배분 — 홈 탭 목표(기본 3310kcal·185g = 흑마 벌크업 영상 공식, hy_cal_goal/hy_cal_protein_goal)를 이 비율로 나눈다.
 export const MEAL_SHARE = { 아침: 0.20, 점심: 0.27, 간식: 0.12, 저녁: 0.29, 야식: 0.12 }
 export const MEAL_HINT = {
   아침: '15분 안, 소화 편하게. 탄수(밥·빵·오트)+단백질 30g 이상으로 하루를 연다',
@@ -33,10 +33,10 @@ export const MEAL_HINT = {
 
 // 홈 탭 목표·오늘 기록을 읽어 이 끼니의 목표 kcal·단백질과 오늘 남은 양을 계산한다.
 export function bulkTargets(meal) {
-  let goal = 3300, pGoal = 172, eaten = 0, pEaten = 0
+  let goal = 3310, pGoal = 185, eaten = 0, pEaten = 0
   try {
-    goal = Math.max(0, Number(localStorage.getItem('hy_cal_goal')) || 3300)
-    pGoal = Math.max(0, Number(localStorage.getItem('hy_cal_protein_goal')) || 172)
+    goal = Math.max(0, Number(localStorage.getItem('hy_cal_goal')) || 3310)
+    pGoal = Math.max(0, Number(localStorage.getItem('hy_cal_protein_goal')) || 185)
     const d = new Date(); const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
     const list = (JSON.parse(localStorage.getItem('hy_cal_log') || '{}') || {})[day] || []
     for (const it of list) { eaten += (it.kcal || 0) * (it.qty || 1); pEaten += (it.protein || 0) * (it.qty || 1) }
@@ -62,6 +62,8 @@ const SCHEMA = {
           summary: { type: 'string', description: '한 줄 소개 — 왜 이 끼니에 맞는지' },
           kcal: { type: 'integer', description: '1인분 칼로리(kcal) 추정' },
           protein: { type: 'number', description: '1인분 단백질(g) 추정' },
+          fat: { type: 'number', description: '1인분 지방(g) 추정' },
+          carb: { type: 'number', description: '1인분 탄수화물(g) 추정' },
           minutes: { type: 'integer', description: '총 조리 시간(분)' },
           difficulty: { type: 'string', enum: ['쉬움', '보통', '어려움'] },
           uses: { type: 'array', items: { type: 'string' }, description: '사용자가 가진 재료 중 쓰는 것(분량 포함, 예: "계란 2개")' },

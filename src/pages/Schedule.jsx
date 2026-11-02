@@ -51,6 +51,7 @@ const num = (n) => Math.round(n).toLocaleString()
 const roundQty = (q) => Math.round(q * 10) / 10
 const COLOR = { good: 'var(--good, #22c55e)', bad: 'var(--bad, #ef4444)', warn: 'var(--warn, #f59e0b)', info: 'var(--info, #3b82f6)', calm: 'var(--calm, #8b5cf6)' }
 const GREEN = '#22c55e'
+const HIT = 0.9 // 칼로리·탄단지 목표의 90% 이상이면 달성(초록) — 26-11-02
 const AMBER = '#f59e0b'
 const PASS = 2 / 3 // 이만큼 체크하면 그날은 성공
 const MEALS = ['아침', '점심', '간식', '저녁', '야식']
@@ -448,11 +449,15 @@ export default function Schedule() {
   // ── 칼로리 저장소 (칼로리 탭과 동일 키) ──
   const [calLog, saveCalLog] = useJsonStorage('hy_cal_log', EMPTY)
   const [customFoods, saveCustomFoods] = useJsonStorage('hy_cal_ai_foods', EMPTY_LIST)
-  const [goalStr, setGoalStr] = useLocalStorage('hy_cal_goal', '3300')
-  const [proteinGoalStr, setProteinGoalStr] = useLocalStorage('hy_cal_protein_goal', '172')
+  const [goalStr, setGoalStr] = useLocalStorage('hy_cal_goal', '3310')
+  const [proteinGoalStr, setProteinGoalStr] = useLocalStorage('hy_cal_protein_goal', '185')
+  const [fatGoalStr, setFatGoalStr] = useLocalStorage('hy_cal_fat_goal', '74')
+  const [carbGoalStr, setCarbGoalStr] = useLocalStorage('hy_cal_carb_goal', '476')
   const [calStamp, setCalStamp] = useLocalStorage('hy_cal_stamp', '')
   const goal = Math.max(0, Number(goalStr) || 0)
   const pGoal = Math.max(0, Number(proteinGoalStr) || 0)
+  const fGoal = Math.max(0, Number(fatGoalStr) || 0)
+  const cGoal = Math.max(0, Number(carbGoalStr) || 0)
   const [query, setQuery] = useState('')
   const [mealSel, setMealSel] = useState(() => defaultMeal())   // 지금 기록하는 끼니
   const foodInputRef = useRef(null)
@@ -483,6 +488,8 @@ export default function Schedule() {
         if (v.log) saveCalLog(v.log)
         if (v.goal != null) setGoalStr(String(v.goal))
         if (v.proteinGoal != null) setProteinGoalStr(String(v.proteinGoal))
+        if (v.fatGoal != null) setFatGoalStr(String(v.fatGoal))
+        if (v.carbGoal != null) setCarbGoalStr(String(v.carbGoal))
         if (v.aiFoods) saveCustomFoods(v.aiFoods)
         setCalStamp(at)
       }],
@@ -520,7 +527,7 @@ export default function Schedule() {
     const t = setTimeout(async () => {
       try {
         const now = new Date().toISOString()
-        await sync.push('calories', { log: calLog, goal: goalStr, proteinGoal: proteinGoalStr, aiFoods: customFoods }, now)
+        await sync.push('calories', { log: calLog, goal: goalStr, proteinGoal: proteinGoalStr, fatGoal: fatGoalStr, carbGoal: carbGoalStr, aiFoods: customFoods }, now)
         setCalStamp(now)
       } catch { /* 칼로리 탭에서 다시 올라간다 */ }
     }, 1500)
@@ -544,7 +551,12 @@ export default function Schedule() {
   }
   const calSum = (dkey) => {
     const list = calLog[dkey] || EMPTY_LIST
-    return { kcal: list.reduce((s, it) => s + it.kcal * it.qty, 0), protein: list.reduce((s, it) => s + (it.protein || 0) * it.qty, 0) }
+    return {
+      kcal: list.reduce((s, it) => s + it.kcal * it.qty, 0),
+      protein: list.reduce((s, it) => s + (it.protein || 0) * it.qty, 0),
+      fat: list.reduce((s, it) => s + (it.fat || 0) * it.qty, 0),
+      carb: list.reduce((s, it) => s + (it.carb || 0) * it.qty, 0),
+    }
   }
   const toggle = (dkey, k) => {
     if (dkey > todayKey) return
@@ -591,7 +603,7 @@ export default function Schedule() {
     if (iso > todayKey) return null
     const st = schedStatus(iso)
     const cs = calSum(iso)
-    return { ...st, kcal: cs.kcal, kcalOk: goal > 0 && cs.kcal >= goal }
+    return { ...st, kcal: cs.kcal, kcalOk: goal > 0 && cs.kcal >= goal * HIT }
   }
   // 달력에 올릴 큰 날짜 (secure/schedule.js dday)
   const extra = useMemo(() => data.dday.map((d) => ({ id: `dd_${d.k}`, title: d.label, from: d.date, kind: 'goal', action: d.note ? [d.note] : [] })), [data])
@@ -608,7 +620,7 @@ export default function Schedule() {
     const at = foods.findIndex((it) => it.name === food.n && it.kcal === food.k && (it.meal || '') === mealSel)
     const next = at >= 0
       ? foods.map((it, i) => (i === at ? { ...it, qty: roundQty(it.qty + 1) } : it))
-      : [...foods, { id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, name: food.n, unit: food.u, kcal: food.k, protein: food.p || 0, qty: 1, meal: mealSel }]
+      : [...foods, { id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, name: food.n, unit: food.u, kcal: food.k, protein: food.p || 0, fat: food.f, carb: food.cb, qty: 1, meal: mealSel }]
     updateSel(next)
     setQuery('')
     setAiError('')
@@ -625,7 +637,7 @@ export default function Schedule() {
         const key = `${it.name}|${it.kcal}`
         if (seen.has(key)) continue
         seen.add(key)
-        out.push({ n: it.name, k: it.kcal, p: it.protein || 0, u: it.unit || '', c: '기록한 음식', ai: true })
+        out.push({ n: it.name, k: it.kcal, p: it.protein || 0, f: it.fat, cb: it.carb, u: it.unit || '', c: '기록한 음식', ai: true })
       }
     }
     return out
@@ -673,24 +685,30 @@ export default function Schedule() {
               목표
               <input value={goalStr} onChange={(e) => setGoalStr(e.target.value.replace(/[^\d]/g, '').slice(0, 5))} inputMode="numeric" title="목표 칼로리 (칼로리 탭과 공유)"
                 style={{ ...field, width: 58, padding: '3px 6px', fontSize: 12, fontWeight: 700, textAlign: 'center', ...mono }} />
-              kcal · 단백질
+              kcal · 단
               <input value={proteinGoalStr} onChange={(e) => setProteinGoalStr(e.target.value.replace(/[^\d]/g, '').slice(0, 4))} inputMode="numeric" title="목표 단백질 (칼로리 탭과 공유)"
-                style={{ ...field, width: 46, padding: '3px 6px', fontSize: 12, fontWeight: 700, textAlign: 'center', ...mono }} />
+                style={{ ...field, width: 42, padding: '3px 6px', fontSize: 12, fontWeight: 700, textAlign: 'center', ...mono }} />
+              · 지
+              <input value={fatGoalStr} onChange={(e) => setFatGoalStr(e.target.value.replace(/[^\d]/g, '').slice(0, 4))} inputMode="numeric" title="목표 지방 (칼로리 탭과 공유)"
+                style={{ ...field, width: 38, padding: '3px 6px', fontSize: 12, fontWeight: 700, textAlign: 'center', ...mono }} />
+              · 탄
+              <input value={carbGoalStr} onChange={(e) => setCarbGoalStr(e.target.value.replace(/[^\d]/g, '').slice(0, 4))} inputMode="numeric" title="목표 탄수화물 (칼로리 탭과 공유)"
+                style={{ ...field, width: 42, padding: '3px 6px', fontSize: 12, fontWeight: 700, textAlign: 'center', ...mono }} />
               g
             </span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, margin: '10px 0' }}>
-            {[['섭취', total.kcal, goal, 'kcal'], ['단백질', total.protein, pGoal, 'g']].map(([lbl, v, g, unit]) => {
-              const ok = g > 0 && v >= g
+            {[['섭취', total.kcal, goal, 'kcal'], ['단백질', total.protein, pGoal, 'g'], ['지방', total.fat, fGoal, 'g'], ['탄수화물', total.carb, cGoal, 'g']].map(([lbl, v, g, unit]) => {
+              const ok = g > 0 && v >= g * HIT   // 90% 이상 = 달성
               const pct = g > 0 ? Math.min(100, Math.round((v / g) * 100)) : 0
               return (
                 <div key={lbl} style={{ background: 'var(--surface2)', borderRadius: 12, padding: '10px 12px', minWidth: 0 }}>
-                  <div style={{ fontSize: 11, color: 'var(--text-3)' }}>{lbl}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', display: 'flex', justifyContent: 'space-between' }}>{lbl}{ok && <span style={{ color: GREEN, fontWeight: 700 }}>달성</span>}</div>
                   <div style={{ ...mono, fontSize: 20, fontWeight: 700, color: ok ? GREEN : 'var(--text)' }}>{num(v)} <span style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 500 }}>{unit}</span></div>
                   <div style={{ height: 5, borderRadius: 3, background: 'var(--line)', marginTop: 6, overflow: 'hidden' }}>
                     <div style={{ width: `${pct}%`, height: '100%', background: ok ? GREEN : 'var(--accent)' }} />
                   </div>
-                  <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 4 }}>{g > 0 ? (ok ? `+${num(v - g)} 초과` : `${num(g - v)} 남음`) : '목표 미설정'}</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 4 }}>{g > 0 ? (v > g ? `+${num(v - g)} 초과` : `${num(g - v)} 남음 · ${pct}%`) : '목표 미설정'}</div>
                 </div>
               )
             })}
@@ -752,7 +770,7 @@ export default function Schedule() {
               <div key={it.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 0', borderTop: '1px solid var(--line)' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.name}</div>
-                  <div style={{ fontSize: 10.5, color: 'var(--text-3)' }}>{it.unit || ''} · {num(it.kcal)} kcal · {it.protein ?? 0}g</div>
+                  <div style={{ fontSize: 10.5, color: 'var(--text-3)' }}>{it.unit || ''} · {num(it.kcal)} kcal · 단 {it.protein ?? 0}{it.fat != null || it.carb != null ? ` · 지 ${Math.round(it.fat || 0)} · 탄 ${Math.round(it.carb || 0)}` : ''}</div>
                 </div>
                 <button onClick={() => setQty(it.id, -0.5)} style={btn}>−</button>
                 <span style={{ ...mono, fontSize: 13, width: 28, textAlign: 'center' }}>{it.qty}</span>

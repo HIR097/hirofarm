@@ -215,14 +215,15 @@ export default function Cook() {
       const log = JSON.parse(localStorage.getItem('hy_cal_log') || '{}') || {}
       const day = todayIso()
       const list = log[day] || []
-      list.push({ id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, name: d.name, unit: '1인분', kcal: d.kcal, protein: d.protein || 0, qty: 1, meal: m })
+      list.push({ id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, name: d.name, unit: '1인분', kcal: d.kcal, protein: d.protein || 0, fat: d.fat, carb: d.carb, qty: 1, meal: m })
       log[day] = list
       localStorage.setItem('hy_cal_log', JSON.stringify(log))
       setLogged({ ...logged, [d.name + m]: true })
       if (sync.isConfigured() && sync.isLoggedIn()) {
         const now = new Date().toISOString()
         sync.push('calories', {
-          log, goal: localStorage.getItem('hy_cal_goal') || '3300', proteinGoal: localStorage.getItem('hy_cal_protein_goal') || '172',
+          log, goal: localStorage.getItem('hy_cal_goal') || '3310', proteinGoal: localStorage.getItem('hy_cal_protein_goal') || '185',
+          fatGoal: localStorage.getItem('hy_cal_fat_goal') || '74', carbGoal: localStorage.getItem('hy_cal_carb_goal') || '476',
           aiFoods: JSON.parse(localStorage.getItem('hy_cal_ai_foods') || '[]'),
         }, now).then(() => localStorage.setItem('hy_cal_stamp', now)).catch(() => {})
       }

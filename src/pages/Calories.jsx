@@ -10,6 +10,8 @@ import * as sync from '../lib/sync.js'
 const fade = { animation: 'hyFade .4s ease', marginTop: 8 }
 const OVER = '#22c55e' // 목표 초과 = 초록 (벌크업 기준)
 const SHORT = '#ef4444' // 목표 미달 = 빨강
+const HIT = 0.9 // 목표의 90% 이상이면 '달성'(초록) — 26-11-02 사용자 지시
+const macroText = (it) => `${it.protein ?? 0}g${it.fat != null || it.carb != null ? ` · 지 ${Math.round(it.fat || 0)} · 탄 ${Math.round(it.carb || 0)}` : ''}`
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 const SYNC_KEY = 'calories'
 
@@ -37,11 +39,14 @@ const clock = (iso) => {
   }
 }
 
-// "치즈볼 250" 또는 "치즈볼 250 20"(칼로리·단백질)처럼 숫자를 붙이면 직접 추가된다.
+// "치즈볼 250", "치즈볼 250 20"(칼로리·단백질), "치즈볼 250 20 10 30"(칼로리·단백질·지방·탄수)처럼 숫자를 붙이면 직접 추가된다.
 function parseCustom(query) {
-  const m = query.trim().match(/^(.+?)\s+(\d{1,5})(?:\s+(\d{1,3}))?$/)
+  const m = query.trim().match(/^(.+?)\s+(\d{1,5})(?:\s+(\d{1,3}))?(?:\s+(\d{1,3}))?(?:\s+(\d{1,3}))?$/)
   if (!m) return null
-  return { n: m[1].trim(), k: Number(m[2]), p: Number(m[3] || 0), u: '직접 입력' }
+  const o = { n: m[1].trim(), k: Number(m[2]), p: Number(m[3] || 0), u: '직접 입력' }
+  if (m[4] != null) o.f = Number(m[4])
+  if (m[5] != null) o.cb = Number(m[5])
+  return o
 }
 
 function useJsonStorage(key, fallback) {
@@ -177,8 +182,8 @@ export function MealPlan({ isMobile, bare = false }) {
   const Wrap = bare ? 'div' : Card
   const plan = (typeof window !== 'undefined' && window.__HY_DATA__?.body?.mealPlan) || null
   const [stored, setStored] = useJsonStorage('hy_meal_picks', EMPTY_FOODS)   // 홈 주간 뷰의 식사 체크가 같은 선택을 읽는다
-  const [goalStr] = useLocalStorage('hy_cal_goal', '3300')                  // 칼로리 목표(칼로리 패널과 같은 키)
-  const [pGoalStr] = useLocalStorage('hy_cal_protein_goal', '172')
+  const [goalStr] = useLocalStorage('hy_cal_goal', '3310')                  // 칼로리 목표(칼로리 패널과 같은 키)
+  const [pGoalStr] = useLocalStorage('hy_cal_protein_goal', '185')
   if (!plan) return null
   const goal = Math.max(0, Number(goalStr) || 0)
   const pGoal = Math.max(0, Number(pGoalStr) || 0)
@@ -268,8 +273,10 @@ export default function Calories() {
   const [log, saveLog] = useJsonStorage('hy_cal_log', EMPTY_LOG)
   // AI로 찾은 음식은 여기에 쌓여 다음부터는 호출 없이 검색된다.
   const [customFoods, saveCustomFoods] = useJsonStorage('hy_cal_ai_foods', EMPTY_FOODS)
-  const [goalStr, setGoalStr] = useLocalStorage('hy_cal_goal', '3300')
-  const [proteinGoalStr, setProteinGoalStr] = useLocalStorage('hy_cal_protein_goal', '172')
+  const [goalStr, setGoalStr] = useLocalStorage('hy_cal_goal', '3310')
+  const [proteinGoalStr, setProteinGoalStr] = useLocalStorage('hy_cal_protein_goal', '185')
+  const [fatGoalStr, setFatGoalStr] = useLocalStorage('hy_cal_fat_goal', '74')      // 26-11-02 영상 공식: 체중 ×1
+  const [carbGoalStr, setCarbGoalStr] = useLocalStorage('hy_cal_carb_goal', '476')  // 나머지 칼로리를 밥으로
   const [stamp, setStamp] = useLocalStorage('hy_cal_stamp', '')
 
   const [query, setQuery] = useState('')
@@ -288,18 +295,20 @@ export default function Calories() {
 
   const goal = Math.max(0, Number(goalStr) || 0)
   const pGoal = Math.max(0, Number(proteinGoalStr) || 0)
+  const fGoal = Math.max(0, Number(fatGoalStr) || 0)
+  const cGoal = Math.max(0, Number(carbGoalStr) || 0)
   const items = log[today] || []
   const total = items.reduce((s, it) => s + it.kcal * it.qty, 0)
   const pTotal = items.reduce((s, it) => s + (it.protein || 0) * it.qty, 0)
-  const isOver = goal > 0 && total > goal
-  const pOver = pGoal > 0 && pTotal >= pGoal
-  const pct = goal > 0 ? Math.min(100, Math.round((total / goal) * 100)) : 0
-  const pPct = pGoal > 0 ? Math.min(100, Math.round((pTotal / pGoal) * 100)) : 0
+  const fTotal = items.reduce((s, it) => s + (it.fat || 0) * it.qty, 0)
+  const cTotal = items.reduce((s, it) => s + (it.carb || 0) * it.qty, 0)
+  // 지방·탄수 값이 없는 항목(옛 기록, DB 에 f/cb 가 없는 음식)은 0 으로 더해지므로 몇 개인지 같이 보여 준다
+  const unknownN = items.filter((it) => it.fat == null && it.carb == null).length
 
   // ── 기기 간 동기화 ──
   const bundle = useMemo(
-    () => ({ log, goal: goalStr, proteinGoal: proteinGoalStr, aiFoods: customFoods }),
-    [log, goalStr, proteinGoalStr, customFoods],
+    () => ({ log, goal: goalStr, proteinGoal: proteinGoalStr, fatGoal: fatGoalStr, carbGoal: carbGoalStr, aiFoods: customFoods }),
+    [log, goalStr, proteinGoalStr, fatGoalStr, carbGoalStr, customFoods],
   )
 
   const applyRemote = (v) => {
@@ -308,6 +317,8 @@ export default function Calories() {
     if (v.log) saveLog(v.log)
     if (v.goal != null) setGoalStr(String(v.goal))
     if (v.proteinGoal != null) setProteinGoalStr(String(v.proteinGoal))
+    if (v.fatGoal != null) setFatGoalStr(String(v.fatGoal))
+    if (v.carbGoal != null) setCarbGoalStr(String(v.carbGoal))
     if (v.aiFoods) saveCustomFoods(v.aiFoods)
   }
 
@@ -381,6 +392,8 @@ export default function Calories() {
               unit: food.u,
               kcal: food.k,
               protein: food.p || 0,
+              fat: food.f,
+              carb: food.cb,
               qty: 1,
             },
           ]
@@ -448,48 +461,58 @@ export default function Calories() {
     return {
       kcal: list.reduce((s, it) => s + it.kcal * it.qty, 0),
       protein: list.reduce((s, it) => s + (it.protein || 0) * it.qty, 0),
+      fat: list.reduce((s, it) => s + (it.fat || 0) * it.qty, 0),
+      carb: list.reduce((s, it) => s + (it.carb || 0) * it.qty, 0),
     }
   }
   const monthDays = Array.from({ length: daysInMonth }, (_, i) => i + 1)
   const loggedDays = monthDays.filter((d) => sumsOf(d).kcal > 0)
-  const overDays = goal > 0 ? loggedDays.filter((d) => sumsOf(d).kcal > goal) : []
+  const overDays = goal > 0 ? loggedDays.filter((d) => sumsOf(d).kcal >= goal * HIT) : []
 
-  const gauge = (label, value, goalValue, percent, over, unit) => (
-    <div style={{ flex: 1, minWidth: isMobile ? 140 : 190 }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-        <div style={{ fontSize: isMobile ? 26 : 30, fontWeight: 700, letterSpacing: '-.02em', color: over ? OVER : 'var(--text)' }}>
-          {value.toLocaleString('ko-KR', { maximumFractionDigits: 0 })}
-          <span style={{ fontSize: 14, color: 'var(--text-3)' }}> {unit}</span>
+  // 90% 이상 = 달성(초록). 100% 를 넘으면 초과량도 같이 표시한다.
+  const gauge = (label, value, goalValue, unit) => {
+    const percent = goalValue > 0 ? Math.round((value / goalValue) * 100) : 0
+    const hit = goalValue > 0 && value >= goalValue * HIT
+    return (
+      <div key={label} style={{ flex: 1, minWidth: isMobile ? 140 : 160 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+          <div style={{ fontSize: isMobile ? 24 : 28, fontWeight: 700, letterSpacing: '-.02em', color: hit ? OVER : 'var(--text)' }}>
+            {value.toLocaleString('ko-KR', { maximumFractionDigits: 0 })}
+            <span style={{ fontSize: 14, color: 'var(--text-3)' }}> {unit}</span>
+          </div>
+          <span style={{ font: mono, color: 'var(--text-3)' }}>{label}</span>
+          {hit && <span style={{ font: mono, color: OVER, fontWeight: 700, marginLeft: 'auto' }}>달성</span>}
         </div>
-        <span style={{ font: mono, color: 'var(--text-3)' }}>{label}</span>
+        <div style={{ height: 8, background: 'var(--surface2)', borderRadius: 99, overflow: 'hidden', marginTop: 8 }}>
+          <div style={{ height: '100%', width: `${Math.min(100, percent)}%`, borderRadius: 99, background: hit ? OVER : 'var(--accent)', transition: 'width .25s' }} />
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, font: mono, color: 'var(--text-3)' }}>
+          <span>{goalValue > 0 ? `${percent}%` : '목표 미설정'}</span>
+          <span>
+            {goalValue > 0
+              ? value > goalValue
+                ? `+${num(Math.round(value - goalValue))} 초과`
+                : `${num(Math.round(goalValue - value))} 남음`
+              : '—'}
+          </span>
+        </div>
       </div>
-      <div style={{ height: 8, background: 'var(--surface2)', borderRadius: 99, overflow: 'hidden', marginTop: 8 }}>
-        <div style={{ height: '100%', width: `${percent}%`, borderRadius: 99, background: over ? OVER : 'var(--accent)', transition: 'width .25s' }} />
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, font: mono, color: 'var(--text-3)' }}>
-        <span>{goalValue > 0 ? `${percent}%` : '목표 미설정'}</span>
-        <span>
-          {goalValue > 0
-            ? over
-              ? `+${num(Math.round(value - goalValue))} 초과`
-              : `${num(Math.round(goalValue - value))} 남음`
-            : '—'}
-        </span>
-      </div>
-    </div>
-  )
+    )
+  }
 
   return (
     <div style={fade}>
       {/* ── 목표 설정 ── */}
       <Card style={{ marginBottom: 14, padding: isMobile ? 16 : 22 }}>
-        <CardHead title="목표" caption={isMobile ? '1일 기준' : '1일 기준 · 운동일/휴식일 구분 없음'} />
+        <CardHead title="목표" caption={isMobile ? '1일 기준 · 90% 이상 달성' : '1일 기준 · 운동일/휴식일 구분 없음 · 각 항목 90% 이상이면 달성 · 기본값은 벌크업 영상 공식(TDEE+500 · 단 ×2.5 · 지 ×1 · 나머지 밥)'} />
         <div style={{ display: 'flex', gap: isMobile ? 14 : 20, flexWrap: 'wrap' }}>
           {[
-            { label: '칼로리', unit: 'kcal', value: goalStr, set: setGoalStr, presets: [2700, 3300, 3600] },
-            { label: '단백질', unit: 'g', value: proteinGoalStr, set: setProteinGoalStr, presets: [140, 160, 172] },
+            { label: '칼로리', unit: 'kcal', value: goalStr, set: setGoalStr, presets: [2810, 3310, 3600] },
+            { label: '단백질', unit: 'g', value: proteinGoalStr, set: setProteinGoalStr, presets: [150, 172, 185] },
+            { label: '지방', unit: 'g', value: fatGoalStr, set: setFatGoalStr, presets: [65, 74, 85] },
+            { label: '탄수화물', unit: 'g', value: carbGoalStr, set: setCarbGoalStr, presets: [370, 476, 550] },
           ].map((f) => (
-            <div key={f.label} style={{ flex: 1, minWidth: isMobile ? 130 : 200 }}>
+            <div key={f.label} style={{ flex: 1, minWidth: isMobile ? 130 : 150 }}>
               <div style={{ font: mono, color: 'var(--text-3)', marginBottom: 7 }}>{f.label}</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <input
@@ -519,9 +542,16 @@ export default function Calories() {
       <Card style={{ marginBottom: 14, padding: isMobile ? 16 : 22 }}>
         <CardHead title="오늘 섭취량" caption={isMobile ? `${items.length}개 항목` : `${today} · ${items.length}개 항목`} />
         <div style={{ display: 'flex', gap: isMobile ? 16 : 26, flexWrap: 'wrap' }}>
-          {gauge('kcal', total, goal, pct, isOver, 'kcal')}
-          {gauge('단백질', pTotal, pGoal, pPct, pOver, 'g')}
+          {gauge('kcal', total, goal, 'kcal')}
+          {gauge('단백질', pTotal, pGoal, 'g')}
+          {gauge('지방', fTotal, fGoal, 'g')}
+          {gauge('탄수화물', cTotal, cGoal, 'g')}
         </div>
+        {unknownN > 0 && (
+          <div style={{ font: mono, color: 'var(--text-3)', marginTop: 10 }}>
+            ※ {unknownN}개 항목은 지방·탄수 값이 없어 0 으로 더해졌다 (옛 기록이거나 DB 에 값이 없는 음식). 직접 입력은 "이름 칼로리 단백질 지방 탄수" 순으로.
+          </div>
+        )}
       </Card>
 
       {/* ── 검색 + 오늘 먹은 것 ── */}
@@ -629,7 +659,7 @@ export default function Calories() {
                   <div style={{ fontSize: 14, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.name}</div>
                   <div style={{ font: mono, color: 'var(--text-3)', marginTop: 2 }}>
                     {isMobile ? '' : `${it.unit} · `}
-                    {num(it.kcal)} kcal · {it.protein ?? 0}g
+                    {num(it.kcal)} kcal · {macroText(it)}
                   </div>
                 </div>
 
@@ -796,13 +826,13 @@ export default function Calories() {
           {cells.map((d, i) => {
             if (!d) return <div key={i} style={{ minHeight: isMobile ? 54 : 80 }} />
             const key = `${year}-${pad(month + 1)}-${pad(d)}`
-            const { kcal, protein } = sumsOf(d)
-            const over = goal > 0 && kcal > goal
+            const { kcal, protein, fat, carb } = sumsOf(d)
+            const over = goal > 0 && kcal >= goal * HIT
             const isToday = key === today
             return (
               <div
                 key={i}
-                title={kcal ? `${key} · ${num(kcal)} kcal · 단백질 ${Math.round(protein)}g` : key}
+                title={kcal ? `${key} · ${num(kcal)} kcal · 단백질 ${Math.round(protein)}g · 지방 ${Math.round(fat)}g · 탄수 ${Math.round(carb)}g` : key}
                 style={{
                   minHeight: isMobile ? 54 : 80,
                   borderRadius: isMobile ? 9 : 13,
@@ -836,7 +866,7 @@ export default function Calories() {
 
       <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 14, lineHeight: 1.6 }}>
         ※ 기록은 날짜별로 저장돼 <b>자정이 지나면 오늘 목록이 자동으로 비워집니다.</b> 지난 날짜의 기록은 달력에 그대로 남습니다.
-        달력의 초록색은 그날 섭취량이 <b>현재 목표({num(goal)} kcal)</b>를 넘긴 날입니다.
+        달력의 초록색은 그날 섭취량이 <b>현재 목표({num(goal)} kcal)의 90% 이상</b>인 날입니다.
       </div>
     </div>
   )
